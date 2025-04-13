@@ -84,6 +84,9 @@ def load_user(user_id):
 
 @app.route('/')
 def home():
+    if current_user.is_authenticated:
+        table = RPLTable.query.order_by(RPLTable.position).all()
+        return render_template('home.html', rpl_table=table)
     return render_template('home.html')
 
 
@@ -96,7 +99,7 @@ def register():
         name = request.form['name']
         email = request.form['email']
         club = request.form['club']
-        password = pw_secure.encrypt_password(request.form['password']) 
+        password = pw_secure.encrypt_password(request.form['password'])
         is_admin = (email == ADMIN_EMAIL)
 
         if User.query.filter_by(email=email).first():
@@ -145,10 +148,30 @@ def show_users():
 
 
 @app.route('/rpl_table')
-@login_required  
+@login_required
 def show_rpl_table():
     table = RPLTable.query.order_by(RPLTable.position).all()
     return render_template('rpl_table.html', table=table)
+
+
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    if not current_user.is_admin:
+        flash('Доступ запрещён', 'danger')
+        return redirect(url_for('home'))
+
+    user_to_delete = User.query.get_or_404(user_id)
+
+    # Не позволяем удалить самого себя
+    if user_to_delete.id == current_user.id:
+        flash('Вы не можете удалить себя', 'danger')
+        return redirect(url_for('show_users'))
+
+    db.session.delete(user_to_delete)
+    db.session.commit()
+    flash('Пользователь успешно удалён', 'success')
+    return redirect(url_for('show_users'))
 
 
 @app.route('/edit_rpl_table', methods=['GET', 'POST'])
@@ -168,10 +191,15 @@ def edit_rpl_table():
         goals_for = request.form.getlist('goals_for[]')
         goals_against = request.form.getlist('goals_against[]')
 
+        # Проверка на заполнение названий команд
+        if any(not team.strip() for team in teams):
+            flash('Все названия команд должны быть заполнены!', 'danger')
+            return redirect(url_for('edit_rpl_table'))
+
         for i, team in enumerate(teams):
-            record = RPLTable.query.filter_by(team=team).first()
+            record = RPLTable.query.filter_by(position=i+1).first()
             if record:
-                record.position = int(positions[i])
+                record.team = team.strip()
                 record.matches = int(matches[i])
                 record.wins = int(wins[i])
                 record.draws = int(draws[i])
