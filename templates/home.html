@@ -16,6 +16,22 @@
         .menu a {
             margin-right: 15px;
         }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
     </style>
 </head>
 <body>
@@ -46,5 +62,35 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
+
+    {% if current_user.is_authenticated %}
+        <h2>Турнирная таблица РПЛ</h2>
+        <table>
+            <tr>
+                <th>№</th>
+                <th>Команда</th>
+                <th>И</th>
+                <th>В</th>
+                <th>Н</th>
+                <th>П</th>
+                <th>ЗМ</th>
+                <th>ПМ</th>
+                <th>О</th>
+            </tr>
+            {% for team in rpl_table %}
+            <tr>
+                <td>{{ team.position }}</td>
+                <td>{{ team.team }}</td>
+                <td>{{ team.matches }}</td>
+                <td>{{ team.wins }}</td>
+                <td>{{ team.draws }}</td>
+                <td>{{ team.losses }}</td>
+                <td>{{ team.goals_for }}</td>
+                <td>{{ team.goals_against }}</td>
+                <td><strong>{{ team.points }}</strong></td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
 </body>
 </html>
