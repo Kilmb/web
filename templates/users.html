@@ -27,6 +27,17 @@
         tr:nth-child(even) {
             background-color: #f2f2f2;
         }
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            background-color: #d32f2f;
+        }
     </style>
 </head>
 <body>
@@ -39,6 +50,7 @@
             <th>Имя</th>
             <th>Email</th>
             <th>Клуб</th>
+            <th>Действия</th>
         </tr>
         {% for user in users %}
         <tr>
@@ -46,6 +58,13 @@
             <td>{{ user.name }}</td>
             <td>{{ user.email }}</td>
             <td>{{ user.club }}</td>
+            <td>
+                {% if current_user.is_admin and user.id != current_user.id %}
+                <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" style="display: inline;">
+                    <button type="submit" class="delete-btn" onclick="return confirm('Вы уверены, что хотите удалить этого пользователя?')">Удалить</button>
+                </form>
+                {% endif %}
+            </td>
         </tr>
         {% endfor %}
     </table>
