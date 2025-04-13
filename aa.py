@@ -3,6 +3,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
+from cryptography.fernet import Fernet
+import base64
+import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-very-secret-key-here'
@@ -32,8 +35,53 @@ RPL_CLUBS = [
     "Рубин",
     "Спартак",
     "Факел",
+    "Химки"
     "ЦСКА"
 ]
+
+
+class Password_inkognito:
+    """
+    Класс для шифрования и дешифрования паролей с использованием Fernet.
+    Также поддерживает хеширование паролей для дополнительной безопасности.
+    """
+
+    def __init__(self):
+        # Генерируем ключ шифрования или используем существующий из переменных окружения
+        self.encryption_key = os.getenv('ENCRYPTION_KEY')
+        if not self.encryption_key:
+            self.encryption_key = Fernet.generate_key().decode()
+            # В реальном приложении следует сохранить этот ключ в безопасное место
+        self.cipher_suite = Fernet(self.encryption_key.encode())
+
+    def encrypt_password(self, password):
+        """Шифрует пароль и возвращает зашифрованную строку."""
+        # Сначала создаем хеш пароля для безопасности
+        hashed_pw = generate_password_hash(password)
+        # Затем шифруем хеш
+        encrypted_pw = self.cipher_suite.encrypt(hashed_pw.encode())
+        return encrypted_pw.decode()
+
+    def decrypt_password(self, encrypted_password):
+        """Дешифрует пароль и возвращает оригинальный хеш."""
+        return self.cipher_suite.decrypt(encrypted_password.encode()).decode()
+
+    def verify_password(self, encrypted_password, input_password):
+        """
+        Проверяет, соответствует ли введенный пароль зашифрованному.
+        Возвращает True если соответствует, иначе False.
+        """
+        try:
+            # Дешифруем сохраненный пароль
+            hashed_pw = self.decrypt_password(encrypted_password)
+            # Проверяем соответствие
+            return check_password_hash(hashed_pw, input_password)
+        except:
+            return False
+
+
+# Инициализируем наш шифровальщик
+pw_secure = Password_inkognito()
 
 
 class User(db.Model, UserMixin):
@@ -67,7 +115,7 @@ def register():
         name = request.form['name']
         email = request.form['email']
         club = request.form['club']
-        password = generate_password_hash(request.form['password'])
+        password = pw_secure.encrypt_password(request.form['password'])
         is_admin = (email == ADMIN_EMAIL)
 
         if User.query.filter_by(email=email).first():
@@ -76,6 +124,7 @@ def register():
             user = User(name=name, email=email, club=club, password=password, is_admin=is_admin)
             db.session.add(user)
             db.session.commit()
+
 
             login_user(user)
             flash('Регистрация прошла успешно!', 'success')
@@ -94,7 +143,7 @@ def login():
         password = request.form['password']
         user = User.query.filter_by(email=email).first()
 
-        if user and check_password_hash(user.password, password):
+        if user and pw_secure.verify_password(user.password, password):
             login_user(user)
             flash('Вы успешно вошли!', 'success')
             return redirect(url_for('home'))
@@ -131,7 +180,7 @@ if __name__ == '__main__':
                 name='Admin',
                 email=ADMIN_EMAIL,
                 club='Краснодар',
-                password=generate_password_hash('admin123'),
+                password=pw_secure.encrypt_password('admin123'),
                 is_admin=True
             )
             db.session.add(admin)
