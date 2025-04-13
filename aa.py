@@ -3,9 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
-from cryptography.fernet import Fernet
-import base64
-import os
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-very-secret-key-here'
@@ -35,52 +33,19 @@ RPL_CLUBS = [
     "Рубин",
     "Спартак",
     "Факел",
-    "Химки"
+    "Химки",
     "ЦСКА"
 ]
 
 
 class Password_inkognito:
-    """
-    Класс для шифрования и дешифрования паролей с использованием Fernet.
-    Также поддерживает хеширование паролей для дополнительной безопасности.
-    """
-
-    def __init__(self):
-        # Генерируем ключ шифрования или используем существующий из переменных окружения
-        self.encryption_key = os.getenv('ENCRYPTION_KEY')
-        if not self.encryption_key:
-            self.encryption_key = Fernet.generate_key().decode()
-            # В реальном приложении следует сохранить этот ключ в безопасное место
-        self.cipher_suite = Fernet(self.encryption_key.encode())
-
     def encrypt_password(self, password):
-        """Шифрует пароль и возвращает зашифрованную строку."""
-        # Сначала создаем хеш пароля для безопасности
-        hashed_pw = generate_password_hash(password)
-        # Затем шифруем хеш
-        encrypted_pw = self.cipher_suite.encrypt(hashed_pw.encode())
-        return encrypted_pw.decode()
+        return generate_password_hash(password)
 
-    def decrypt_password(self, encrypted_password):
-        """Дешифрует пароль и возвращает оригинальный хеш."""
-        return self.cipher_suite.decrypt(encrypted_password.encode()).decode()
-
-    def verify_password(self, encrypted_password, input_password):
-        """
-        Проверяет, соответствует ли введенный пароль зашифрованному.
-        Возвращает True если соответствует, иначе False.
-        """
-        try:
-            # Дешифруем сохраненный пароль
-            hashed_pw = self.decrypt_password(encrypted_password)
-            # Проверяем соответствие
-            return check_password_hash(hashed_pw, input_password)
-        except:
-            return False
+    def verify_password(self, hashed_password, input_password):
+        return check_password_hash(hashed_password, input_password)
 
 
-# Инициализируем наш шифровальщик
 pw_secure = Password_inkognito()
 
 
@@ -94,6 +59,22 @@ class User(db.Model, UserMixin):
 
     def __repr__(self):
         return f"User('{self.name}', '{self.email}')"
+
+
+class RPLTable(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    position = db.Column(db.Integer, nullable=False)
+    team = db.Column(db.String(50), nullable=False, unique=True)
+    matches = db.Column(db.Integer, default=0)
+    wins = db.Column(db.Integer, default=0)
+    draws = db.Column(db.Integer, default=0)
+    losses = db.Column(db.Integer, default=0)
+    goals_for = db.Column(db.Integer, default=0)
+    goals_against = db.Column(db.Integer, default=0)
+    points = db.Column(db.Integer, default=0)
+
+    def __repr__(self):
+        return f"RPLTable('{self.team}', {self.points})"
 
 
 @login_manager.user_loader
@@ -115,7 +96,7 @@ def register():
         name = request.form['name']
         email = request.form['email']
         club = request.form['club']
-        password = pw_secure.encrypt_password(request.form['password'])
+        password = pw_secure.encrypt_password(request.form['password']) 
         is_admin = (email == ADMIN_EMAIL)
 
         if User.query.filter_by(email=email).first():
@@ -125,10 +106,9 @@ def register():
             db.session.add(user)
             db.session.commit()
 
-
             login_user(user)
             flash('Регистрация прошла успешно!', 'success')
-            return redirect(url_for('home'))
+            return redirect(url_for('show_rpl_table'))
 
     return render_template('register.html', clubs=RPL_CLUBS)
 
@@ -164,6 +144,50 @@ def show_users():
     return render_template('users.html', users=users)
 
 
+@app.route('/rpl_table')
+@login_required  
+def show_rpl_table():
+    table = RPLTable.query.order_by(RPLTable.position).all()
+    return render_template('rpl_table.html', table=table)
+
+
+@app.route('/edit_rpl_table', methods=['GET', 'POST'])
+@login_required
+def edit_rpl_table():
+    if not current_user.is_admin:
+        flash('Доступ запрещён', 'danger')
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        teams = request.form.getlist('team[]')
+        positions = request.form.getlist('position[]')
+        matches = request.form.getlist('matches[]')
+        wins = request.form.getlist('wins[]')
+        draws = request.form.getlist('draws[]')
+        losses = request.form.getlist('losses[]')
+        goals_for = request.form.getlist('goals_for[]')
+        goals_against = request.form.getlist('goals_against[]')
+
+        for i, team in enumerate(teams):
+            record = RPLTable.query.filter_by(team=team).first()
+            if record:
+                record.position = int(positions[i])
+                record.matches = int(matches[i])
+                record.wins = int(wins[i])
+                record.draws = int(draws[i])
+                record.losses = int(losses[i])
+                record.goals_for = int(goals_for[i])
+                record.goals_against = int(goals_against[i])
+                record.points = record.wins * 3 + record.draws * 1
+
+        db.session.commit()
+        flash('Таблица успешно обновлена!', 'success')
+        return redirect(url_for('show_rpl_table'))
+
+    table = RPLTable.query.order_by(RPLTable.position).all()
+    return render_template('edit_rpl_table.html', table=table)
+
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -184,6 +208,22 @@ if __name__ == '__main__':
                 is_admin=True
             )
             db.session.add(admin)
+            db.session.commit()
+
+        if RPLTable.query.count() == 0:
+            for i, club in enumerate(RPL_CLUBS, 1):
+                team = RPLTable(
+                    position=i,
+                    team=club,
+                    matches=0,
+                    wins=0,
+                    draws=0,
+                    losses=0,
+                    goals_for=0,
+                    goals_against=0,
+                    points=0
+                )
+                db.session.add(team)
             db.session.commit()
 
     app.run(debug=True)
