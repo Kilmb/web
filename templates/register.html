@@ -16,16 +16,37 @@
         }
         input, select {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             box-sizing: border-box;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
         }
         button {
             background-color: #4CAF50;
             color: white;
-            padding: 10px 15px;
+            padding: 12px 20px;
             border: none;
+            border-radius: 4px;
             cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .flash-message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #dff0d8;
+            color: #3c763d;
+        }
+        .danger {
+            background-color: #f2dede;
+            color: #a94442;
         }
     </style>
 </head>
@@ -36,7 +57,7 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div style="color: {% if category == 'success' %}green{% else %}red{% endif %}">
+                <div class="flash-message {{ category }}">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -44,17 +65,17 @@
     {% endwith %}
 
     <form method="POST">
-        <input type="text" name="name" placeholder="Имя" required><br>
-        <input type="email" name="email" placeholder="Email" required><br>
-        <input type="password" name="password" placeholder="Пароль" required><br>
+        <input type="text" name="name" placeholder="Имя" required>
+        <input type="email" name="email" placeholder="Email" required>
+        <input type="password" name="password" placeholder="Пароль" required>
         <select name="club" required>
             <option value="">Выберите клуб</option>
             {% for club in clubs %}
             <option value="{{ club }}">{{ club }}</option>
             {% endfor %}
-        </select><br>
+        </select>
         <button type="submit">Зарегистрироваться</button>
     </form>
-    <p>Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a></p>
+    <p style="text-align: center; margin-top: 15px;">Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a></p>
 </body>
 </html>
