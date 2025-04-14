@@ -12,14 +12,17 @@
         }
         .menu {
             margin-bottom: 20px;
+            text-align: center;
         }
         .menu a {
             margin-right: 15px;
         }
         table {
-            width: 100%;
+            width: 80%;
             border-collapse: collapse;
             margin-top: 20px;
+            margin-left: auto;
+            margin-right: auto;
         }
         th, td {
             border: 1px solid #ddd;
@@ -27,11 +30,22 @@
             text-align: center;
         }
         th {
-            background-color: #f2f2f2;
+            background-color: #4682B4;
         }
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+        h1 {
+           text-align: center;
+        }
+        h2 {
+           text-align: center;
+           padding-top: 50px;
+        }
+        p {
+           font-size: 20px;
+        }
+
     </style>
 </head>
 <body>
@@ -91,6 +105,9 @@
             </tr>
             {% endfor %}
         </table>
+        <h2>Краснодар</h2>
+        <p><b>Стадион: </b>Краснодар Арена.</p>
+        <p>Клуб был основан 22.02.2008 Сергеем Николаевичем Галицким, первое название клуба было также "Краснодар".</p>
     {% endif %}
 </body>
 </html>
