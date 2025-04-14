@@ -110,11 +110,9 @@ def register():
             db.session.commit()
 
             login_user(user)
-            flash('Регистрация прошла успешно!', 'success')
-            return redirect(url_for('show_rpl_table'))
+            return redirect(url_for('home'))
 
     return render_template('register.html', clubs=RPL_CLUBS)
-
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -128,7 +126,6 @@ def login():
 
         if user and pw_secure.verify_password(user.password, password):
             login_user(user)
-            flash('Вы успешно вошли!', 'success')
             return redirect(url_for('home'))
         else:
             flash('Неверный email или пароль', 'danger')
