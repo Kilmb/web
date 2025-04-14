@@ -45,25 +45,39 @@
         p {
            font-size: 20px;
         }
+        h3 {
+           text-align: center;
+           font-size: 30px;
+           padding-bottom: 5px;
+           margin-bottom: 5px;
+        }
+        .club-info {
+            background: linear-gradient(var(--color1), var(--color2));
+            color: white;
+            padding: 10px 15px;
+            margin-bottom: 30px;
+            border-radius: 5px;
+        }
+
 
     </style>
 </head>
 <body>
     <div class="menu">
-        {% if current_user.is_authenticated %}
-            <div class="user-info">
-                <p>Вы вошли как: {{ current_user.name }}</p>
-                <p>Ваш клуб: {{ current_user.club }}</p>
-                {% if current_user.is_admin %}
-                    <a href="{{ url_for('show_users') }}">Список пользователей</a>
-                    <a href="{{ url_for('edit_rpl_table') }}">Редактировать таблицу</a>
-                {% endif %}
-            </div>
-            <a href="{{ url_for('logout') }}">Выйти</a>
-        {% else %}
-            <a href="{{ url_for('login') }}">Войти</a>
-            <a href="{{ url_for('register') }}">Зарегистрироваться</a>
-        {% endif %}
+    {% if current_user.is_authenticated %}
+        <div class="user-info">
+            <p>Вы вошли как: {{ current_user.name }}</p>
+            <p>Ваш клуб: {{ current_user.club }}</p>
+            {% if current_user.is_admin %}
+                <a href="{{ url_for('show_users') }}">Список пользователей</a>
+                <a href="{{ url_for('edit_rpl_table') }}">Редактировать таблицу</a>
+            {% endif %}
+        </div>
+        <a href="{{ url_for('logout') }}">Выйти</a>
+    {% else %}
+        <a href="{{ url_for('login') }}">Войти</a>
+        <a href="{{ url_for('register') }}">Зарегистрироваться</a>
+    {% endif %}
     </div>
     <h1>Добро пожаловать на сайт фанатов РПЛ!</h1>
 
@@ -108,6 +122,53 @@
         <h2>Краснодар</h2>
         <p><b>Стадион: </b>Краснодар Арена.</p>
         <p>Клуб был основан 22.02.2008 Сергеем Николаевичем Галицким, первое название клуба было также "Краснодар".</p>
+    {% endif %}
+{% if current_user.is_authenticated %}
+    <div style="margin-top: 70px; max-width: 1400px; margin-left: auto; margin-right: auto;">
+        <h2>Информация о клубах</h2>
+
+       <div class="club-info" style="--color1: #0000FF; --color2: #00BFFF;">
+            <h3>Зенит</h3>
+            <p>Город: Санкт-Петербург</p>
+            <p>Стадион: Газпром Арена</p>
+            <p>Год основания: 1925</p>
+        </div>
+
+        <div class="club-info" style="--color1: #008000; --color2: #000000;">
+            <h3>Краснодар</h3>
+            <p>Город: Краснодар</p>
+            <p>Стадион: Краснодар Арена</p>
+            <p>Клуб был основан 22.02.2008 Сергеем Николаевичем Галицким, первое название клуба было также "Краснодар".</p>
+        </div>
+
+        <div class="club-info" style="--color1: #FF0000; --color2: #8B0000;">
+            <h3>Спартак</h3>
+            <p>Город: Москва</p>
+            <p>Стадион: Открытие Банк Арена</p>
+            <p>Год основания: 1922</p>
+        </div>
+
+        <div class="club-info" style="--color1: #D00027; --color2: #0041A3;">
+            <h3>ЦСКА</h3>
+            <p>Город: Москва</p>
+            <p>Стадион: ВЭБ Арена</p>
+            <p>Год основания: 1911</p>
+        </div>
+
+        <div class="club-info" style="--color1: #008000; --color2: #D00027;">
+           <h3>Локомотив</h3>
+           <p>Город: Москва</p>
+           <p>Стадион: РЖД Арена</p>
+           <p>Год основания: 1922</p>
+        </div>
+
+        <div class="club-info" style="--color1: #0000FF; --color2: #1E90FF;">
+            <h3>Динамо Москва</h3>
+            <p>Город: Москва</p>
+            <p>Стадион: ВТБ Арена</p>
+            <p>Год основания: 1923</p>
+        </div>
+    </div>
     {% endif %}
 </body>
 </html>
