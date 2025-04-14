@@ -180,7 +180,6 @@ def edit_rpl_table():
     if not current_user.is_admin:
         flash('Доступ запрещён', 'danger')
         return redirect(url_for('home'))
-
     if request.method == 'POST':
         teams = request.form.getlist('team[]')
         positions = request.form.getlist('position[]')
