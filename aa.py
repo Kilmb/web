@@ -4,7 +4,6 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_migrate import Migrate
 
-
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-very-secret-key-here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
@@ -99,13 +98,14 @@ def register():
         name = request.form['name']
         email = request.form['email']
         club = request.form['club']
-        password = pw_secure.encrypt_password(request.form['password'])
+        password = request.form['password']
+        hashed_password = pw_secure.encrypt_password(password)
         is_admin = (email == ADMIN_EMAIL)
 
         if User.query.filter_by(email=email).first():
             flash('Этот email уже занят!', 'danger')
         else:
-            user = User(name=name, email=email, club=club, password=password, is_admin=is_admin)
+            user = User(name=name, email=email, club=club, password=hashed_password, is_admin=is_admin)
             db.session.add(user)
             db.session.commit()
 
@@ -113,6 +113,7 @@ def register():
             return redirect(url_for('home'))
 
     return render_template('register.html', clubs=RPL_CLUBS)
+
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -160,7 +161,6 @@ def delete_user(user_id):
 
     user_to_delete = User.query.get_or_404(user_id)
 
-    # Не позволяем удалить самого себя
     if user_to_delete.id == current_user.id:
         flash('Вы не можете удалить себя', 'danger')
         return redirect(url_for('show_users'))
@@ -177,9 +177,9 @@ def edit_rpl_table():
     if not current_user.is_admin:
         flash('Доступ запрещён', 'danger')
         return redirect(url_for('home'))
+
     if request.method == 'POST':
         teams = request.form.getlist('team[]')
-        positions = request.form.getlist('position[]')
         matches = request.form.getlist('matches[]')
         wins = request.form.getlist('wins[]')
         draws = request.form.getlist('draws[]')
@@ -187,13 +187,12 @@ def edit_rpl_table():
         goals_for = request.form.getlist('goals_for[]')
         goals_against = request.form.getlist('goals_against[]')
 
-        # Проверка на заполнение названий команд
         if any(not team.strip() for team in teams):
             flash('Все названия команд должны быть заполнены!', 'danger')
             return redirect(url_for('edit_rpl_table'))
 
         for i, team in enumerate(teams):
-            record = RPLTable.query.filter_by(position=i+1).first()
+            record = RPLTable.query.filter_by(position=i + 1).first()
             if record:
                 record.team = team.strip()
                 record.matches = int(matches[i])
@@ -210,6 +209,44 @@ def edit_rpl_table():
 
     table = RPLTable.query.order_by(RPLTable.position).all()
     return render_template('edit_rpl_table.html', table=table)
+
+
+@app.route('/move_up/<int:position>')
+@login_required
+def move_up(position):
+    if not current_user.is_admin:
+        flash('Доступ запрещён', 'danger')
+        return redirect(url_for('home'))
+
+    if position > 1:
+        team1 = RPLTable.query.filter_by(position=position).first()
+        team2 = RPLTable.query.filter_by(position=position - 1).first()
+
+        if team1 and team2:
+            team1.position, team2.position = team2.position, team1.position
+            db.session.commit()
+
+    return redirect(url_for('show_rpl_table'))
+
+
+@app.route('/move_down/<int:position>')
+@login_required
+def move_down(position):
+    if not current_user.is_admin:
+        flash('Доступ запрещён', 'danger')
+        return redirect(url_for('home'))
+
+    max_position = db.session.query(db.func.max(RPLTable.position)).scalar()
+
+    if position < max_position:
+        team1 = RPLTable.query.filter_by(position=position).first()
+        team2 = RPLTable.query.filter_by(position=position + 1).first()
+
+        if team1 and team2:
+            team1.position, team2.position = team2.position, team1.position
+            db.session.commit()
+
+    return redirect(url_for('show_rpl_table'))
 
 
 @app.route('/logout')
