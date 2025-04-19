@@ -53,7 +53,7 @@
             {% for team in table %}
             <tr>
                 <td>{{ team.position }}</td>
-                <td><input type="text" name="team[]" value="" class="team-name" required></td>
+                <td><input type="text" name="team[]" value="{{ team.team }}" class="team-name" required></td>
                 <td><input type="number" name="matches[]" value="{{ team.matches }}" min="0"></td>
                 <td><input type="number" name="wins[]" value="{{ team.wins }}" min="0"></td>
                 <td><input type="number" name="draws[]" value="{{ team.draws }}" min="0"></td>
