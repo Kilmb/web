@@ -69,6 +69,16 @@
             object-fit: contain;
             margin-bottom: 5px;
         }
+        .emblem {
+            max-width: 2000px;
+            height: auto;
+            width: center;
+            max-height: 2000px;
+            object-fit: contain;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+
 
 
 
@@ -92,6 +102,11 @@
     {% endif %}
     </div>
     <h1>Добро пожаловать на сайт фанатов РПЛ!</h1>
+
+    <div class="emblem" style="">
+        <img src="{{ url_for('static', filename='img/rpl_emblema.png') }}" align="center"
+                     class="emblem">
+    </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
