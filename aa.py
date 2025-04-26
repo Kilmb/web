@@ -164,17 +164,27 @@ def profile():
         if 'avatar' in request.files:
             file = request.files['avatar']
             if file and allowed_file(file.filename):
-                filename = secure_filename(f"user_{current_user.id}.{file.filename.rsplit('.', 1)[1].lower()}")
+                # Генерация нового имени файла
+                file_ext = file.filename.rsplit('.', 1)[1].lower()
+                filename = secure_filename(f"user_{current_user.id}.{file_ext}")
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+                # Создание папки, если её нет
                 if not os.path.exists(app.config['UPLOAD_FOLDER']):
                     os.makedirs(app.config['UPLOAD_FOLDER'])
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+
+                # Удаление старого аватара, если он существует
+                old_avatar = current_user.avatar
+                if old_avatar:
+                    old_avatar_path = os.path.join(app.config['UPLOAD_FOLDER'], old_avatar)
+                    if os.path.exists(old_avatar_path):
+                        try:
+                            os.remove(old_avatar_path)
+                        except Exception as e:
+                            app.logger.error(f"Ошибка при удалении старого аватара: {e}")
+
+                # Сохранение нового аватара
                 file.save(filepath)
-
-                # Удаляем старый аватар, если он существует
-                if current_user.avatar and os.path.exists(
-                        os.path.join(app.config['UPLOAD_FOLDER'], current_user.avatar)):
-                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], current_user.avatar))
-
                 current_user.avatar = filename
                 db.session.commit()
                 flash('Аватар успешно обновлен!', 'success')
@@ -225,9 +235,14 @@ def delete_user(user_id):
         flash('Вы не можете удалить себя', 'danger')
         return redirect(url_for('show_users'))
 
-    # Удаляем аватар пользователя, если он существует
-    if user_to_delete.avatar and os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], user_to_delete.avatar)):
-        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], user_to_delete.avatar))
+    # Удаление аватара пользователя
+    if user_to_delete.avatar:
+        avatar_path = os.path.join(app.config['UPLOAD_FOLDER'], user_to_delete.avatar)
+        if os.path.exists(avatar_path):
+            try:
+                os.remove(avatar_path)
+            except Exception as e:
+                app.logger.error(f"Ошибка при удалении аватара пользователя: {e}")
 
     db.session.delete(user_to_delete)
     db.session.commit()
