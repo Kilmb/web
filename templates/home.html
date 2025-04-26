@@ -50,7 +50,6 @@
            font-size: 40px;
            padding-bottom: 5px;
            margin: 10px 0 5px 0;
-
         }
         .club-info {
             background: linear-gradient(var(--color1), var(--color2));
@@ -78,13 +77,45 @@
             margin-bottom: 5px;
             text-align: center;
         }
-
-
-
-
+        .profile-header {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+        }
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+        .profile-link {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #4682B4;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .profile-link:hover {
+            background-color: #3a6d99;
+        }
     </style>
 </head>
 <body>
+    {% if current_user.is_authenticated %}
+    <div class="profile-header">
+        {% if current_user.avatar %}
+            <img src="{{ url_for('uploaded_file', filename=current_user.avatar) }}" class="profile-avatar" alt="Аватар">
+        {% else %}
+            <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="profile-avatar" alt="Аватар">
+        {% endif %}
+        <a href="{{ url_for('profile') }}" class="profile-link">Профиль</a>
+    </div>
+    {% endif %}
+
     <div class="menu">
     {% if current_user.is_authenticated %}
         <div class="user-info">
