@@ -1,15 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 from flask_migrate import Migrate
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
+import os
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-very-secret-key-here'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['UPLOAD_FOLDER'] = 'static/uploads'
+app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -40,6 +44,11 @@ RPL_CLUBS = [
 ]
 
 
+def allowed_file(filename):
+    return '.' in filename and \
+        filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+
 class Password_inkognito:
     def encrypt_password(self, password):
         return generate_password_hash(password)
@@ -60,6 +69,7 @@ class User(SqlAlchemyBase, UserMixin):
     club = sa.Column(sa.String(50), nullable=False)
     password = sa.Column(sa.String(200), nullable=False)
     is_admin = sa.Column(sa.Boolean, default=False)
+    avatar = sa.Column(sa.String(200))
 
     def __repr__(self):
         return f"User('{self.name}', '{self.email}')"
@@ -86,6 +96,11 @@ class RPLTable(SqlAlchemyBase):
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
+
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
 @app.route('/')
@@ -141,6 +156,41 @@ def login():
     return render_template('login.html')
 
 
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    if request.method == 'POST':
+        # Обновление аватара
+        if 'avatar' in request.files:
+            file = request.files['avatar']
+            if file and allowed_file(file.filename):
+                filename = secure_filename(f"user_{current_user.id}.{file.filename.rsplit('.', 1)[1].lower()}")
+                if not os.path.exists(app.config['UPLOAD_FOLDER']):
+                    os.makedirs(app.config['UPLOAD_FOLDER'])
+                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                file.save(filepath)
+
+                # Удаляем старый аватар, если он существует
+                if current_user.avatar and os.path.exists(
+                        os.path.join(app.config['UPLOAD_FOLDER'], current_user.avatar)):
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], current_user.avatar))
+
+                current_user.avatar = filename
+                db.session.commit()
+                flash('Аватар успешно обновлен!', 'success')
+                return redirect(url_for('profile'))
+
+        # Обновление имени
+        new_name = request.form.get('name')
+        if new_name and new_name != current_user.name:
+            current_user.name = new_name
+            db.session.commit()
+            flash('Имя успешно обновлено!', 'success')
+            return redirect(url_for('profile'))
+
+    return render_template('profile.html')
+
+
 @app.route('/users')
 @login_required
 def show_users():
@@ -174,6 +224,10 @@ def delete_user(user_id):
     if user_to_delete.id == current_user.id:
         flash('Вы не можете удалить себя', 'danger')
         return redirect(url_for('show_users'))
+
+    # Удаляем аватар пользователя, если он существует
+    if user_to_delete.avatar and os.path.exists(os.path.join(app.config['UPLOAD_FOLDER'], user_to_delete.avatar)):
+        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], user_to_delete.avatar))
 
     db.session.delete(user_to_delete)
     db.session.commit()
