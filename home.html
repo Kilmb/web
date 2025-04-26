@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Главная</title>
+    <style>
+        .user-info {
+            margin: 20px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 5px;
+        }
+        .menu {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .menu a {
+            margin-right: 15px;
+        }
+        table {
+            width: 80%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+        th {
+            background-color: #4682B4;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        h1 {
+           text-align: center;
+        }
+        h2 {
+           text-align: center;
+           padding-top: 50px;
+        }
+        p {
+           font-size: 20px;
+        }
+        h3 {
+           text-align: center;
+           font-size: 40px;
+           padding-bottom: 5px;
+           margin: 10px 0 5px 0;
+        }
+        .club-info {
+            background: linear-gradient(var(--color1), var(--color2));
+            color: white;
+            border-radius: 5px;
+            padding: 15px 20px;
+            margin-bottom: 40px;
+        }
+        .club-logo-container {
+            text-align: center;
+        }
+        .club-logo {
+            max-width: 1300px;
+            height: auto;
+            max-height: 2000px;
+            object-fit: contain;
+            margin-bottom: 5px;
+        }
+        .emblem {
+            max-width: 2000px;
+            height: auto;
+            width: center;
+            max-height: 2000px;
+            object-fit: contain;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        .profile-header {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+        }
+        .profile-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+        .profile-link {
+            display: inline-block;
+            padding: 5px 10px;
+            background-color: #4682B4;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .profile-link:hover {
+            background-color: #3a6d99;
+        }
+    </style>
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <div class="profile-header">
+        {% if current_user.avatar %}
+            <img src="{{ url_for('uploaded_file', filename=current_user.avatar) }}" class="profile-avatar" alt="Аватар">
+        {% else %}
+            <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="profile-avatar" alt="Аватар">
+        {% endif %}
+        <a href="{{ url_for('profile') }}" class="profile-link">Профиль</a>
+    </div>
+    {% endif %}
+
+    <div class="menu">
+    {% if current_user.is_authenticated %}
+        <div class="user-info">
+            <p>Вы вошли как: {{ current_user.name }}</p>
+            <p>Ваш клуб: {{ current_user.club }}</p>
+            {% if current_user.is_admin %}
+                <a href="{{ url_for('show_users') }}">Список пользователей</a>
+                <a href="{{ url_for('edit_rpl_table') }}">Редактировать таблицу</a>
+            {% endif %}
+        </div>
+        <a href="{{ url_for('logout') }}">Выйти</a>
+    {% else %}
+        <a href="{{ url_for('login') }}">Войти</a>
+        <a href="{{ url_for('register') }}">Зарегистрироваться</a>
+    {% endif %}
+    </div>
+    <h1>Добро пожаловать на сайт фанатов РПЛ!</h1>
+
+    <div class="emblem" style="">
+        <img src="{{ url_for('static', filename='img/rpl_emblema.png') }}" align="center"
+                     class="emblem">
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div style="color: {% if category == 'success' %}green{% else %}red{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if current_user.is_authenticated %}
+        <h2>Турнирная таблица РПЛ</h2>
+        <table>
+            <tr>
+                <th>№</th>
+                <th>Команда</th>
+                <th>И</th>
+                <th>В</th>
+                <th>Н</th>
+                <th>П</th>
+                <th>ЗМ</th>
+                <th>ПМ</th>
+                <th>О</th>
+            </tr>
+            {% for team in rpl_table %}
+            <tr>
+                <td>{{ team.position }}</td>
+                <td>{{ team.team }}</td>
+                <td>{{ team.matches }}</td>
+                <td>{{ team.wins }}</td>
+                <td>{{ team.draws }}</td>
+                <td>{{ team.losses }}</td>
+                <td>{{ team.goals_for }}</td>
+                <td>{{ team.goals_against }}</td>
+                <td><strong>{{ team.points }}</strong></td>
+            </tr>
+            {% endfor %}
+        </table>
+    {% endif %}
+{% if current_user.is_authenticated %}
+    <div style="margin-top: 70px; max-width: 1400px; margin-left: auto; margin-right: auto;">
+        <h2>Информация о клубах</h2>
+
+       <div class="club-info" style="--color1: #0000FF; --color2: #00BFFF;">
+            <h3>Зенит</h3>
+            <p>Город: Санкт-Петербург</p>
+            <p>Стадион: Газпром Арена</p>
+            <p>Дата основания: 25.05.1925</p>
+        </div>
+
+        <div class="club-info" style="--color1: #008000; --color2: #000000;">
+            <h3>Краснодар</h3>
+            <div class="club-logo-container">
+                <img src="{{ url_for('static', filename='img/Краснодар.png') }}"
+                     class="club-logo">
+            </div>
+            <p>Город: Краснодар</p>
+            <p>Стадион: Краснодар Арена</p>
+            <p>Клуб был основан 22.02.2008 Сергеем Николаевичем Галицким, первое название клуба было также "Краснодар".</p>
+        </div>
+
+        <div class="club-info" style="--color1: #FF0000; --color2: #B22222;">
+            <h3>Спартак</h3>
+            <div class="club-logo-container">
+                <img src="{{ url_for('static', filename='img/Спартак.png') }}"
+                     class="club-logo">
+            </div>
+            <p>Город: Москва</p>
+            <p>Стадион: Открытие Банк Арена</p>
+            <p>Дата основания: 18.04.1922</p>
+        </div>
+
+        <div class="club-info" style="--color1: #D00027; --color2: #0041A3;">
+            <h3>ЦСКА</h3>
+            <div class="club-logo-container">
+                <img src="{{ url_for('static', filename='img/ЦСКА.png') }}"
+                     class="club-logo">
+            </div>
+            <p>Город: Москва</p>
+            <p>Стадион: ВЭБ Арена</p>
+            <p>Дата основания: 27.08.1911</p>
+        </div>
+
+        <div class="club-info" style="--color1: #008000; --color2: #D00027;">
+           <h3>Локомотив</h3>
+            <div class="club-logo-container">
+                <img src="{{ url_for('static', filename='img/Локомотив.png') }}"
+                     class="club-logo">
+            </div>
+           <p>Город: Москва</p>
+           <p>Стадион: РЖД Арена</p>
+           <p>Дата основания: 23.07.1922</p>
+        </div>
+
+        <div class="club-info" style="--color1: #0000FF; --color2: #1E90FF;">
+            <h3>Динамо Москва</h3>
+            <div class="club-logo-container">
+                <img src="{{ url_for('static', filename='img/Динамо.png') }}"
+                     class="club-logo">
+            </div>
+            <p>Город: Москва</p>
+            <p>Стадион: ВТБ Арена</p>
+            <p>Дата основания: 18.04.1923</p>
+        </div>
+        <div class="club-info" style="--color1: #4169E1; --color2: #00BFFF;">
+            <h3>Динамо Махачкала</h3>
+            <div class="club-logo-container">
+                <img src="{{ url_for('static', filename='img/Динамо Мхч.png') }}"
+                     class="club-logo">
+            </div>
+            <p>Город: Махачкала</p>
+            <p>Стадион: Анжи-Арена</p>
+            <p>Дата основания: 11.04.1927</p>
+        </div>
+
+        <div class="club-info" style="--color1: #228B22; --color2: #32CD32;">
+            <h3>Ахмат</h3>
+            <p>Город: Грозный</p>
+            <p>Стадион: Ахмат-Арена</p>
+            <p>Дата основания: 11.05.1945</p>
+        </div>
+
+        <div class="club-info" style="--color1: #FFD700; --color2: #0041A3;">
+            <h3>Ростов</h3>
+            <p>Город: Ростов-на-Дону</p>
+            <p>Стадион: Ростов Арена</p>
+            <p>Дата основания: 10.05.1930</p>
+        </div>
+
+        <div class="club-info" style="--color1: #8B0000; --color2: #D00027;">
+            <h3>Рубин</h3>
+            <p>Город: Казань</p>
+            <p>Стадион: Ак Барс Арена</p>
+            <p>Дата основания: 20.04.1958</p>
+        </div>
+
+        <div class="club-info" style="--color1: #FF0000; --color2: #000000;">
+           <h3>Химки</h3>
+           <p>Город: Химки</p>
+           <p>Стадион: Арена Химки</p>
+           <p>Дата основания: 30.01.1997</p>
+        </div>
+
+        <div class="club-info" style="--color1: #E0FFFF; --color2: #1E90FF;">
+            <h3>Оренбург</h3>
+            <p>Город: Оренбург</p>
+            <p>Стадион: Газовик</p>
+            <p>Дата основания: 01.01.1976</p>
+        </div>
+        <div class="club-info" style="--color1: #E0FFFF; --color2: #0000FF;">
+            <h3>Факел</h3>
+            <p>Город: Воронеж</p>
+            <p>Стадион: Факел</p>
+            <p>Дата основания: 10.07.1947</p>
+        </div>
+
+        <div class="club-info" style="--color1: #D00027; --color2: #000000;">
+            <h3>Акрон</h3>
+            <p>Город: Тольятти</p>
+            <p>Стадион: Солидарность Самара Арена</p>
+            <p>Дата основания: 21.04.2018</p>
+        </div>
+
+        <div class="club-info" style="--color1: #87CEFA; --color2: #00BFFF;">
+           <h3>Пари НН</h3>
+           <p>Город: Нижний Новгород</p>
+           <p>Стадион: Нижний Новгород</p>
+           <p>Дата основания: 01.06.2015</p>
+        </div>
+
+        <div class="club-info" style="--color1: #0000FF; --color2: #1E90FF;">
+            <h3>Крылья Советов</h3>
+            <p>Город: Самара</p>
+            <p>Стадион: Солидарность Самара Арена</p>
+            <p>Дата основания: 03.05.1942</p>
+        </div>
+    </div>
+    {% endif %}
+</body>
+</html>
