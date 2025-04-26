@@ -266,21 +266,29 @@ def edit_rpl_table():
         goals_for = request.form.getlist('goals_for[]')
         goals_against = request.form.getlist('goals_against[]')
 
+        # Проверка на пустые названия команд
         if any(not team.strip() for team in teams):
             flash('Все названия команд должны быть заполнены!', 'danger')
             return redirect(url_for('edit_rpl_table'))
 
-        for i, team in enumerate(teams):
-            record = db.session.query(RPLTable).filter_by(position=i + 1).first()
-            if record:
-                record.team = team.strip()
-                record.matches = int(matches[i])
-                record.wins = int(wins[i])
-                record.draws = int(draws[i])
-                record.losses = int(losses[i])
-                record.goals_for = int(goals_for[i])
-                record.goals_against = int(goals_against[i])
-                record.points = record.wins * 3 + record.draws * 1
+        # Полная очистка таблицы перед обновлением
+        db.session.query(RPLTable).delete()
+        db.session.commit()
+
+        # Заполнение таблицы новыми данными
+        for i in range(len(teams)):
+            new_record = RPLTable(
+                position=i + 1,
+                team=teams[i].strip(),
+                matches=int(matches[i]),
+                wins=int(wins[i]),
+                draws=int(draws[i]),
+                losses=int(losses[i]),
+                goals_for=int(goals_for[i]),
+                goals_against=int(goals_against[i]),
+                points=int(wins[i]) * 3 + int(draws[i]) * 1
+            )
+            db.session.add(new_record)
 
         db.session.commit()
         flash('Таблица успешно обновлена!', 'success')
