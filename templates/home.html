@@ -4,18 +4,27 @@
     <meta charset="UTF-8">
     <title>Главная</title>
     <style>
-        .user-info {
-            margin: 20px 0;
-            padding: 10px;
-            background: #f0f0f0;
-            border-radius: 5px;
-        }
         .menu {
             margin-bottom: 20px;
             text-align: center;
+            font-size: 18px;
         }
         .menu a {
             margin-right: 15px;
+            padding: 8px 15px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .logout-btn {
+            background-color: #dc3545;
+            color: white;
+            border-radius: 5px;
+            position: absolute;
+            top: 20px;
+            left: 50px;
+        }
+        .logout-btn:hover {
+            background-color: #c82333;
         }
         table {
             width: 80%;
@@ -23,33 +32,40 @@
             margin-top: 20px;
             margin-left: auto;
             margin-right: auto;
+            font-size: 18px;
         }
         th, td {
             border: 1px solid #ddd;
-            padding: 8px;
+            padding: 10px;
             text-align: center;
         }
         th {
             background-color: #4682B4;
+            color: white;
+            font-size: 20px;
         }
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
-        h1 {
+        h1, h2 {
            text-align: center;
-        }
-        h2 {
-           text-align: center;
-           padding-top: 50px;
-        }
-        p {
-           font-size: 20px;
+           font-size: 40px;
         }
         h3 {
            text-align: center;
-           font-size: 40px;
+           font-size: 32px;
            padding-bottom: 5px;
            margin: 10px 0 5px 0;
+        }
+        h4 {
+           text-align: center;
+           font-size: 25px;
+           padding-bottom: 5px;
+           margin: 10px 0 5px 0;
+        }
+        p {
+           font-size: 20px;
+           text-align: left;
         }
         .club-info {
             background: linear-gradient(var(--color1), var(--color2));
@@ -71,9 +87,6 @@
         .emblem {
             max-width: 2000px;
             height: auto;
-            width: center;
-            max-height: 2000px;
-            object-fit: contain;
             margin-bottom: 5px;
             text-align: center;
         }
@@ -102,15 +115,42 @@
         .profile-link:hover {
             background-color: #3a6d99;
         }
+        .user-club-row td {
+            background: linear-gradient(to bottom, var(--club-color1), var(--club-color2)) !important;
+            color: var(--text-color);
+            font-weight: bold;
+        }
+        .team-name {
+            font-size: 18px;
+        }
+        .team-city {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        .club-header {
+            display: flex;
+            justify-content: center;
+            align-items: baseline;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+        .club-name {
+            font-size: 32px;
+            margin: 0;
+        }
+        .club-city {
+            font-size: 25px;
+            margin: 0;
+        }
     </style>
 </head>
 <body>
     {% if current_user.is_authenticated %}
     <div class="profile-header">
         {% if current_user.avatar %}
-            <img src="{{ url_for('uploaded_file', filename=current_user.avatar) }}" class="profile-avatar" alt="Аватар">
+            <img src="{{ url_for('uploaded_file', filename=current_user.avatar) }}" class="profile-avatar">
         {% else %}
-            <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="profile-avatar" alt="Аватар">
+            <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="profile-avatar">
         {% endif %}
         <a href="{{ url_for('profile') }}" class="profile-link">Профиль</a>
     </div>
@@ -118,26 +158,23 @@
 
     <div class="menu">
     {% if current_user.is_authenticated %}
-        <div class="user-info">
-            <p>Вы вошли как: {{ current_user.name }}</p>
-            <p>Ваш клуб: {{ current_user.club }}</p>
-            {% if current_user.is_admin %}
-                <a href="{{ url_for('show_users') }}">Список пользователей</a>
-                <a href="{{ url_for('edit_rpl_table') }}">Редактировать таблицу</a>
-            {% endif %}
-        </div>
-        <a href="{{ url_for('logout') }}">Выйти</a>
+        {% if current_user.is_admin %}
+           <a href="{{ url_for('show_users') }}">Список пользователей</a>
+           <a href="{{ url_for('edit_rpl_table') }}">Редактировать таблицу</a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
     {% else %}
         <a href="{{ url_for('login') }}">Войти</a>
         <a href="{{ url_for('register') }}">Зарегистрироваться</a>
+        <h1>Добро пожаловать на сайт фанатов РПЛ!</h1>
+
+        <div class="emblem">
+            <img src="{{ url_for('static', filename='img/rpl_emblema.png') }}" class="emblem">
+        </div>
+
     {% endif %}
     </div>
-    <h1>Добро пожаловать на сайт фанатов РПЛ!</h1>
 
-    <div class="emblem" style="">
-        <img src="{{ url_for('static', filename='img/rpl_emblema.png') }}" align="center"
-                     class="emblem">
-    </div>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -148,6 +185,44 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
+
+    {% set clubs = [
+    {'name': 'Акрон', 'city': 'Тольятти', 'stadium': 'Солидарность Самара Арена', 'founded': '21.04.2018', 'logo': 'Акрон.png', 'color1': '#D00027', 'color2': '#000000'},
+    {'name': 'Ахмат', 'city': 'Грозный', 'stadium': 'Ахмат-Арена', 'founded': '11.05.1945', 'logo': 'Ахмат.png', 'color1': '#228B22', 'color2': '#32CD32'},
+    {'name': 'Динамо Махачкала', 'city': 'Махачкала', 'stadium': 'Анжи-Арена', 'founded': '11.04.1927', 'logo': 'Динамо Мхч.png', 'color1': '#4169E1', 'color2': '#00BFFF'},
+    {'name': 'Динамо Москва', 'city': 'Москва', 'stadium': 'ВТБ Арена', 'founded': '18.04.1923', 'logo': 'Динамо.png', 'color1': '#87CEFA', 'color2': '#1E90FF'},
+    {'name': 'Зенит', 'city': 'Санкт-Петербург', 'stadium': 'Газпром Арена', 'founded': '25.05.1925', 'logo': 'Зенит.png', 'color1': '#0000FF', 'color2': '#00BFFF'},
+    {'name': 'Краснодар', 'city': 'Краснодар', 'stadium': 'Краснодар Арена', 'founded': '22.02.2008', 'logo': 'Краснодар.png', 'color1': '#008000', 'color2': '#000000'},
+    {'name': 'Крылья Советов', 'city': 'Самара', 'stadium': 'Солидарность Самара Арена', 'founded': '03.05.1942', 'logo': 'КС.png', 'color1': '#87CEFA', 'color2': '#00BFFF'},
+    {'name': 'Локомотив', 'city': 'Москва', 'stadium': 'РЖД Арена', 'founded': '23.07.1922', 'logo': 'Локомотив.png', 'color1': '#008000', 'color2': '#D00027'},
+    {'name': 'Оренбург', 'city': 'Оренбург', 'stadium': 'Газовик', 'founded': '01.01.1976', 'logo': 'Оренбург.png', 'color1': '#0000FF', 'color2': '#1E90FF'},
+    {'name': 'Пари НН', 'city': 'Нижний Новгород', 'stadium': 'Нижний Новгород', 'founded': '01.06.2015', 'logo': 'Пари НН.png', 'color1': '#0000FF', 'color2': '#1E90FF'},
+    {'name': 'Ростов', 'city': 'Ростов-на-Дону', 'stadium': 'Ростов Арена', 'founded': '10.05.1930', 'logo': 'Ростов.png', 'color1': '#FFD700', 'color2': '#0041A3'},
+    {'name': 'Рубин', 'city': 'Казань', 'stadium': 'Ак Барс Арена', 'founded': '20.04.1958', 'logo': 'Рубин.png', 'color1': '#8B0000', 'color2': '#D00027'},
+    {'name': 'Спартак', 'city': 'Москва', 'stadium': 'Открытие Банк Арена', 'founded': '18.04.1922', 'logo': 'Спартак.png', 'color1': '#FF0000', 'color2': '#B22222'},
+    {'name': 'Факел', 'city': 'Воронеж', 'stadium': 'Факел', 'founded': '10.07.1947', 'logo': 'Факел.png', 'color1': '#E0FFFF', 'color2': '#0000FF'},
+    {'name': 'Химки', 'city': 'Химки', 'stadium': 'Арена Химки', 'founded': '30.01.1997', 'logo': 'Химки.png', 'color1': '#FF0000', 'color2': '#000000'},
+    {'name': 'ЦСКА', 'city': 'Москва', 'stadium': 'ВЭБ Арена', 'founded': '27.08.1911', 'logo': 'ЦСКА.png', 'color1': '#D00027', 'color2': '#0041A3'}
+    ] %}
+
+    {% set club_colors = {
+        'Акрон': ['#D00027', '#000000'],
+        'Ахмат': ['#228B22', '#32CD32'],
+        'Динамо Махачкала': ['#4169E1', '#00BFFF'],
+        'Динамо Москва': ['#87CEFA', '#1E90FF'],
+        'Зенит': ['#0000FF', '#00BFFF'],
+        'Краснодар': ['#008000', '#000000'],
+        'Крылья Советов': ['#87CEFA', '#00BFFF'],
+        'Локомотив': ['#008000', '#D00027'],
+        'Оренбург': ['#0000FF', '#1E90FF'],
+        'Пари НН': ['#0000FF', '#1E90FF'],
+        'Ростов': ['#FFD700', '#0041A3'],
+        'Рубин': ['#8B0000', '#D00027'],
+        'Спартак': ['#FF0000', '#B22222'],
+        'Факел': ['#E0FFFF', '#0000FF'],
+        'Химки': ['#FF0000', '#000000'],
+        'ЦСКА': ['#D00027', '#0041A3']
+    } %}
 
     {% if current_user.is_authenticated %}
         <h2>Турнирная таблица РПЛ</h2>
@@ -164,9 +239,17 @@
                 <th>О</th>
             </tr>
             {% for team in rpl_table %}
-            <tr>
+            <tr {% if current_user.is_authenticated and team.team == current_user.club %}
+                    class="user-club-row"
+                    style="--club-color1: {{ club_colors[team.team][0] }}; --club-color2: {{ club_colors[team.team][1] }};
+                    --text-color: {% if '#00BFFF' in club_colors[team.team] or
+                    '#87CEFA' in club_colors[team.team] %}black{% else %}white{% endif %};"
+                {% endif %}>
                 <td>{{ team.position }}</td>
-                <td>{{ team.team }}</td>
+                <td>
+                    <div class="team-name">{{ team.team }}</div>
+
+                </td>
                 <td>{{ team.matches }}</td>
                 <td>{{ team.wins }}</td>
                 <td>{{ team.draws }}</td>
@@ -178,63 +261,44 @@
             {% endfor %}
         </table>
     {% endif %}
-{% if current_user.is_authenticated %}
+
+    {% if current_user.is_authenticated %}
     <div style="margin-top: 70px; max-width: 1400px; margin-left: auto; margin-right: auto;">
         <h2>Информация о клубах</h2>
 
-        {# Создаем список всех клубов с их данными #}
-        {% set clubs = [
-            {'name': 'Акрон', 'city': 'Тольятти', 'stadium': 'Солидарность Самара Арена', 'founded': '21.04.2018', 'logo': 'Акрон.png', 'color1': '#D00027', 'color2': '#000000'},
-            {'name': 'Ахмат', 'city': 'Грозный', 'stadium': 'Ахмат-Арена', 'founded': '11.05.1945', 'logo': 'Ахмат.png', 'color1': '#228B22', 'color2': '#32CD32'},
-            {'name': 'Динамо Махачкала', 'city': 'Махачкала', 'stadium': 'Анжи-Арена', 'founded': '11.04.1927', 'logo': 'Динамо Мхч.png', 'color1': '#4169E1', 'color2': '#00BFFF'},
-            {'name': 'Динамо Москва', 'city': 'Москва', 'stadium': 'ВТБ Арена', 'founded': '18.04.1923', 'logo': 'Динамо.png', 'color1': '#0000FF', 'color2': '#1E90FF'},
-            {'name': 'Зенит', 'city': 'Санкт-Петербург', 'stadium': 'Газпром Арена', 'founded': '25.05.1925', 'logo': 'Зенит.png', 'color1': '#0000FF', 'color2': '#00BFFF'},
-            {'name': 'Краснодар', 'city': 'Краснодар', 'stadium': 'Краснодар Арена', 'founded': '22.02.2008', 'logo': 'Краснодар.png', 'color1': '#008000', 'color2': '#000000'},
-            {'name': 'Крылья Советов', 'city': 'Самара', 'stadium': 'Солидарность Самара Арена', 'founded': '03.05.1942', 'logo': 'КС.png', 'color1': '#87CEFA', 'color2': '#00BFFF'},
-            {'name': 'Локомотив', 'city': 'Москва', 'stadium': 'РЖД Арена', 'founded': '23.07.1922', 'logo': 'Локомотив.png', 'color1': '#008000', 'color2': '#D00027'},
-            {'name': 'Оренбург', 'city': 'Оренбург', 'stadium': 'Газовик', 'founded': '01.01.1976', 'logo': 'Оренбург.png', 'color1': '#E0FFFF', 'color2': '#1E90FF'},
-            {'name': 'Пари НН', 'city': 'Нижний Новгород', 'stadium': 'Нижний Новгород', 'founded': '01.06.2015', 'logo': 'Пари НН.png', 'color1': '#0000FF', 'color2': '#1E90FF'},
-            {'name': 'Ростов', 'city': 'Ростов-на-Дону', 'stadium': 'Ростов Арена', 'founded': '10.05.1930', 'logo': 'Ростов.png', 'color1': '#FFD700', 'color2': '#0041A3'},
-            {'name': 'Рубин', 'city': 'Казань', 'stadium': 'Ак Барс Арена', 'founded': '20.04.1958', 'logo': 'Рубин.png', 'color1': '#8B0000', 'color2': '#D00027'},
-            {'name': 'Спартак', 'city': 'Москва', 'stadium': 'Открытие Банк Арена', 'founded': '18.04.1922', 'logo': 'Спартак.png', 'color1': '#FF0000', 'color2': '#B22222'},
-            {'name': 'Факел', 'city': 'Воронеж', 'stadium': 'Факел', 'founded': '10.07.1947', 'logo': 'Факел.png', 'color1': '#E0FFFF', 'color2': '#0000FF'},
-            {'name': 'Химки', 'city': 'Химки', 'stadium': 'Арена Химки', 'founded': '30.01.1997', 'logo': 'Химки.png', 'color1': '#FF0000', 'color2': '#000000'},
-            {'name': 'ЦСКА', 'city': 'Москва', 'stadium': 'ВЭБ Арена', 'founded': '27.08.1911', 'logo': 'ЦСКА.png', 'color1': '#D00027', 'color2': '#0041A3'}
-        ] %}
-
-        {# Сортируем клубы по алфавиту #}
         {% set sorted_clubs = clubs|sort(attribute='name') %}
 
-        {# Если у пользователя указан клуб, выводим его первым #}
         {% if current_user.club %}
             {% for club in sorted_clubs %}
                 {% if club.name == current_user.club %}
                     <div class="club-info" style="--color1: {{ club.color1 }}; --color2: {{ club.color2 }};">
-                        <h3>{{ club.name }}</h3>
-                        <div class="club-logo-container">
-                            <img src="{{ url_for('static', filename='img/' + club.logo) }}"
-                                 class="club-logo">
+                        <div class="club-header">
+                            <h3 class="club-name">{{ club.name }}</h3>
+                            <h4 class="club-city">(г. {{ club.city }})</h4>
                         </div>
-                        <p>Город: {{ club.city }}</p>
-                        <p>Стадион: {{ club.stadium }}</p>
-                        <p>Дата основания: {{ club.founded }}</p>
+                        <div class="club-logo-container">
+                            <img src="{{ url_for('static', filename='img/' + club.logo) }}" class="club-logo">
+                        </div>
+
+                        <p><strong>Стадион:</strong> {{ club.stadium }}</p>
+                        <p><strong>Дата основания:</strong> {{ club.founded }}</p>
                     </div>
                 {% endif %}
             {% endfor %}
         {% endif %}
 
-        {# Выводим остальные клубы в алфавитном порядке #}
         {% for club in sorted_clubs %}
             {% if not current_user.club or club.name != current_user.club %}
                 <div class="club-info" style="--color1: {{ club.color1 }}; --color2: {{ club.color2 }};">
-                    <h3>{{ club.name }}</h3>
-                    <div class="club-logo-container">
-                        <img src="{{ url_for('static', filename='img/' + club.logo) }}"
-                             class="club-logo">
+                    <div class="club-header">
+                        <h3 class="club-name">{{ club.name }}</h3>
+                        <h4 class="club-city">(г. {{ club.city }})</h4>
                     </div>
-                    <p>Город: {{ club.city }}</p>
-                    <p>Стадион: {{ club.stadium }}</p>
-                    <p>Дата основания: {{ club.founded }}</p>
+                    <div class="club-logo-container">
+                        <img src="{{ url_for('static', filename='img/' + club.logo) }}" class="club-logo">
+                    </div>
+                    <p><strong>Стадион:</strong> {{ club.stadium }}</p>
+                    <p><strong>Дата основания:</strong> {{ club.founded }}</p>
                 </div>
             {% endif %}
         {% endfor %}
