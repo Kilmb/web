@@ -160,20 +160,16 @@ def login():
 @login_required
 def profile():
     if request.method == 'POST':
-        # Обновление аватара
         if 'avatar' in request.files:
             file = request.files['avatar']
             if file and allowed_file(file.filename):
-                # Генерация нового имени файла
                 file_ext = file.filename.rsplit('.', 1)[1].lower()
                 filename = secure_filename(f"user_{current_user.id}.{file_ext}")
                 filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
-                # Создание папки, если её нет
                 if not os.path.exists(app.config['UPLOAD_FOLDER']):
                     os.makedirs(app.config['UPLOAD_FOLDER'])
 
-                # Удаление старого аватара, если он существует
                 old_avatar = current_user.avatar
                 if old_avatar:
                     old_avatar_path = os.path.join(app.config['UPLOAD_FOLDER'], old_avatar)
@@ -183,14 +179,12 @@ def profile():
                         except Exception as e:
                             app.logger.error(f"Ошибка при удалении старого аватара: {e}")
 
-                # Сохранение нового аватара
                 file.save(filepath)
                 current_user.avatar = filename
                 db.session.commit()
                 flash('Аватар успешно обновлен!', 'success')
                 return redirect(url_for('profile'))
 
-        # Обновление имени
         new_name = request.form.get('name')
         if new_name and new_name != current_user.name:
             current_user.name = new_name
@@ -235,7 +229,6 @@ def delete_user(user_id):
         flash('Вы не можете удалить себя', 'danger')
         return redirect(url_for('show_users'))
 
-    # Удаление аватара пользователя
     if user_to_delete.avatar:
         avatar_path = os.path.join(app.config['UPLOAD_FOLDER'], user_to_delete.avatar)
         if os.path.exists(avatar_path):
@@ -266,16 +259,13 @@ def edit_rpl_table():
         goals_for = request.form.getlist('goals_for[]')
         goals_against = request.form.getlist('goals_against[]')
 
-        # Проверка на пустые названия команд
         if any(not team.strip() for team in teams):
             flash('Все названия команд должны быть заполнены!', 'danger')
             return redirect(url_for('edit_rpl_table'))
 
-        # Полная очистка таблицы перед обновлением
         db.session.query(RPLTable).delete()
         db.session.commit()
 
-        # Заполнение таблицы новыми данными
         for i in range(len(teams)):
             new_record = RPLTable(
                 position=i + 1,
