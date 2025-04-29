@@ -2,104 +2,142 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Главная</title>
     <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+
         .menu {
             margin-bottom: 20px;
             text-align: center;
             font-size: 18px;
+            padding: 10px;
+            position: relative;
         }
+
         .menu a {
-            margin-right: 15px;
-            padding: 5px 10px;
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 12px;
             text-decoration: none;
             font-weight: bold;
-            font-size: 23px;
+            font-size: clamp(16px, 4vw, 23px);
+            border-radius: 5px;
         }
+
         .logout-btn {
             background-color: #dc3545;
             color: white;
             border-radius: 5px;
             position: absolute;
-            left: 20px;
-            margin-left: 15px;
-            margin-top: 15px;
+            left: 10px;
+            top: 10px;
         }
+
         .logout-btn:hover {
             background-color: #c82333;
         }
+
         table {
-            width: 80%;
+            width: 95%;
+            max-width: 1200px;
             border-collapse: collapse;
-            margin-top: 20px;
-            margin-left: auto;
-            margin-right: auto;
-            font-size: 18px;
+            margin: 20px auto;
+            font-size: clamp(16px, 3vw, 20px);
         }
+
         th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
+            border: 2px solid #ddd;
+            padding: 8px;
             text-align: center;
         }
+
         th {
             background-color: #4682B4;
             color: white;
-            font-size: 20px;
+            font-size: clamp(18px, 4vw, 22px);
         }
+
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
+
         h1, h2 {
-           text-align: center;
-           font-size: 40px;
-           margin-top: 5px;
+            text-align: center;
+            font-size: clamp(24px, 6vw, 40px);
+            margin-top: 5px;
+            padding: 0 10px;
         }
+
         h3 {
-           text-align: center;
-           font-size: 32px;
-           padding-bottom: 5px;
-           margin: 10px 0 5px 0;
+            text-align: center;
+            font-size: clamp(20px, 5vw, 32px);
+            padding-bottom: 5px;
+            margin: 10px 0 5px 0;
         }
+
         h4 {
-           text-align: center;
-           font-size: 25px;
-           padding-bottom: 5px;
-           margin: 10px 0 5px 0;
+            text-align: center;
+            font-size: clamp(18px, 4vw, 25px);
+            padding-bottom: 5px;
+            margin: 10px 0 5px 0;
         }
+
         p {
-           font-size: 25px;
-           text-align: left;
+            font-size: clamp(16px, 4vw, 20px);
+            text-align: left;
+            padding: 0 10px;
         }
+
         .club-info {
             background: linear-gradient(var(--color1), var(--color2));
             color: white;
             border-radius: 5px;
-            padding: 15px 20px;
-            margin-bottom: 40px;
+            padding: 15px 10px;
+            margin: 20px 10px;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
         }
+
         .club-logo-container {
             text-align: center;
+            margin: 15px 0;
         }
+
         .club-logo {
-            max-width: 1300px;
+            max-width: 100%;
             height: auto;
-            max-height: 2000px;
+            max-height: 300px;
             object-fit: contain;
-            margin-bottom: 5px;
         }
+
         .emblem {
-            max-width: 2000px;
+            max-width: 100%;
             height: auto;
-            margin-bottom: 5px;
-            text-align: center;
+            margin: 0 auto;
+            display: block;
+            padding: 0 10px;
         }
+
         .profile-header {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: 10px;
+            right: 10px;
             display: flex;
             align-items: center;
+            flex-wrap: wrap;
+            justify-content: flex-end;
         }
+
         .profile-avatar {
             width: 40px;
             height: 40px;
@@ -107,6 +145,7 @@
             object-fit: cover;
             margin-right: 10px;
         }
+
         .profile-link {
             display: inline-block;
             padding: 5px 10px;
@@ -114,36 +153,119 @@
             color: white;
             text-decoration: none;
             border-radius: 4px;
+            margin-top: 5px;
         }
+
         .profile-link:hover {
             background-color: #3a6d99;
         }
+
         .user-club-row td {
             background: linear-gradient(to bottom, var(--club-color1), var(--club-color2)) !important;
             color: var(--text-color);
             font-weight: bold;
         }
+
         .team-name {
-            font-size: 18px;
+            font-size: clamp(16px, 3vw, 20px);
         }
+
         .team-city {
-            font-size: 14px;
+            font-size: clamp(12px, 2.5vw, 14px);
             opacity: 0.8;
         }
+
         .club-header {
             display: flex;
-            justify-content: center;
-            align-items: baseline;
-            gap: 15px;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
             margin-bottom: 10px;
         }
+
         .club-name {
-            font-size: 32px;
+            font-size: clamp(20px, 5vw, 32px);
             margin: 0;
         }
+
         .club-city {
-            font-size: 25px;
+            font-size: clamp(16px, 4vw, 25px);
             margin: 0;
+        }
+
+        .kit-container {
+            position: relative;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .kit-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+
+        .kit-label {
+            flex: 1;
+            font-size: clamp(14px, 3vw, 18px);
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .kit-label.left {
+            text-align: left;
+            padding-left: 3%;
+        }
+
+        .kit-label.center {
+            text-align: center;
+        }
+
+        .kit-label.right {
+            text-align: right;
+            padding-right: 4%;
+        }
+
+        @media (min-width: 768px) {
+            .menu a {
+                margin-right: 15px;
+                padding: 5px 10px;
+            }
+
+            .logout-btn {
+                left: 20px;
+                top: 15px;
+            }
+
+            .profile-header {
+                top: 20px;
+                right: 20px;
+            }
+
+            .club-header {
+                flex-direction: row;
+                justify-content: center;
+                gap: 15px;
+            }
+
+            .club-logo {
+                max-height: 500px;
+            }
+
+            table {
+                width: 80%;
+            }
+
+            .club-info {
+                padding: 15px 20px;
+                margin: 20px auto 40px;
+            }
+        }
+
+        @media (min-width: 1200px) {
+            .club-logo {
+                max-height: 700px;
+            }
         }
     </style>
 </head>
@@ -182,7 +304,7 @@
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
-                <div style="color: {% if category == 'success' %}green{% else %}red{% endif %}">
+                <div style="color: {% if category == 'success' %}green{% else %}red{% endif %}; text-align: center; padding: 10px;">
                     {{ message }}
                 </div>
             {% endfor %}
@@ -191,21 +313,21 @@
 
     {% set clubs = [
     {'name': 'Акрон', 'city': 'Тольятти', 'stadium': 'Солидарность Самара Арена', 'places': '45 000', 'year': '2018',
-    'founded': '21.04.2018', 'first_name': '','logo': 'Акрон.png', 'color1': '#D00027', 'color2': '#000000'},
+    'founded': '21.04.2018', 'first_name': 'Акрон','logo': 'Акрон.png', 'color1': '#D00027', 'color2': '#000000'},
     {'name': 'Ахмат', 'city': 'Грозный', 'stadium': 'Ахмат-Арена', 'places': '30 597', 'year': '2011',
-    'founded': '11.05.1945', 'first_name': '', 'logo': 'Ахмат.png', 'color1': '#228B22', 'color2': '#32CD32'},
+    'founded': '11.05.1945', 'first_name': 'Динамо', 'logo': 'Ахмат.png', 'color1': '#228B22', 'color2': '#32CD32'},
     {'name': 'Динамо Махачкала', 'city': 'Махачкала', 'stadium': 'Анжи-Арена', 'places': '28 000', 'year': '2003',
-    'founded': '11.04.1927', 'first_name': '', 'logo': 'Динамо Мхч.png', 'color1': '#4169E1', 'color2': '#00BFFF'},
+    'founded': '11.04.1927', 'first_name': 'Динамо', 'logo': 'Динамо Мхч.png', 'color1': '#4169E1', 'color2': '#00BFFF'},
     {'name': 'Динамо Москва', 'city': 'Москва', 'stadium': 'ВТБ Арена', 'places': '25 716', 'year': '2018',
     'founded': '18.04.1923', 'first_name': 'Динамо', 'logo': 'Динамо.png', 'color1': '#87CEFA', 'color2': '#1E90FF'},
     {'name': 'Зенит', 'city': 'Санкт-Петербург', 'stadium': 'Газпром Арена', 'places': '68 134', 'year': '2017',
-    'founded': '25.05.1925', 'first_name': '', 'logo': 'Зенит.png', 'color1': '#0000FF', 'color2': '#00BFFF'},
+    'founded': '25.05.1925', 'first_name': 'Ленинградский металлический завод', 'logo': 'Зенит.png', 'color1': '#0000FF', 'color2': '#00BFFF'},
     {'name': 'Краснодар', 'city': 'Краснодар', 'stadium': 'Краснодар Арена', 'places': '35 074', 'year': '2016',
     'founded': '22.02.2008', 'first_name': 'Краснодар', 'logo': 'Краснодар.png', 'color1': '#008000', 'color2': '#000000'},
     {'name': 'Крылья Советов', 'city': 'Самара', 'stadium': 'Солидарность Самара Арена', 'places': '45 000', 'year': '2018',
-    'founded': '03.05.1942', 'first_name': '', 'logo': 'КС.png', 'color1': '#87CEFA', 'color2': '#00BFFF'},
+    'founded': '03.05.1942', 'first_name': 'Команда капитана Карелина', 'logo': 'КС.png', 'color1': '#87CEFA', 'color2': '#00BFFF'},
     {'name': 'Локомотив', 'city': 'Москва', 'stadium': 'РЖД Арена', 'places': '28 800', 'year': '2002',
-    'founded': '23.07.1922', 'first_name': 'Локомотив', 'logo': 'Локомотив.png', 'color1': '#008000', 'color2': '#D00027'},
+    'founded': '23.07.1922', 'first_name': 'Кружок футболистов Казанской дороги', 'logo': 'Локомотив.png', 'color1': '#008000', 'color2': '#D00027'},
     {'name': 'Оренбург', 'city': 'Оренбург', 'stadium': 'Газовик', 'places': '10 046', 'year': '2002',
     'founded': '01.01.1976', 'first_name': 'Газовик', 'logo': 'Оренбург.png', 'color1': '#0000FF', 'color2': '#1E90FF'},
     {'name': 'Пари НН', 'city': 'Нижний Новгород', 'stadium': 'Нижний Новгород', 'places': '44 899', 'year': '2018',
@@ -213,35 +335,16 @@
     {'name': 'Ростов', 'city': 'Ростов-на-Дону', 'stadium': 'Ростов Арена', 'places': '45 000', 'year': '2018',
     'founded': '10.05.1930', 'first_name': 'Сельмашстрой', 'logo': 'Ростов.png', 'color1': '#FFD700', 'color2': '#0041A3'},
     {'name': 'Рубин', 'city': 'Казань', 'stadium': 'Ак Барс Арена', 'places': '45 379', 'year': '2013',
-    'founded': '20.04.1958', 'first_name': '', 'logo': 'Рубин.png', 'color1': '#8B0000', 'color2': '#D00027'},
+    'founded': '20.04.1958', 'first_name': 'Искра', 'logo': 'Рубин.png', 'color1': '#8B0000', 'color2': '#D00027'},
     {'name': 'Спартак', 'city': 'Москва', 'stadium': 'Открытие Банк Арена', 'places': '45 360', 'year': '2014',
     'founded': '18.04.1922', 'first_name': 'Московский клуб спорта', 'logo': 'Спартак.png', 'color1': '#FF0000', 'color2': '#B22222'},
     {'name': 'Факел', 'city': 'Воронеж', 'stadium': 'Факел', 'places': '10 052', 'year': '2003',
-    'founded': '10.07.1947', 'first_name': '', 'logo': 'Факел.png', 'color1': '#E0FFFF', 'color2': '#0000FF'},
+    'founded': '10.07.1947', 'first_name': 'Труд', 'logo': 'Факел.png', 'color1': '#E0FFFF', 'color2': '#0000FF'},
     {'name': 'Химки', 'city': 'Химки', 'stadium': 'Арена Химки', 'places': '18 636', 'year': '2008',
-    'founded': '30.01.1997', 'first_name': 'Химки', 'logo': 'Химки.png', 'color1': '#FF0000', 'color2': '#000000'},
+    'founded': '30.01.1997', 'first_name': 'Новатор', 'logo': 'Химки.png', 'color1': '#FF0000', 'color2': '#000000'},
     {'name': 'ЦСКА', 'city': 'Москва', 'stadium': 'ВЭБ Арена', 'places': '30 000', 'year': '2016',
-    'founded': '27.08.1911', 'first_name': '', 'logo': 'ЦСКА.png', 'color1': '#D00027', 'color2': '#0041A3'}
+    'founded': '27.08.1911', 'first_name': 'Общество любителей лыжного спорта', 'logo': 'ЦСКА.png', 'color1': '#D00027', 'color2': '#0041A3'}
     ] %}
-
-    {% set club_colors = {
-        'Акрон': ['#D00027', '#000000'],
-        'Ахмат': ['#228B22', '#32CD32'],
-        'Динамо Махачкала': ['#4169E1', '#00BFFF'],
-        'Динамо Москва': ['#87CEFA', '#1E90FF'],
-        'Зенит': ['#0000FF', '#00BFFF'],
-        'Краснодар': ['#008000', '#000000'],
-        'Крылья Советов': ['#87CEFA', '#00BFFF'],
-        'Локомотив': ['#008000', '#D00027'],
-        'Оренбург': ['#0000FF', '#1E90FF'],
-        'Пари НН': ['#0000FF', '#1E90FF'],
-        'Ростов': ['#FFD700', '#0041A3'],
-        'Рубин': ['#8B0000', '#D00027'],
-        'Спартак': ['#FF0000', '#B22222'],
-        'Факел': ['#E0FFFF', '#0000FF'],
-        'Химки': ['#FF0000', '#000000'],
-        'ЦСКА': ['#D00027', '#0041A3']
-    } %}
 
     {% if current_user.is_authenticated %}
         <h2>Турнирная таблица РПЛ</h2>
@@ -260,14 +363,14 @@
             {% for team in rpl_table %}
             <tr {% if current_user.is_authenticated and team.team == current_user.club %}
                     class="user-club-row"
-                    style="--club-color1: {{ club_colors[team.team][0] }}; --club-color2: {{ club_colors[team.team][1] }};
-                    --text-color: {% if
-                    '#87CEFA' in club_colors[team.team] %}black{% else %}white{% endif %};"
+                    style="--club-color1: {{ clubs|selectattr('name', 'equalto', team.team)|map(attribute='color1')|first }};
+                           --club-color2: {{ clubs|selectattr('name', 'equalto', team.team)|map(attribute='color2')|first }};
+                           --text-color: {% if
+                           '#87CEFA' in clubs|selectattr('name', 'equalto', team.team)|map(attribute='color1')|first %}black{% else %}white{% endif %};"
                 {% endif %}>
                 <td>{{ team.position }}</td>
                 <td>
                     <div class="team-name">{{ team.team }}</div>
-
                 </td>
                 <td>{{ team.matches }}</td>
                 <td>{{ team.wins }}</td>
@@ -282,7 +385,7 @@
     {% endif %}
 
     {% if current_user.is_authenticated %}
-    <div style="margin-top: 70px; max-width: 1400px; margin-left: auto; margin-right: auto;">
+    <div style="margin-top: 40px;">
         <h2>Информация о клубах</h2>
 
         {% set sorted_clubs = clubs|sort(attribute='name') %}
@@ -295,12 +398,20 @@
                             <h3 class="club-name">{{ club.name }}</h3>
                             <h4 class="club-city">(г. {{ club.city }})</h4>
                         </div>
-                        <div class="club-logo-container">
+
+                        <div class="kit-container">
+                            <div class="kit-labels">
+                                <div class="kit-label left">Домашняя форма</div>
+                                <div class="kit-label center">Эмблема</div>
+                                <div class="kit-label right">Гостевая форма</div>
+                            </div>
                             <img src="{{ url_for('static', filename='img/' + club.logo) }}" class="club-logo">
                         </div>
 
-                        <p><strong>Стадион:</strong> {{ club.stadium }} ({{club.year}}г.). Вместимость: {{ club.places }} мест.</p>
-                        <p><strong>Дата основания:</strong> {{ club.founded }}</p>
+                        <p><strong>Стадион:</strong> {{ club.stadium }} ({{club.year}}г.). &ensp;
+                        <strong>Вместимость:</strong> {{ club.places }} мест.</p>
+                        <p><strong>Дата основания:</strong> {{ club.founded }}. &ensp;
+                        <strong>Первое название:</strong> {{ club.first_name }}.</p>
                     </div>
                 {% endif %}
             {% endfor %}
@@ -313,11 +424,20 @@
                         <h3 class="club-name">{{ club.name }}</h3>
                         <h4 class="club-city">(г. {{ club.city }})</h4>
                     </div>
-                    <div class="club-logo-container">
+
+                    <div class="kit-container">
+                        <div class="kit-labels">
+                            <div class="kit-label left">Домашняя форма</div>
+                            <div class="kit-label center">Эмблема</div>
+                            <div class="kit-label right">Гостевая форма</div>
+                        </div>
                         <img src="{{ url_for('static', filename='img/' + club.logo) }}" class="club-logo">
                     </div>
-                    <p><strong>Стадион:</strong> {{ club.stadium }} ({{club.year}}г.). Вместимость: {{ club.places }} мест.</p>
-                    <p><strong>Дата основания:</strong> {{ club.founded }}</p>
+
+                    <p><strong>Стадион:</strong> {{ club.stadium }} ({{club.year}}г.). &ensp;
+                        <strong>Вместимость:</strong> {{ club.places }} мест.</p>
+                    <p><strong>Дата основания:</strong> {{ club.founded }}. &ensp;
+                        <strong>Первое название:</strong> {{ club.first_name }}.</p>
                 </div>
             {% endif %}
         {% endfor %}
