@@ -267,6 +267,118 @@
                 max-height: 700px;
             }
         }
+    .matches-container {
+            max-width: 1200px;
+            margin: 30px auto;
+            padding: 0 15px;
+        }
+
+        .matches-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .matches-title {
+            font-size: 28px;
+            color: #333;
+        }
+
+        .refresh-btn {
+            background: #4682B4;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .refresh-btn:hover {
+            background: #3a6d99;
+        }
+
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .match-card {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            padding: 15px;
+            transition: transform 0.3s;
+        }
+
+        .match-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .match-teams {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .team {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .team-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            margin-bottom: 5px;
+        }
+
+        .team-name {
+            font-weight: bold;
+            text-align: center;
+            font-size: 16px;
+        }
+
+        .vs {
+            font-weight: bold;
+            margin: 0 10px;
+            font-size: 18px;
+            color: #666;
+        }
+
+        .match-info {
+            text-align: center;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+
+        .match-date {
+            font-weight: bold;
+            color: #4682B4;
+            margin-bottom: 5px;
+        }
+
+        .match-stadium {
+            font-style: italic;
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .matches-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .matches-title {
+                font-size: 24px;
+            }
+        }
     </style>
 </head>
 <body>
