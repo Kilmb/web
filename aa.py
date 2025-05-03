@@ -7,6 +7,8 @@ from flask_migrate import Migrate
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
 import os
+from datetime import datetime, timedelta
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'your-very-secret-key-here'
@@ -14,6 +16,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
+
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
@@ -93,6 +98,22 @@ class RPLTable(SqlAlchemyBase):
         return f"RPLTable('{self.team}', {self.points})"
 
 
+class Match(SqlAlchemyBase):
+    __tablename__ = 'matches'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    home_team = sa.Column(sa.String(50), nullable=False)
+    away_team = sa.Column(sa.String(50), nullable=False)
+    match_date = sa.Column(sa.DateTime, nullable=False)
+    home_score = sa.Column(sa.Integer, nullable=True)
+    away_score = sa.Column(sa.Integer, nullable=True)
+    is_played = sa.Column(sa.Boolean, default=False)
+    tour_number = sa.Column(sa.Integer, nullable=False)  # Добавляем номер тура
+
+    def __repr__(self):
+        return f"Match('{self.home_team} vs {self.away_team}', {self.match_date})"
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
@@ -107,7 +128,14 @@ def uploaded_file(filename):
 def home():
     if current_user.is_authenticated:
         table = db.session.query(RPLTable).order_by(RPLTable.position).all()
-        return render_template('home.html', rpl_table=table)
+        # Получаем текущий тур (можно сделать логику определения текущего тура сложнее)
+        current_tour = 27  # Для примера берем 1 тур
+        # Получаем все матчи текущего тура
+        tour_matches = db.session.query(Match)\
+            .filter(Match.tour_number == current_tour)\
+            .order_by(Match.match_date)\
+            .all()
+        return render_template('home.html', rpl_table=table, tour_matches=tour_matches, current_tour=current_tour)
     return render_template('home.html')
 
 
@@ -154,6 +182,110 @@ def login():
             flash('Неверный email или пароль', 'danger')
 
     return render_template('login.html')
+
+
+@app.route('/edit_matches')
+@login_required
+def edit_matches():
+    if not current_user.is_admin:
+        flash('Доступ запрещён', 'danger')
+        return redirect(url_for('home'))
+
+    # Получаем все матчи, сгруппированные по турам
+    tours = db.session.query(Match.tour_number).distinct().order_by(Match.tour_number).all()
+    matches_by_tour = {}
+    for tour in tours:
+        matches = db.session.query(Match).filter(Match.tour_number == tour[0]).order_by(Match.match_date).all()
+        matches_by_tour[tour[0]] = matches
+
+    return render_template('edit_matches.html', matches_by_tour=matches_by_tour, clubs=RPL_CLUBS)
+
+
+@app.route('/update_match/<int:match_id>', methods=['POST'])
+@login_required
+def update_match(match_id):
+    if not current_user.is_admin:
+        flash('Доступ запрещён', 'danger')
+        return redirect(url_for('home'))
+
+    match = db.session.get(Match, match_id)
+    if not match:
+        flash('Матч не найден', 'danger')
+        return redirect(url_for('edit_matches'))
+
+    try:
+        match.home_team = request.form['home_team']
+        match.away_team = request.form['away_team']
+        match.match_date = datetime.strptime(request.form['match_date'], '%Y-%m-%dT%H:%M')
+        match.tour_number = int(request.form['tour_number'])
+
+        # Обновляем счет только если он указан
+        if request.form['home_score'] and request.form['away_score']:
+            match.home_score = int(request.form['home_score'])
+            match.away_score = int(request.form['away_score'])
+            match.is_played = True
+        else:
+            match.home_score = None
+            match.away_score = None
+            match.is_played = False
+
+        db.session.commit()
+        flash('Матч успешно обновлён', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при обновлении матча: {str(e)}', 'danger')
+
+    return redirect(url_for('edit_matches'))
+
+
+@app.route('/add_match', methods=['POST'])
+@login_required
+def add_match():
+    if not current_user.is_admin:
+        flash('Доступ запрещён', 'danger')
+        return redirect(url_for('home'))
+
+    try:
+        new_match = Match(
+            home_team=request.form['home_team'],
+            away_team=request.form['away_team'],
+            match_date=datetime.strptime(request.form['match_date'], '%Y-%m-%dT%H:%M'),
+            tour_number=int(request.form['tour_number']),
+            home_score=None,
+            away_score=None,
+            is_played=False
+        )
+        db.session.add(new_match)
+        db.session.commit()
+        flash('Матч успешно добавлен', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при добавлении матча: {str(e)}', 'danger')
+
+    return redirect(url_for('edit_matches'))
+
+
+@app.route('/delete_match/<int:match_id>', methods=['POST'])
+@login_required
+def delete_match(match_id):
+    if not current_user.is_admin:
+        flash('Доступ запрещён', 'danger')
+        return redirect(url_for('home'))
+
+    match = db.session.get(Match, match_id)
+    if not match:
+        flash('Матч не найден', 'danger')
+        return redirect(url_for('edit_matches'))
+
+    try:
+        db.session.delete(match)
+        db.session.commit()
+        flash('Матч успешно удалён', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка при удалении матча: {str(e)}', 'danger')
+
+    return redirect(url_for('edit_matches'))
 
 
 @app.route('/profile', methods=['GET', 'POST'])
@@ -337,6 +469,7 @@ if __name__ == '__main__':
     with app.app_context():
         SqlAlchemyBase.metadata.create_all(db.engine)
 
+        # Создаем админа (остается без изменений)
         if not db.session.query(User).filter_by(email=ADMIN_EMAIL).first():
             admin = User(
                 name='Admin',
@@ -348,6 +481,7 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
 
+        # Инициализация таблицы (остается без изменений)
         if db.session.query(RPLTable).count() == 0:
             for i, club in enumerate(RPL_CLUBS, 1):
                 team = RPLTable(
@@ -362,6 +496,28 @@ if __name__ == '__main__':
                     points=0
                 )
                 db.session.add(team)
+            db.session.commit()
+
+        # Инициализация матчей (добавляем тестовые данные)
+        if db.session.query(Match).count() == 0:
+            today = datetime.now()
+            # Матчи 1 тура
+            matches = [
+                Match(home_team="Зенит", away_team="Спартак",
+                      match_date=today + timedelta(days=1), tour_number=1),
+                Match(home_team="ЦСКА", away_team="Динамо Москва",
+                      match_date=today + timedelta(days=1, hours=3), tour_number=1),
+                Match(home_team="Краснодар", away_team="Ростов",
+                      match_date=today + timedelta(days=2), tour_number=1),
+                # Матчи 2 тура
+                Match(home_team="Локомотив", away_team="Крылья Советов",
+                      match_date=today + timedelta(days=8), tour_number=2),
+                Match(home_team="Рубин", away_team="Ахмат",
+                      match_date=today + timedelta(days=8, hours=2), tour_number=2)
+            ]
+
+            for match in matches:
+                db.session.add(match)
             db.session.commit()
 
     app.run(debug=True)
