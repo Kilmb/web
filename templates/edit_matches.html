@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+
+{% block title %}Управление матчами{% endblock %}
+
+{% block styles %}
+<style>
+    .admin-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+    }
+
+    .tour-section {
+        margin-bottom: 40px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .match-form {
+        background-color: white;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .form-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 10px;
+    }
+
+    .form-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+
+    .form-group select,
+    .form-group input[type="datetime-local"],
+    .form-group input[type="number"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .score-inputs {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 0 10px;
+    }
+
+    .score-inputs input {
+        width: 50px;
+        text-align: center;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .btn-submit, .btn-update {
+        background-color: #28a745;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    .btn-update {
+        background-color: #007bff;
+    }
+
+    .btn-delete {
+        background-color: #dc3545;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 4px;
+        text-decoration: none;
+    }
+
+    .btn-submit:hover {
+        background-color: #218838;
+    }
+
+    .btn-update:hover {
+        background-color: #0069d9;
+    }
+
+    .btn-delete:hover {
+        background-color: #c82333;
+    }
+
+    @media (max-width: 768px) {
+        .form-row {
+            flex-direction: column;
+        }
+
+        .score-inputs {
+            justify-content: center;
+            padding: 10px 0;
+        }
+
+        .form-actions {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div class="admin-container">
+    <h2 style="text-align: center; margin-bottom: 20px;">Управление матчами</h2>
+
+    <div style="margin-bottom: 30px;">
+        <h3>Добавить новый матч</h3>
+        <form method="POST" action="{{ url_for('add_match') }}" class="match-form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Хозяева:</label>
+                    <select name="home_team" required>
+                        {% for club in clubs %}
+                            <option value="{{ club }}">{{ club }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Гости:</label>
+                    <select name="away_team" required>
+                        {% for club in clubs %}
+                            <option value="{{ club }}">{{ club }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Дата и время:</label>
+                    <input type="datetime-local" name="match_date" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Номер тура:</label>
+                    <input type="number" name="tour_number" min="1" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-submit">Добавить матч</button>
+        </form>
+    </div>
+
+    {% for tour_number, matches in matches_by_tour.items() %}
+    <div class="tour-section">
+        <h3>Тур {{ tour_number }}</h3>
+
+        <div class="matches-list">
+            {% for match in matches %}
+            <form method="POST" action="{{ url_for('update_match', match_id=match.id) }}" class="match-form">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Хозяева:</label>
+                        <select name="home_team">
+                            {% for club in clubs %}
+                                <option value="{{ club }}" {% if club == match.home_team %}selected{% endif %}>{{ club }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="score-inputs">
+                        <input type="number" name="home_score" min="0" value="{{ match.home_score if match.home_score is not none }}">
+                        <span>:</span>
+                        <input type="number" name="away_score" min="0" value="{{ match.away_score if match.away_score is not none }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Гости:</label>
+                        <select name="away_team">
+                            {% for club in clubs %}
+                                <option value="{{ club }}" {% if club == match.away_team %}selected{% endif %}>{{ club }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Дата и время:</label>
+                        <input type="datetime-local" name="match_date"
+                               value="{{ match.match_date.strftime('%Y-%m-%dT%H:%M') }}">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Номер тура:</label>
+                        <input type="number" name="tour_number" min="1" value="{{ match.tour_number }}">
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn-update">Обновить</button>
+                    <form method="POST" action="{{ url_for('delete_match', match_id=match.id) }}" style="display: inline;">
+                    <button type="submit" class="btn-delete"
+                     onclick="return confirm('Вы уверены, что хотите удалить этот матч?')">
+                          Удалить
+                    </button>
+                    </form>
+                </div>
+            </form>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

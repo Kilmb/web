@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <style>
+        /* Общие стили для всех страниц */
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        /* Добавьте другие общие стили */
+    </style>
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <div class="profile-header">
+        {% if current_user.avatar %}
+            <img src="{{ url_for('uploaded_file', filename=current_user.avatar) }}" class="profile-avatar">
+        {% else %}
+            <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="profile-avatar">
+        {% endif %}
+        <a href="{{ url_for('profile') }}" class="profile-link">Профиль</a>
+    </div>
+    {% endif %}
+
+    <div class="menu">
+        {% if current_user.is_authenticated %}
+            {% if current_user.is_admin %}
+               <a href="{{ url_for('show_users') }}">Пользователи</a>
+               <a href="{{ url_for('edit_rpl_table') }}">Таблица</a>
+               <a href="{{ url_for('edit_matches') }}">Матчи</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
+        {% else %}
+            <a href="{{ url_for('login') }}">Войти</a>
+            <a href="{{ url_for('register') }}">Зарегистрироваться</a>
+        {% endif %}
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <div class="content">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
