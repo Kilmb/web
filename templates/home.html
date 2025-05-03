@@ -1,9 +1,8 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Главная</title>
+{% extends "base.html" %}
+
+{% block title %}Главная страница{% endblock %}
+
+{% block styles %}
     <style>
         * {
             box-sizing: border-box;
@@ -268,9 +267,76 @@
                 max-height: 700px;
             }
         }
+        .tour-matches {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tour-header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .tour-title {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .match-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .match-teams {
+            font-size: 18px;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+
+        .match-score {
+            font-size: 22px;
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+            color: #333;
+        }
+
+        .match-details {
+            display: flex;
+            justify-content: space-between;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .match-date {
+            text-align: center;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            .matches-grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
-</head>
-<body>
+{% endblock %}
+
+{% block content %}
     {% if current_user.is_authenticated %}
     <div class="profile-header">
         {% if current_user.avatar %}
@@ -282,26 +348,6 @@
     </div>
     {% endif %}
 
-    <div class="menu">
-    {% if current_user.is_authenticated %}
-        {% if current_user.is_admin %}
-           <a href="{{ url_for('show_users') }}">Список пользователей</a>
-           <a href="{{ url_for('edit_rpl_table') }}">Редактировать таблицу</a>
-        {% endif %}
-        <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
-    {% else %}
-        <a href="{{ url_for('login') }}">Войти</a>
-        <a href="{{ url_for('register') }}">Зарегистрироваться</a>
-        <h1>Добро пожаловать на сайт фанатов РПЛ!</h1>
-
-        <div class="emblem">
-            <img src="{{ url_for('static', filename='img/rpl_emblema.png') }}" class="emblem">
-        </div>
-
-    {% endif %}
-    </div>
-
-
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
@@ -311,6 +357,39 @@
             {% endfor %}
         {% endif %}
     {% endwith %}
+
+    {% if current_user.is_authenticated and tour_matches %}
+    <div class="matches-container">
+        <h2>Матчи {{ current_tour }} тура</h2>
+
+        <div class="matches-grid">
+            {% for match in tour_matches %}
+            <div class="match-card">
+                <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
+                    {{ match.home_team }} vs {{ match.away_team }}
+                </div>
+                <div style="text-align: center; font-size: 24px; margin: 10px 0;">
+                    {% if match.is_played %}
+                        {{ match.home_score }} : {{ match.away_score }}
+                    {% else %}
+                        vs
+                    {% endif %}
+                </div>
+                <div style="text-align: center; color: #666;">
+                    {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    {% if not current_user.is_authenticated %}
+        <h1>Добро пожаловать на сайт фанатов РПЛ!</h1>
+        <div class="emblem">
+            <img src="{{ url_for('static', filename='img/rpl_emblema.png') }}" style="max-width: 100%; height: auto; margin: 0 auto; display: block; padding: 0 10px;">
+        </div>
+    {% endif %}
 
     {% set clubs = [
     {'name': 'Акрон', 'city': 'Тольятти', 'stadium': 'Солидарность Самара Арена', 'places': '45 000', 'year': '2018',
@@ -444,5 +523,4 @@
         {% endfor %}
     </div>
     {% endif %}
-</body>
-</html>
+{% endblock %}
