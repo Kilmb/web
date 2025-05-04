@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-very-secret-key-here'
+app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
@@ -108,7 +108,7 @@ class Match(SqlAlchemyBase):
     home_score = sa.Column(sa.Integer, nullable=True)
     away_score = sa.Column(sa.Integer, nullable=True)
     is_played = sa.Column(sa.Boolean, default=False)
-    tour_number = sa.Column(sa.Integer, nullable=False)  # Добавляем номер тура
+    tour_number = sa.Column(sa.Integer, nullable=False)
 
     def __repr__(self):
         return f"Match('{self.home_team} vs {self.away_team}', {self.match_date})"
@@ -128,9 +128,7 @@ def uploaded_file(filename):
 def home():
     if current_user.is_authenticated:
         table = db.session.query(RPLTable).order_by(RPLTable.position).all()
-        # Получаем текущий тур (можно сделать логику определения текущего тура сложнее)
-        current_tour = 27  # Для примера берем 1 тур
-        # Получаем все матчи текущего тура
+        current_tour = 27  
         tour_matches = db.session.query(Match)\
             .filter(Match.tour_number == current_tour)\
             .order_by(Match.match_date)\
@@ -188,10 +186,8 @@ def login():
 @login_required
 def edit_matches():
     if not current_user.is_admin:
-        flash('Доступ запрещён', 'danger')
         return redirect(url_for('home'))
 
-    # Получаем все матчи, сгруппированные по турам
     tours = db.session.query(Match.tour_number).distinct().order_by(Match.tour_number).all()
     matches_by_tour = {}
     for tour in tours:
@@ -205,12 +201,10 @@ def edit_matches():
 @login_required
 def update_match(match_id):
     if not current_user.is_admin:
-        flash('Доступ запрещён', 'danger')
         return redirect(url_for('home'))
 
     match = db.session.get(Match, match_id)
     if not match:
-        flash('Матч не найден', 'danger')
         return redirect(url_for('edit_matches'))
 
     try:
@@ -219,7 +213,6 @@ def update_match(match_id):
         match.match_date = datetime.strptime(request.form['match_date'], '%Y-%m-%dT%H:%M')
         match.tour_number = int(request.form['tour_number'])
 
-        # Обновляем счет только если он указан
         if request.form['home_score'] and request.form['away_score']:
             match.home_score = int(request.form['home_score'])
             match.away_score = int(request.form['away_score'])
@@ -230,10 +223,8 @@ def update_match(match_id):
             match.is_played = False
 
         db.session.commit()
-        flash('Матч успешно обновлён', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Ошибка при обновлении матча: {str(e)}', 'danger')
 
     return redirect(url_for('edit_matches'))
 
@@ -242,7 +233,6 @@ def update_match(match_id):
 @login_required
 def add_match():
     if not current_user.is_admin:
-        flash('Доступ запрещён', 'danger')
         return redirect(url_for('home'))
 
     try:
@@ -257,10 +247,8 @@ def add_match():
         )
         db.session.add(new_match)
         db.session.commit()
-        flash('Матч успешно добавлен', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Ошибка при добавлении матча: {str(e)}', 'danger')
 
     return redirect(url_for('edit_matches'))
 
@@ -269,21 +257,14 @@ def add_match():
 @login_required
 def delete_match(match_id):
     if not current_user.is_admin:
-        flash('Доступ запрещён', 'danger')
         return redirect(url_for('home'))
 
     match = db.session.get(Match, match_id)
-    if not match:
-        flash('Матч не найден', 'danger')
-        return redirect(url_for('edit_matches'))
-
     try:
         db.session.delete(match)
         db.session.commit()
-        flash('Матч успешно удалён', 'success')
     except Exception as e:
         db.session.rollback()
-        flash(f'Ошибка при удалении матча: {str(e)}', 'danger')
 
     return redirect(url_for('edit_matches'))
 
@@ -314,14 +295,12 @@ def profile():
                 file.save(filepath)
                 current_user.avatar = filename
                 db.session.commit()
-                flash('Аватар успешно обновлен!', 'success')
                 return redirect(url_for('profile'))
 
         new_name = request.form.get('name')
         if new_name and new_name != current_user.name:
             current_user.name = new_name
             db.session.commit()
-            flash('Имя успешно обновлено!', 'success')
             return redirect(url_for('profile'))
 
     return render_template('profile.html')
@@ -331,7 +310,6 @@ def profile():
 @login_required
 def show_users():
     if not current_user.is_admin:
-        flash('Доступ запрещён', 'danger')
         return redirect(url_for('home'))
 
     users = db.session.query(User).all()
@@ -349,16 +327,13 @@ def show_rpl_table():
 @login_required
 def delete_user(user_id):
     if not current_user.is_admin:
-        flash('Доступ запрещён', 'danger')
         return redirect(url_for('home'))
 
     user_to_delete = db.session.get(User, user_id)
     if not user_to_delete:
-        flash('Пользователь не найден', 'danger')
         return redirect(url_for('show_users'))
 
     if user_to_delete.id == current_user.id:
-        flash('Вы не можете удалить себя', 'danger')
         return redirect(url_for('show_users'))
 
     if user_to_delete.avatar:
@@ -371,7 +346,6 @@ def delete_user(user_id):
 
     db.session.delete(user_to_delete)
     db.session.commit()
-    flash('Пользователь успешно удалён', 'success')
     return redirect(url_for('show_users'))
 
 
@@ -379,7 +353,6 @@ def delete_user(user_id):
 @login_required
 def edit_rpl_table():
     if not current_user.is_admin:
-        flash('Доступ запрещён', 'danger')
         return redirect(url_for('home'))
 
     if request.method == 'POST':
@@ -392,7 +365,6 @@ def edit_rpl_table():
         goals_against = request.form.getlist('goals_against[]')
 
         if any(not team.strip() for team in teams):
-            flash('Все названия команд должны быть заполнены!', 'danger')
             return redirect(url_for('edit_rpl_table'))
 
         db.session.query(RPLTable).delete()
@@ -413,7 +385,6 @@ def edit_rpl_table():
             db.session.add(new_record)
 
         db.session.commit()
-        flash('Таблица успешно обновлена!', 'success')
         return redirect(url_for('show_rpl_table'))
 
     table = db.session.query(RPLTable).order_by(RPLTable.position).all()
@@ -424,7 +395,6 @@ def edit_rpl_table():
 @login_required
 def move_up(position):
     if not current_user.is_admin:
-        flash('Доступ запрещён', 'danger')
         return redirect(url_for('home'))
 
     if position > 1:
@@ -442,7 +412,6 @@ def move_up(position):
 @login_required
 def move_down(position):
     if not current_user.is_admin:
-        flash('Доступ запрещён', 'danger')
         return redirect(url_for('home'))
 
     max_position = db.session.query(sa.func.max(RPLTable.position)).scalar()
@@ -469,7 +438,6 @@ if __name__ == '__main__':
     with app.app_context():
         SqlAlchemyBase.metadata.create_all(db.engine)
 
-        # Создаем админа (остается без изменений)
         if not db.session.query(User).filter_by(email=ADMIN_EMAIL).first():
             admin = User(
                 name='Admin',
@@ -481,7 +449,6 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
 
-        # Инициализация таблицы (остается без изменений)
         if db.session.query(RPLTable).count() == 0:
             for i, club in enumerate(RPL_CLUBS, 1):
                 team = RPLTable(
@@ -498,22 +465,11 @@ if __name__ == '__main__':
                 db.session.add(team)
             db.session.commit()
 
-        # Инициализация матчей (добавляем тестовые данные)
         if db.session.query(Match).count() == 0:
             today = datetime.now()
-            # Матчи 1 тура
             matches = [
                 Match(home_team="Зенит", away_team="Спартак",
-                      match_date=today + timedelta(days=1), tour_number=1),
-                Match(home_team="ЦСКА", away_team="Динамо Москва",
-                      match_date=today + timedelta(days=1, hours=3), tour_number=1),
-                Match(home_team="Краснодар", away_team="Ростов",
-                      match_date=today + timedelta(days=2), tour_number=1),
-                # Матчи 2 тура
-                Match(home_team="Локомотив", away_team="Крылья Советов",
-                      match_date=today + timedelta(days=8), tour_number=2),
-                Match(home_team="Рубин", away_team="Ахмат",
-                      match_date=today + timedelta(days=8, hours=2), tour_number=2)
+                      match_date=today + timedelta(days=1), tour_number=1)
             ]
 
             for match in matches:
