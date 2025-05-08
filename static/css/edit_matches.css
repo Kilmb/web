@@ -117,3 +117,27 @@ h2 {
     border-bottom: 1px solid #eee;
     padding-bottom: 10px;
 }
+.current-tour-control {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+}
+
+.current-tour-control h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.current-tour-control form {
+    margin-top: 10px;
+}
+
+.current-tour-control input[type="number"] {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    text-align: center;
+}
