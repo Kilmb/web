@@ -24,9 +24,9 @@
             <th>Действия</th>
             {% endif %}
         </tr>
-        {% for team in table %}
+        {% for team in table|sort(attribute='points', reverse=True) %}
         <tr>
-            <td>{{ team.position }}</td>
+            <td>{{ loop.index }}</td>  <!-- Автоматическая нумерация по очкам -->
             <td>{{ team.team }}</td>
             <td>{{ team.matches }}</td>
             <td>{{ team.wins }}</td>
@@ -37,6 +37,7 @@
             <td><strong>{{ team.points }}</strong></td>
             {% if current_user.is_admin %}
             <td>
+                <!-- Кнопки для ручного изменения позиции -->
                 <a href="{{ url_for('move_up', position=team.position) }}" class="move-btn">↑</a>
                 <a href="{{ url_for('move_down', position=team.position) }}" class="move-btn">↓</a>
             </td>

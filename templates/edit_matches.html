@@ -10,7 +10,17 @@
     <div class="admin-container">
         <a href="{{ url_for('home') }}">На главную</a>
         <h2 style="text-align: center; margin-bottom: 20px;">Управление матчами</h2>
-
+        <div class="current-tour-control" style="margin-bottom: 20px; text-align: center;">
+        <h3>Текущий тур: {{ current_tour }}</h3>
+        <form method="POST" action="{{ url_for('set_current_tour') }}" style="display: inline-block;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <label for="current_tour">Изменить текущий тур:</label>
+                <input type="number" name="current_tour" min="1" value="{{ current_tour }}"
+                       style="width: 60px; padding: 5px;">
+                <button type="submit" class="btn-update" style="padding: 5px 10px;">Сохранить</button>
+            </div>
+        </form>
+       </div>
         <div style="margin-bottom: 30px;">
             <h3>Добавить новый матч</h3>
             <form method="POST" action="{{ url_for('add_match') }}" class="match-form">

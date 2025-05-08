@@ -13,9 +13,9 @@
     <div class="profile-container">
         <div class="avatar-container">
             {% if current_user.avatar %}
-                <img src="{{ url_for('uploaded_file', filename=current_user.avatar) }}" class="avatar" alt="Аватар">
+                <img src="{{ url_for('uploaded_file', filename=current_user.avatar) }}" class="avatar">
             {% else %}
-                <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="avatar" alt="Аватар">
+                <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="avatar">
             {% endif %}
             <form method="POST" enctype="multipart/form-data" style="margin-top: 10px;">
                 <input type="file" name="avatar" accept="image/*" required>
