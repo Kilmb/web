@@ -8,6 +8,9 @@ import sqlalchemy as sa
 import sqlalchemy.orm as orm
 import os
 from datetime import datetime, timedelta
+import json
+import os
+from pathlib import Path
 
 
 app = Flask(__name__)
@@ -16,6 +19,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
+app.config['CURRENT_TOUR_KEY'] = 'current_tour'
 
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
@@ -23,6 +27,7 @@ if not os.path.exists(app.config['UPLOAD_FOLDER']):
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 SqlAlchemyBase = orm.declarative_base()
+TOUR_CONFIG_PATH = Path(__file__).parent / 'current_tour.json'
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -124,16 +129,38 @@ def uploaded_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 
+@app.context_processor
+def inject_current_tour():
+    return {'current_tour': app.config['CURRENT_TOUR_KEY']}
+
+
+def load_current_tour():
+    try:
+        if TOUR_CONFIG_PATH.exists():
+            with open(TOUR_CONFIG_PATH, 'r') as f:
+                return json.load(f).get('current_tour', 1)
+    except Exception:
+        pass
+    return 1  # Значение по умолчанию
+
+
+def save_current_tour(tour_number):
+    with open(TOUR_CONFIG_PATH, 'w') as f:
+        json.dump({'current_tour': tour_number}, f)
+
+
+app.config['CURRENT_TOUR_KEY'] = load_current_tour()
+
+
 @app.route('/')
 def home():
     if current_user.is_authenticated:
         table = db.session.query(RPLTable).order_by(RPLTable.position).all()
-        current_tour = 27  
         tour_matches = db.session.query(Match)\
-            .filter(Match.tour_number == current_tour)\
+            .filter(Match.tour_number == app.config['CURRENT_TOUR_KEY'])\
             .order_by(Match.match_date)\
             .all()
-        return render_template('home.html', rpl_table=table, tour_matches=tour_matches, current_tour=current_tour)
+        return render_template('home.html', rpl_table=table, tour_matches=tour_matches)
     return render_template('home.html')
 
 
@@ -182,6 +209,23 @@ def login():
     return render_template('login.html')
 
 
+@app.route('/set_current_tour', methods=['POST'])
+@login_required
+def set_current_tour():
+    if not current_user.is_admin:
+        return redirect(url_for('home'))
+
+    try:
+        new_tour = int(request.form['current_tour'])
+        app.config['CURRENT_TOUR_KEY'] = new_tour
+        save_current_tour(new_tour)  # Сохраняем в файл
+        flash('Текущий тур успешно изменен', 'success')
+    except ValueError:
+        flash('Некорректный номер тура', 'danger')
+
+    return redirect(url_for('edit_matches'))
+
+
 @app.route('/edit_matches')
 @login_required
 def edit_matches():
@@ -223,6 +267,7 @@ def update_match(match_id):
             match.is_played = False
 
         db.session.commit()
+        update_team_positions()
     except Exception as e:
         db.session.rollback()
 
@@ -316,13 +361,6 @@ def show_users():
     return render_template('users.html', users=users)
 
 
-@app.route('/rpl_table')
-@login_required
-def show_rpl_table():
-    table = db.session.query(RPLTable).order_by(RPLTable.position).all()
-    return render_template('rpl_table.html', table=table)
-
-
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
 @login_required
 def delete_user(user_id):
@@ -347,6 +385,20 @@ def delete_user(user_id):
     db.session.delete(user_to_delete)
     db.session.commit()
     return redirect(url_for('show_users'))
+
+
+@app.route('/rpl_table')
+@login_required
+def show_rpl_table():
+    table = db.session.query(RPLTable).order_by(RPLTable.position).all()
+    return render_template('rpl_table.html', table=table)
+
+
+def update_team_positions():
+    teams = db.session.query(RPLTable).order_by(RPLTable.points.desc()).all()
+    for index, team in enumerate(teams, start=1):
+        team.position = index
+    db.session.commit()
 
 
 @app.route('/edit_rpl_table', methods=['GET', 'POST'])
@@ -385,6 +437,7 @@ def edit_rpl_table():
             db.session.add(new_record)
 
         db.session.commit()
+        update_team_positions()
         return redirect(url_for('show_rpl_table'))
 
     table = db.session.query(RPLTable).order_by(RPLTable.position).all()
@@ -402,6 +455,7 @@ def move_up(position):
         team2 = db.session.query(RPLTable).filter_by(position=position - 1).first()
 
         if team1 and team2:
+
             team1.position, team2.position = team2.position, team1.position
             db.session.commit()
 
