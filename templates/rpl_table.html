@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Пользователи</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/rpl_table.css') }}">
+</head>
+<body>
+    <a href="{{ url_for('home') }}">На главную</a>
+    <h1>Турнирная таблица РПЛ</h1>
+
+    <table>
+        <tr>
+            <th>№</th>
+            <th>Команда</th>
+            <th>И</th>
+            <th>В</th>
+            <th>Н</th>
+            <th>П</th>
+            <th>ЗМ</th>
+            <th>ПМ</th>
+            <th>О</th>
+            {% if current_user.is_admin %}
+            <th>Действия</th>
+            {% endif %}
+        </tr>
+        {% for team in table|sort(attribute='points', reverse=True) %}
+        <tr>
+            <td>{{ loop.index }}</td>  <!-- Автоматическая нумерация по очкам -->
+            <td>{{ team.team }}</td>
+            <td>{{ team.matches }}</td>
+            <td>{{ team.wins }}</td>
+            <td>{{ team.draws }}</td>
+            <td>{{ team.losses }}</td>
+            <td>{{ team.goals_for }}</td>
+            <td>{{ team.goals_against }}</td>
+            <td><strong>{{ team.points }}</strong></td>
+            {% if current_user.is_admin %}
+            <td>
+                <!-- Кнопки для ручного изменения позиции -->
+                <a href="{{ url_for('move_up', position=team.position) }}" class="move-btn">↑</a>
+                <a href="{{ url_for('move_down', position=team.position) }}" class="move-btn">↓</a>
+            </td>
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Результаты теста</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/quiz.css') }}">
+</head>
+<body>
+    <div class="results-container">
+        <h1>
+            {% if test_type == 'easy' %}
+                Результаты лёгкого теста
+            {% elif test_type == 'medium' %}
+                Результаты среднего теста
+            {% elif test_type == 'hard' %}
+                Результаты сложного теста
+            {% else %}
+                Результаты теста
+            {% endif %}
+        </h1>
+
+        {% if test_type == 'mixed' %}
+        <div class="mixed-stats">
+            <div class="stat-item">
+                <div class="stat-value">{{ score }}/{{ total }}</div>
+                <div class="stat-label">Общий результат</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ results|selectattr('difficulty', 'equalto', 1)|list|count }}</div>
+                <div class="stat-label">Лёгкие вопросы</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ results|selectattr('difficulty', 'ge', 2)|selectattr('difficulty', 'le', 3)|list|count }}</div>
+                <div class="stat-label">Средние вопросы</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">{{ results|selectattr('difficulty', 'ge', 4)|list|count }}</div>
+                <div class="stat-label">Сложные вопросы</div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="score-summary">
+            <div class="score-circle
+                {% if score/total >= 0.8 %}excellent
+                {% elif score/total >= 0.5 %}good
+                {% else %}poor
+                {% endif %}">
+                {{ score }}/{{ total }}
+            </div>
+            <p class="score-text">
+                {% if score/total >= 0.8 %}
+                    Отличный результат!
+                {% elif score/total >= 0.5 %}
+                    Хороший результат!
+                {% else %}
+                    Есть над чем поработать!
+                {% endif %}
+            </p>
+        </div>
+
+        {% if test_type == 'mixed' %}
+        <div class="difficulty-tabs">
+            <a href="#all" class="tab-link active">Все вопросы</a>
+            <a href="#easy" class="tab-link">Лёгкие</a>
+            <a href="#medium" class="tab-link">Средние</a>
+            <a href="#hard" class="tab-link">Сложные</a>
+        </div>
+        {% endif %}
+
+        <!-- Все вопросы -->
+        <div id="all" class="tab-content active">
+            {% for result in results %}
+            <div class="result-item
+                {% if result.is_correct %}correct{% else %}incorrect{% endif %}
+                difficulty-{{ result.difficulty }}">
+                <div class="result-header">
+                    <span class="question-number">{{ loop.index }}.</span>
+                    {% if test_type == 'mixed' %}
+                    <span class="difficulty-badge">
+                        {% if result.difficulty == 1 %}
+                            Лёгкий
+                        {% elif result.difficulty >= 4 %}
+                            Сложный
+                        {% else %}
+                            Средний
+                        {% endif %}
+                    </span>
+                    {% endif %}
+                </div>
+
+                <div class="result-question">
+                    {{ result.question }}
+                </div>
+
+                <div class="user-answer">
+                    Ваш ответ: <span class="{% if result.is_correct %}correct-answer{% else %}wrong-answer{% endif %}">
+                        {{ result.user_answer }}
+                    </span>
+                </div>
+
+                {% if not result.is_correct %}
+                <div class="correct-answer">
+                    Правильный ответ: {{ result.correct_answer }}
+                </div>
+                {% endif %}
+
+                <div class="result-icon">
+                    {% if result.is_correct %}
+                        <span class="correct-icon">✓</span>
+                    {% else %}
+                        <span class="incorrect-icon">✗</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        {% if test_type == 'mixed' %}
+        <!-- Только лёгкие вопросы -->
+        <div id="easy" class="tab-content">
+            {% for result in results if result.difficulty == 1 %}
+            <div class="result-item {% if result.is_correct %}correct{% else %}incorrect{% endif %}">
+                <div class="result-header">
+                    <span class="question-number">{{ loop.index }}.</span>
+                    <span class="difficulty-badge">Лёгкий</span>
+                </div>
+
+                <div class="result-question">
+                    {{ result.question }}
+                </div>
+
+                <div class="user-answer">
+                    Ваш ответ: <span class="{% if result.is_correct %}correct-answer{% else %}wrong-answer{% endif %}">
+                        {{ result.user_answer }}
+                    </span>
+                </div>
+
+                {% if not result.is_correct %}
+                <div class="correct-answer">
+                    Правильный ответ: {{ result.correct_answer }}
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="no-results">Нет лёгких вопросов в этом тесте</p>
+            {% endfor %}
+        </div>
+
+        <!-- Только средние вопросы -->
+        <div id="medium" class="tab-content">
+            {% for result in results if result.difficulty >= 2 and result.difficulty <= 3 %}
+            <div class="result-item {% if result.is_correct %}correct{% else %}incorrect{% endif %}">
+                <div class="result-header">
+                    <span class="question-number">{{ loop.index }}.</span>
+                    <span class="difficulty-badge">Средний</span>
+                </div>
+
+                <div class="result-question">
+                    {{ result.question }}
+                </div>
+
+                <div class="user-answer">
+                    Ваш ответ: <span class="{% if result.is_correct %}correct-answer{% else %}wrong-answer{% endif %}">
+                        {{ result.user_answer }}
+                    </span>
+                </div>
+
+                {% if not result.is_correct %}
+                <div class="correct-answer">
+                    Правильный ответ: {{ result.correct_answer }}
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="no-results">Нет средних вопросов в этом тесте</p>
+            {% endfor %}
+        </div>
+
+        <!-- Только сложные вопросы -->
+        <div id="hard" class="tab-content">
+            {% for result in results if result.difficulty >= 4 %}
+            <div class="result-item {% if result.is_correct %}correct{% else %}incorrect{% endif %}">
+                <div class="result-header">
+                    <span class="question-number">{{ loop.index }}.</span>
+                    <span class="difficulty-badge">Сложный</span>
+                </div>
+
+                <div class="result-question">
+                    {{ result.question }}
+                </div>
+
+                <div class="user-answer">
+                    Ваш ответ: <span class="{% if result.is_correct %}correct-answer{% else %}wrong-answer{% endif %}">
+                        {{ result.user_answer }}
+                    </span>
+                </div>
+
+                {% if not result.is_correct %}
+                <div class="correct-answer">
+                    Правильный ответ: {{ result.correct_answer }}
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="no-results">Нет сложных вопросов в этом тесте</p>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="actions">
+            {% if test_type == 'mixed' %}
+                <a href="{{ url_for('quiz') }}" class="btn-retry">Пройти ещё раз</a>
+            {% else %}
+                <a href="{{ url_for(test_type + '_quiz') }}" class="btn-retry">Пройти ещё раз</a>
+            {% endif %}
+
+            <a href="{{ url_for('home') }}" class="btn-home">На главную</a>
+
+            {% if test_type == 'easy' %}
+                <a href="{{ url_for('medium_quiz') }}" class="btn-next">Средний тест →</a>
+            {% elif test_type == 'medium' %}
+                <a href="{{ url_for('hard_quiz') }}" class="btn-next">Сложный тест →</a>
+            {% elif test_type == 'mixed' %}
+                <a href="{{ url_for('easy_quiz') }}" class="btn-next">Лёгкий тест</a>
+                <a href="{{ url_for('hard_quiz') }}" class="btn-next">Сложный тест</a>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Тесты про клубы РПЛ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/club_tests.css') }}">
+</head>
+<body>
+    <div class="admin-container">
+        <a href="{{ url_for('home') }}" class="btn-back">← На главную</a>
+        <h1>Управление тестами про клубы</h1>
+
+        <form method="POST" action="{{ url_for('add_test') }}" class="test-form">
+
+            <div class="form-group">
+                <label>Вопрос:</label>
+                <input type="text" name="question" required>
+            </div>
+
+            <div class="form-group">
+                <label>Сложность (1-5):</label>
+                <input type="number" name="difficulty" min="1" max="5" value="1" required>
+            </div>
+
+            <div class="form-group">
+                <label>Правильный ответ:</label>
+                <input type="text" name="correct_answer" required>
+            </div>
+
+            <div class="form-group">
+                <label>Вариант 1:</label>
+                <input type="text" name="option1" required>
+            </div>
+
+            <div class="form-group">
+                <label>Вариант 2:</label>
+                <input type="text" name="option2" required>
+            </div>
+
+            <div class="form-group">
+                <label>Вариант 3:</label>
+                <input type="text" name="option3" required>
+            </div>
+
+            <div class="form-group">
+                <label>Вариант 4:</label>
+                <input type="text" name="option4" required>
+            </div>
+
+            <button type="submit" class="btn-add">Добавить вопрос</button>
+        </form>
+
+        <div class="tests-list">
+            {% for test in tests %}
+            <div class="test-card" data-difficulty="{{ test.difficulty }}">
+                <div class="test-header">
+                    <h3>{{ test.club_name }}</h3>
+                    <span class="difficulty">Сложность: {{ test.difficulty }}/5</span>
+                </div>
+                <p><strong>Вопрос:</strong> {{ test.question }}</p>
+                <p><strong>Ответ:</strong> {{ test.answer }}</p>
+
+                <form method="POST" action="{{ url_for('delete_test', test_id=test.id) }}"
+                      onsubmit="return confirm('Удалить этот вопрос?')">
+                    <button type="submit" class="btn-delete">Удалить</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
