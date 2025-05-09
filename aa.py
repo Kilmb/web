@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 import json
 import os
 from pathlib import Path
-
+import random
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -119,6 +119,248 @@ class Match(SqlAlchemyBase):
         return f"Match('{self.home_team} vs {self.away_team}', {self.match_date})"
 
 
+class ClubTest(SqlAlchemyBase):
+    __tablename__ = 'club_tests'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    question = sa.Column(sa.String(500), nullable=False)
+    correct_answer = sa.Column(sa.String(200), nullable=False)
+    option1 = sa.Column(sa.String(200), nullable=False)
+    option2 = sa.Column(sa.String(200), nullable=False)
+    option3 = sa.Column(sa.String(200), nullable=False)
+    option4 = sa.Column(sa.String(200), nullable=False)
+    difficulty = sa.Column(sa.Integer, default=1)
+
+
+class TestResult(SqlAlchemyBase):
+    __tablename__ = 'test_results'
+
+    id = sa.Column(sa.Integer, primary_key=True)
+    user_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'))
+    test_type = sa.Column(sa.String(10))  # easy/medium/hard
+    score = sa.Column(sa.Integer)
+    total = sa.Column(sa.Integer)
+    date = sa.Column(sa.DateTime, default=datetime.now)
+
+    user = orm.relationship('User')
+
+
+# Новые маршруты для управления тестами
+@app.route('/club_tests')
+@login_required
+def club_tests():
+    if not current_user.is_admin:
+        return redirect(url_for('home'))
+
+    tests = db.session.query(ClubTest).order_by(db.func.random()).limit(10).all()
+    return render_template('club_tests.html', tests=tests, clubs=RPL_CLUBS)
+
+
+@app.route('/delete_test/<int:test_id>', methods=['POST'])
+@login_required
+def delete_test(test_id):
+    if not current_user.is_admin:
+        return redirect(url_for('home'))
+
+    test = db.session.get(ClubTest, test_id)
+    db.session.delete(test)
+    db.session.commit()
+    return redirect(url_for('club_tests'))
+
+
+@app.route('/quiz', methods=['GET', 'POST'])
+@login_required
+def quiz():
+    """Универсальный тест со случайными вопросами всех уровней"""
+    if request.method == 'POST':
+        # Обработка результатов
+        score = 0
+        results = []
+
+        for question_id, user_answer in request.form.items():
+            if question_id.startswith('q_'):
+                test = db.session.get(ClubTest, question_id[2:])
+                if test:
+                    is_correct = (user_answer.lower().strip() == test.correct_answer.lower().strip())
+                    score += 1 if is_correct else 0
+                    results.append({
+                        'question': test.question,
+                        'user_answer': user_answer,
+                        'correct_answer': test.correct_answer,
+                        'is_correct': is_correct,
+                        'difficulty': test.difficulty
+                    })
+
+        return render_template('quiz_results.html',
+                               score=score,
+                               total=len(results),
+                               results=results,
+                               test_type='mixed')
+
+    # GET запрос - показать тест
+    # Берем по 3-4 вопроса каждого уровня сложности
+    easy = db.session.query(ClubTest).filter(ClubTest.difficulty == 1).order_by(db.func.random()).limit(3).all()
+
+    medium = (db.session.query(ClubTest).filter(ClubTest.difficulty.between(2, 3)).
+              order_by(db.func.random()).limit(4).all())
+
+    hard = (db.session.query(ClubTest).filter(ClubTest.difficulty.between(4, 5)).
+            order_by(db.func.random()).limit(3).all())
+
+    tests = easy + medium + hard
+    random.shuffle(tests)  # Перемешиваем вопросы
+
+    if not tests:
+        flash('Тест временно недоступен', 'info')
+        return redirect(url_for('home'))
+
+    return render_template('quiz.html',
+                           tests=tests,
+                           test_type='mixed',
+                           title='Общий тест')
+
+
+@app.route('/easy_quiz')
+@login_required
+def easy_quiz():
+    """Тест с лёгкими вопросами (сложность 1)"""
+    tests = db.session.query(ClubTest) \
+        .filter(ClubTest.difficulty == 1) \
+        .order_by(ClubTest.id) \
+        .limit(10) \
+        .all()
+
+    if not tests:
+        return redirect(url_for('home'))
+
+    return render_template('quiz.html',
+                           tests=tests,
+                           test_type='easy',
+                           title='Лёгкий тест')
+
+
+@app.route('/medium_quiz')
+@login_required
+def medium_quiz():
+    """Тест со средними вопросами (сложность 2-3)"""
+    tests = db.session.query(ClubTest) \
+        .filter(ClubTest.difficulty.between(2, 3)) \
+        .order_by(ClubTest.id) \
+        .limit(10) \
+        .all()
+
+    if not tests:
+        return redirect(url_for('home'))
+
+    return render_template('quiz.html',
+                           tests=tests,
+                           test_type='medium',
+                           title='Средний тест')
+
+
+@app.route('/hard_quiz')
+@login_required
+def hard_quiz():
+    """Тест со сложными вопросами (сложность 4-5)"""
+    tests = db.session.query(ClubTest) \
+        .filter(ClubTest.difficulty.between(4, 5)) \
+        .order_by(ClubTest.id) \
+        .limit(10) \
+        .all()
+
+    if not tests:
+        return redirect(url_for('home'))
+
+    return render_template('quiz.html',
+                           tests=tests,
+                           test_type='hard',
+                           title='Сложный тест')
+
+
+@app.route('/check_quiz/<test_type>', methods=['POST'])
+@login_required
+def check_quiz(test_type):
+    score = 0
+    results = []
+    difficulty_filter = {
+        'easy': (1, 1),
+        'medium': (2, 3),
+        'hard': (4, 5)
+    }.get(test_type, (1, 5))
+
+    for question_id, user_answer in request.form.items():
+        if question_id.startswith('q_'):
+            test = db.session.get(ClubTest, question_id[2:])
+            if test and difficulty_filter[0] <= test.difficulty <= difficulty_filter[1]:
+                is_correct = (user_answer == test.correct_answer)
+                score += 1 if is_correct else 0
+                results.append({
+                    'question': test.question,
+                    'user_answer': user_answer,
+                    'correct_answer': test.correct_answer,
+                    'is_correct': is_correct,
+                    'difficulty': test.difficulty
+                })
+
+    # Сохраняем результат теста
+    result = TestResult(
+        user_id=current_user.id,
+        test_type=test_type,
+        score=score,
+        total=len(results),
+        date=datetime.now()
+    )
+    db.session.add(result)
+    db.session.commit()
+
+    return render_template('quiz_results.html',
+                           score=score,
+                           total=len(results),
+                           results=results,
+                           test_type=test_type)
+
+
+@app.route('/add_test', methods=['POST'])
+@login_required
+def add_test():
+    if not current_user.is_admin:
+        return redirect(url_for('home'))
+
+    options = [
+        request.form['option1'],
+        request.form['option2'],
+        request.form['option3'],
+        request.form['option4']
+    ]
+
+    if request.form['correct_answer'] not in options:
+        flash('Правильный ответ должен совпадать с одним из вариантов', 'danger')
+        return redirect(url_for('club_tests'))
+
+    new_test = ClubTest(
+        question=request.form['question'],
+        correct_answer=request.form['correct_answer'],
+        option1=options[0],
+        option2=options[1],
+        option3=options[2],
+        option4=options[3],
+        difficulty=int(request.form['difficulty'])
+    )
+    db.session.add(new_test)
+    db.session.commit()
+    return redirect(url_for('club_tests'))
+
+
+@app.template_filter('shuffle')
+def shuffle_filter(s):
+    try:
+        result = list(s)
+        random.shuffle(result)
+        return result
+    except:
+        return s
+
+
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
@@ -218,8 +460,7 @@ def set_current_tour():
     try:
         new_tour = int(request.form['current_tour'])
         app.config['CURRENT_TOUR_KEY'] = new_tour
-        save_current_tour(new_tour)  # Сохраняем в файл
-        flash('Текущий тур успешно изменен', 'success')
+        save_current_tour(new_tour)
     except ValueError:
         flash('Некорректный номер тура', 'danger')
 
@@ -528,6 +769,21 @@ if __name__ == '__main__':
 
             for match in matches:
                 db.session.add(match)
+            db.session.commit()
+
+        if db.session.query(ClubTest).count() == 0:
+            sample_tests = [
+                ClubTest(
+                    question="В каком году основан Спартак?",
+                    correct_answer="1922",
+                    option1="1902",
+                    option2="1920",
+                    option3="1922",
+                    option4="1912",
+                    difficulty=2
+                )
+            ]
+            db.session.add_all(sample_tests)
             db.session.commit()
 
     app.run(debug=True)
