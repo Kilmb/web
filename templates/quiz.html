@@ -8,7 +8,7 @@
 <body>
     <div class="test-container">
         <h1>{{ title }}</h1>
-        <p class="test-description">10 вопросов | Без возможности пропуска</p>
+        <p class="test-description">10 вопросов</p>
 
         <form method="POST" action="{{ url_for('check_quiz', test_type=test_type) }}">
             {% for test in tests %}

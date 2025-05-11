@@ -145,7 +145,6 @@ class TestResult(SqlAlchemyBase):
     user = orm.relationship('User')
 
 
-# Новые маршруты для управления тестами
 @app.route('/club_tests')
 @login_required
 def club_tests():
@@ -171,9 +170,7 @@ def delete_test(test_id):
 @app.route('/quiz', methods=['GET', 'POST'])
 @login_required
 def quiz():
-    """Универсальный тест со случайными вопросами всех уровней"""
     if request.method == 'POST':
-        # Обработка результатов
         score = 0
         results = []
 
@@ -350,6 +347,42 @@ def add_test():
     db.session.commit()
     return redirect(url_for('club_tests'))
 
+
+@app.route('/edit_test/<int:test_id>', methods=['GET', 'POST'])
+@login_required
+def edit_test(test_id):
+    if not current_user.is_admin:
+        return redirect(url_for('home'))
+
+    test = db.session.get(ClubTest, test_id)
+    if not test:
+        return redirect(url_for('club_tests'))
+
+    if request.method == 'POST':
+        options = [
+            request.form['option1'],
+            request.form['option2'],
+            request.form['option3'],
+            request.form['option4']
+        ]
+
+        if request.form['correct_answer'] not in options:
+            flash('Правильный ответ должен совпадать с одним из вариантов', 'danger')
+            return redirect(url_for('edit_test', test_id=test_id))
+
+        test.question = request.form['question']
+        test.correct_answer = request.form['correct_answer']
+        test.option1 = options[0]
+        test.option2 = options[1]
+        test.option3 = options[2]
+        test.option4 = options[3]
+        test.difficulty = int(request.form['difficulty'])
+
+        db.session.commit()
+        flash('Вопрос успешно обновлен', 'success')
+        return redirect(url_for('club_tests'))
+
+    return render_template('edit_test.html', test=test)
 
 @app.template_filter('shuffle')
 def shuffle_filter(s):

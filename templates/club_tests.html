@@ -10,8 +10,9 @@
         <a href="{{ url_for('home') }}" class="btn-back">← На главную</a>
         <h1>Управление тестами про клубы</h1>
 
-        <form method="POST" action="{{ url_for('add_test') }}" class="test-form">
+        <button id="show-form-btn" class="btn-add">Добавить новый вопрос</button>
 
+        <form method="POST" action="{{ url_for('add_test') }}" class="test-form" id="test-form" style="display: none;">
             <div class="form-group">
                 <label>Вопрос:</label>
                 <input type="text" name="question" required>
@@ -48,25 +49,49 @@
             </div>
 
             <button type="submit" class="btn-add">Добавить вопрос</button>
+            <button type="button" id="hide-form-btn" class="btn-cancel">Отмена</button>
         </form>
 
         <div class="tests-list">
             {% for test in tests %}
             <div class="test-card" data-difficulty="{{ test.difficulty }}">
                 <div class="test-header">
-                    <h3>{{ test.club_name }}</h3>
+                    <h3>{{ test.question }}</h3>
                     <span class="difficulty">Сложность: {{ test.difficulty }}/5</span>
                 </div>
-                <p><strong>Вопрос:</strong> {{ test.question }}</p>
-                <p><strong>Ответ:</strong> {{ test.answer }}</p>
+                <p><strong>Ответ:</strong> {{ test.correct_answer }}</p>
+                <p><strong>Варианты:</strong></p>
+                <ul>
+                    <li>{{ test.option1 }}</li>
+                    <li>{{ test.option2 }}</li>
+                    <li>{{ test.option3 }}</li>
+                    <li>{{ test.option4 }}</li>
+                </ul>
 
-                <form method="POST" action="{{ url_for('delete_test', test_id=test.id) }}"
-                      onsubmit="return confirm('Удалить этот вопрос?')">
-                    <button type="submit" class="btn-delete">Удалить</button>
-                </form>
+                <div class="test-actions">
+                    <form method="GET" action="{{ url_for('edit_test', test_id=test.id) }}">
+                        <button type="submit" class="btn-edit">Редактировать</button>
+                    </form>
+                    <form method="POST" action="{{ url_for('delete_test', test_id=test.id) }}"
+                          onsubmit="return confirm('Удалить этот вопрос?')">
+                        <button type="submit" class="btn-delete">Удалить</button>
+                    </form>
+                </div>
             </div>
             {% endfor %}
         </div>
     </div>
+
+    <script>
+        document.getElementById('show-form-btn').addEventListener('click', function() {
+            document.getElementById('test-form').style.display = 'block';
+            this.style.display = 'none';
+        });
+
+        document.getElementById('hide-form-btn').addEventListener('click', function() {
+            document.getElementById('test-form').style.display = 'none';
+            document.getElementById('show-form-btn').style.display = 'block';
+        });
+    </script>
 </body>
 </html>

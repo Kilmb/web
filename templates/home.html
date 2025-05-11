@@ -27,9 +27,9 @@
            <a href="{{ url_for('club_tests') }}">Редактировать тесты</a>
         {% else %}
            <a href="{{ url_for('quiz') }}">Тесты про клубы</a>
-           <a href="{{ url_for('easy_quiz') }}">Лёгкий тест (10 вопросов)</a>
-           <a href="{{ url_for('medium_quiz') }}">Средний тест (10 вопросов)</a>
-           <a href="{{ url_for('hard_quiz') }}">Сложный тест (10 вопросов)</a>
+           <a href="{{ url_for('easy_quiz') }}">Лёгкий тест</a>
+           <a href="{{ url_for('medium_quiz') }}">Средний тест</a>
+           <a href="{{ url_for('hard_quiz') }}">Сложный тест</a>
         {% endif %}
         <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
 
