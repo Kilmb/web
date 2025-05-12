@@ -53,10 +53,8 @@
 }
 
 .test-card[data-difficulty="1"] { border-color: #4CAF50; }
-.test-card[data-difficulty="2"] { border-color: #8BC34A; }
-.test-card[data-difficulty="3"] { border-color: #FFC107; }
-.test-card[data-difficulty="4"] { border-color: #FF9800; }
-.test-card[data-difficulty="5"] { border-color: #F44336; }
+.test-card[data-difficulty="2"] { border-color: #FFC107; }
+.test-card[data-difficulty="3"] { border-color: #F44336; }
 
 .test-header {
     display: flex;
