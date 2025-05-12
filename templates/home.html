@@ -26,7 +26,6 @@
            <a href="{{ url_for('edit_matches') }}">Редактировать матчи</a>
            <a href="{{ url_for('club_tests') }}">Редактировать тесты</a>
         {% else %}
-           <a href="{{ url_for('quiz') }}">Тесты про клубы</a>
            <a href="{{ url_for('easy_quiz') }}">Лёгкий тест</a>
            <a href="{{ url_for('medium_quiz') }}">Средний тест</a>
            <a href="{{ url_for('hard_quiz') }}">Сложный тест</a>
@@ -67,13 +66,6 @@
             {% endfor %}
         </div>
     </div>
-    {% endif %}
-
-    {% if not current_user.is_authenticated %}
-        <h1>Добро пожаловать на сайт фанатов РПЛ!</h1>
-        <div class="emblem">
-            <img src="{{ url_for('static', filename='img/rpl_emblema.png') }}" style="max-width: 100%; height: auto; margin: 0 auto; display: block; padding: 0 10px;">
-        </div>
     {% endif %}
 
     {% set clubs = [
