@@ -6,12 +6,10 @@ from werkzeug.utils import secure_filename
 from flask_migrate import Migrate
 import sqlalchemy as sa
 import sqlalchemy.orm as orm
-import os
-from datetime import datetime, timedelta
+from datetime import datetime
 import json
 import os
 from pathlib import Path
-import random
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -137,7 +135,7 @@ class TestResult(SqlAlchemyBase):
 
     id = sa.Column(sa.Integer, primary_key=True)
     user_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'))
-    test_type = sa.Column(sa.String(10))  # easy/medium/hard
+    test_type = sa.Column(sa.String(10))
     score = sa.Column(sa.Integer)
     total = sa.Column(sa.Integer)
     date = sa.Column(sa.DateTime, default=datetime.now)
@@ -151,7 +149,7 @@ def club_tests():
     if not current_user.is_admin:
         return redirect(url_for('home'))
 
-    tests = db.session.query(ClubTest).order_by(db.func.random()).all()
+    tests = db.session.query(ClubTest).order_by(ClubTest.id).all()
     return render_template('club_tests.html', tests=tests, clubs=RPL_CLUBS)
 
 
@@ -234,7 +232,6 @@ def check_quiz(test_type):
                     'difficulty': test.difficulty
                 })
 
-    # Сохраняем результат теста
     result = TestResult(
         user_id=current_user.id,
         test_type=test_type,
@@ -264,9 +261,6 @@ def add_test():
         request.form['option3'],
         request.form['option4']
     ]
-
-    if request.form['correct_answer'] not in options:
-        return redirect(url_for('club_tests'))
 
     new_test = ClubTest(
         question=request.form['question'],
@@ -300,9 +294,6 @@ def edit_test(test_id):
             request.form['option4']
         ]
 
-        if request.form['correct_answer'] not in options:
-            return redirect(url_for('edit_test', test_id=test_id))
-
         test.question = request.form['question']
         test.correct_answer = request.form['correct_answer']
         test.option1 = options[0]
@@ -315,16 +306,6 @@ def edit_test(test_id):
         return redirect(url_for('club_tests'))
 
     return render_template('edit_test.html', test=test)
-
-
-@app.template_filter('shuffle')
-def shuffle_filter(s):
-    try:
-        result = list(s)
-        random.shuffle(result)
-        return result
-    except:
-        return s
 
 
 @login_manager.user_loader
@@ -349,7 +330,7 @@ def load_current_tour():
                 return json.load(f).get('current_tour', 1)
     except Exception:
         pass
-    return 1  # Значение по умолчанию
+    return 1
 
 
 def save_current_tour(tour_number):
@@ -363,10 +344,8 @@ app.config['CURRENT_TOUR_KEY'] = load_current_tour()
 @app.route('/')
 def home():
     table = db.session.query(RPLTable).order_by(RPLTable.position).all()
-    tour_matches = db.session.query(Match) \
-        .filter(Match.tour_number == app.config['CURRENT_TOUR_KEY']) \
-        .order_by(Match.match_date) \
-        .all()
+    tour_matches = db.session.query(Match).filter(Match.tour_number == app.config['CURRENT_TOUR_KEY']) \
+        .order_by(Match.match_date).all()
 
     if current_user.is_authenticated:
         return render_template('home.html', rpl_table=table, tour_matches=tour_matches)
@@ -456,8 +435,6 @@ def update_match(match_id):
         return redirect(url_for('home'))
 
     match = db.session.get(Match, match_id)
-    if not match:
-        return redirect(url_for('edit_matches'))
 
     try:
         match.home_team = request.form['home_team']
@@ -513,11 +490,8 @@ def delete_match(match_id):
         return redirect(url_for('home'))
 
     match = db.session.get(Match, match_id)
-    try:
-        db.session.delete(match)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
+    db.session.delete(match)
+    db.session.commit()
 
     return redirect(url_for('edit_matches'))
 
@@ -564,6 +538,7 @@ def profile():
 def show_users():
     users = db.session.query(User).all()
     return render_template('users.html', users=users)
+
 
 @app.route('/user/<int:user_id>')
 @login_required
@@ -628,9 +603,6 @@ def edit_rpl_table():
         losses = request.form.getlist('losses[]')
         goals_for = request.form.getlist('goals_for[]')
         goals_against = request.form.getlist('goals_against[]')
-
-        if any(not team.strip() for team in teams):
-            return redirect(url_for('edit_rpl_table'))
 
         db.session.query(RPLTable).delete()
         db.session.commit()
@@ -736,7 +708,7 @@ if __name__ == '__main__':
             today = datetime.now()
             matches = [
                 Match(home_team="Зенит", away_team="Спартак",
-                      match_date=today + timedelta(days=1), tour_number=1)
+                      match_date=today, tour_number=1)
             ]
 
             for match in matches:
