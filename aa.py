@@ -349,7 +349,7 @@ def load_current_tour():
                 return json.load(f).get('current_tour', 1)
     except Exception:
         pass
-    return 1  # Значение по умолчанию
+    return 1
 
 
 def save_current_tour(tour_number):
