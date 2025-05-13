@@ -349,7 +349,7 @@ def load_current_tour():
                 return json.load(f).get('current_tour', 1)
     except Exception:
         pass
-    return 1
+    return 1  # Значение по умолчанию
 
 
 def save_current_tour(tour_number):
@@ -362,14 +362,15 @@ app.config['CURRENT_TOUR_KEY'] = load_current_tour()
 
 @app.route('/')
 def home():
+    table = db.session.query(RPLTable).order_by(RPLTable.position).all()
+    tour_matches = db.session.query(Match) \
+        .filter(Match.tour_number == app.config['CURRENT_TOUR_KEY']) \
+        .order_by(Match.match_date) \
+        .all()
+
     if current_user.is_authenticated:
-        table = db.session.query(RPLTable).order_by(RPLTable.position).all()
-        tour_matches = db.session.query(Match)\
-            .filter(Match.tour_number == app.config['CURRENT_TOUR_KEY'])\
-            .order_by(Match.match_date)\
-            .all()
         return render_template('home.html', rpl_table=table, tour_matches=tour_matches)
-    return render_template('home.html')
+    return render_template('home.html', rpl_table=table, tour_matches=tour_matches, show_public_content=True)
 
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -561,11 +562,16 @@ def profile():
 @app.route('/users')
 @login_required
 def show_users():
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-
     users = db.session.query(User).all()
     return render_template('users.html', users=users)
+
+@app.route('/user/<int:user_id>')
+@login_required
+def view_user(user_id):
+    user = db.session.get(User, user_id)
+    if not user:
+        return redirect(url_for('home'))
+    return render_template('user_profile.html', user=user)
 
 
 @app.route('/delete_user/<int:user_id>', methods=['POST'])

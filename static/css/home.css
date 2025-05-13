@@ -327,3 +327,15 @@
                 grid-template-columns: 1fr;
             }
         }
+        .public-welcome {
+        text-align: center;
+        margin: 20px auto;
+        max-width: 800px;
+        padding: 20px;
+        }
+
+        .public-welcome p {
+        text-align: center;
+        margin: 15px 0;
+        font-size: clamp(16px, 4vw, 20px);
+        }
