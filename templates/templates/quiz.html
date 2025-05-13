@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/quiz.css') }}">
+</head>
+<body>
+    <div class="test-container">
+        <h1>{{ title }}</h1>
+        <p class="test-description">10 вопросов</p>
+
+        <form method="POST" action="{{ url_for('check_quiz', test_type=test_type) }}">
+            {% for test in tests %}
+            <div class="question-block">
+                <div class="question-header">
+                    <span class="question-number">Вопрос {{ loop.index }}</span>
+                    <span class="difficulty">Сложность: {{ test.difficulty }}/3</span>
+                </div>
+
+                <p class="question-text">{{ test.question }}</p>
+
+                <div class="options">
+                    {% for option in [test.option1, test.option2, test.option3, test.option4] %}
+                    <label class="option">
+                        <input type="radio" name="q_{{ test.id }}" value="{{ option }}" required>
+                        <span class="option-text">{{ option }}</span>
+                    </label>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+
+            <div class="submit-container">
+                <button type="submit" class="submit-btn">Завершить тест</button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
