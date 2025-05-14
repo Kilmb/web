@@ -10,6 +10,8 @@ from datetime import datetime
 import json
 import os
 from pathlib import Path
+from data import db_session
+from api import blueprint
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
@@ -19,6 +21,7 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['CURRENT_TOUR_KEY'] = 'current_tour'
 
+app.register_blueprint(blueprint)
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
@@ -50,6 +53,11 @@ RPL_CLUBS = [
     "Химки",
     "ЦСКА"
 ]
+
+
+def main():
+    db_session.global_init("db/football.db")
+    app.run()
 
 
 def allowed_file(filename):
