@@ -3,28 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Главная</title>
+    <title>Вход | Фан-сайт РПЛ</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/login_register.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='img/rpl.png') }}">
 </head>
 <body>
-    <a href="{{ url_for('home') }}">На главную</a>
-    <h1>Вход</h1>
+    <div class="auth-container">
+        <a href="{{ url_for('home') }}" class="logo-link">
+            <img src="{{ url_for('static', filename='img/rpl.png') }}" alt="Логотип РПЛ">
+        </a>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="flash-message {{ category }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+        <h1>Вход в аккаунт</h1>
 
-    <form method="POST">
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Пароль" required>
-        <button type="submit">Войти</button>
-    </form>
-    <p style="text-align: center; margin-top: 15px;">Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрироваться</a></p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Ваш email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" placeholder="Ваш пароль" required>
+            </div>
+
+            <button type="submit">Войти</button>
+        </form>
+
+        <div class="switch-link">
+            Нет аккаунта? <a href="{{ url_for('register') }}">Зарегистрироваться</a>
+        </div>
+    </div>
 </body>
 </html>
