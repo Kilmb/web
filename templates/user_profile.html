@@ -21,6 +21,12 @@
             <p><strong>Имя:</strong> {{ user.name }}</p>
             <p><strong>Email:</strong> {{ user.email }}</p>
             <p><strong>Клуб:</strong> {{ user.club }}</p>
+            {% if user.about %}
+            <div class="about-section">
+                <h3>О себе:</h3>
+                <p>{{ user.about }}</p>
+            </div>
+            {% endif %}
         </div>
     </div>
 </body>

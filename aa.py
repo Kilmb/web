@@ -78,6 +78,7 @@ class User(SqlAlchemyBase, UserMixin):
     password = sa.Column(sa.String(200), nullable=False)
     is_admin = sa.Column(sa.Boolean, default=False)
     avatar = sa.Column(sa.String(200))
+    about = sa.Column(sa.String(250))
 
     def __repr__(self):
         return f"User('{self.name}', '{self.email}')"
@@ -525,13 +526,15 @@ def profile():
                 return redirect(url_for('profile'))
 
         new_name = request.form.get('name')
+        about_text = request.form.get('about', '')[:250]  # Ограничиваем до 250 символов
+
         if new_name and new_name != current_user.name:
             current_user.name = new_name
-            db.session.commit()
-            return redirect(url_for('profile'))
+        current_user.about = about_text
+        db.session.commit()
+        return redirect(url_for('profile'))
 
     return render_template('profile.html')
-
 
 @app.route('/users')
 @login_required

@@ -52,3 +52,30 @@ body {
         button:hover {
             background-color: #3a6d99;
         }
+        textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    resize: vertical;
+    min-height: 100px;
+    font-family: Arial, sans-serif;
+}
+
+.about-section {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.about-section h3 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+.about-section p {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
