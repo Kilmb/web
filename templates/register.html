@@ -3,35 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Главная</title>
+    <title>Регистрация | Фан-сайт РПЛ</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/login_register.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='img/rpl.png') }}">
 </head>
 <body>
-    <a href="{{ url_for('home') }}">На главную</a>
-    <h1>Регистрация</h1>
+    <div class="auth-container">
+        <a href="{{ url_for('home') }}" class="logo-link">
+            <img src="{{ url_for('static', filename='img/rpl.png') }}" alt="Логотип РПЛ">
+        </a>
 
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            {% for category, message in messages %}
-                <div class="flash-message {{ category }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
+        <h1>Создать аккаунт</h1>
 
-    <form method="POST">
-        <input type="text" name="name" placeholder="Имя" required>
-        <input type="email" name="email" placeholder="Email" required>
-        <input type="password" name="password" placeholder="Пароль" required>
-        <select name="club" required>
-            <option value="">Выберите клуб</option>
-            {% for club in clubs %}
-            <option value="{{ club }}">{{ club }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit">Зарегистрироваться</button>
-    </form>
-    <p style="text-align: center; margin-top: 15px;">Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a></p>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <form method="POST">
+            <div class="form-group">
+                <label for="name">Имя</label>
+                <input type="text" id="name" name="name" placeholder="Ваше имя" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Ваш email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" placeholder="Придумайте пароль" required>
+            </div>
+
+            <div class="form-group">
+                <label for="club">Любимый клуб</label>
+                <select id="club" name="club" class="club-select" required>
+                    <option value="">Выберите клуб</option>
+                    {% for club in clubs %}
+                    <option value="{{ club }}">{{ club }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+
+        <div class="switch-link">
+            Уже есть аккаунт? <a href="{{ url_for('login') }}">Войти</a>
+        </div>
+    </div>
 </body>
 </html>
