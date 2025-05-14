@@ -13,22 +13,24 @@ from pathlib import Path
 from data import db_session
 from api import blueprint
 
+# Инициализация Flask-приложения
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
-app.config['CURRENT_TOUR_KEY'] = 'current_tour'
+app.config['CURRENT_TOUR_KEY'] = 'current_tour'  # Ключ для хранения текущего тура
 
 app.register_blueprint(blueprint)
+# Создание папки для загрузок, если её нет
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 SqlAlchemyBase = orm.declarative_base()
-TOUR_CONFIG_PATH = Path(__file__).parent / 'current_tour.json'
+TOUR_CONFIG_PATH = Path(__file__).parent / 'current_tour.json'  # Путь к файлу с текущим туром
 
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
@@ -56,18 +58,22 @@ RPL_CLUBS = [
 
 
 def main():
+    # Основная функция инициализации приложения
     db_session.global_init("db/football.db")
     app.run()
 
 
 def allowed_file(filename):
+    # Проверка расширения файла
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
 
 
 class Password_inkognito:
+    # Класс для хэширования и проверки паролей
     def encrypt_password(self, password):
         return generate_password_hash(password)
+
 
     def verify_password(self, hashed_password, input_password):
         return check_password_hash(hashed_password, input_password)
@@ -152,6 +158,86 @@ class TestResult(SqlAlchemyBase):
     user = orm.relationship('User')
 
 
+# Загружает пользователя
+@login_manager.user_loader
+def load_user(user_id):
+    return db.session.get(User, int(user_id))
+
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+
+@app.context_processor
+def inject_current_tour():
+    return {'current_tour': app.config['CURRENT_TOUR_KEY']}
+
+
+# Главная страница
+@app.route('/')
+def home():
+    table = db.session.query(RPLTable).order_by(RPLTable.position).all()
+    tour_matches = db.session.query(Match).filter(Match.tour_number == app.config['CURRENT_TOUR_KEY']) \
+        .order_by(Match.match_date).all()
+
+    if current_user.is_authenticated:
+        return render_template('home.html', rpl_table=table, tour_matches=tour_matches)
+    return render_template('home.html', rpl_table=table, tour_matches=tour_matches, show_public_content=True)
+
+
+# Регистрация
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    # GET: Отображает форму регистрации
+    # POST: Обрабатывает данные формы, создает пользователя
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        name = request.form['name']
+        email = request.form['email']
+        club = request.form['club']
+        password = request.form['password']
+        hashed_password = pw_secure.encrypt_password(password)
+        is_admin = (email == ADMIN_EMAIL)
+
+        if db.session.query(User).filter_by(email=email).first():
+            flash('Этот email уже занят!', 'danger')
+        else:
+            user = User(name=name, email=email, club=club, password=hashed_password, is_admin=is_admin)
+            db.session.add(user)
+            db.session.commit()
+
+            login_user(user)
+            return redirect(url_for('home'))
+
+    return render_template('register.html', clubs=RPL_CLUBS)
+
+
+# Вход
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    # GET: Показывает форму входа
+    # POST: Проверяет учетные данные и авторизует пользователя
+    if current_user.is_authenticated:
+        return redirect(url_for('home'))
+
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        user = db.session.query(User).filter_by(email=email).first()
+
+        if user and pw_secure.verify_password(user.password, password):
+            login_user(user)
+            return redirect(url_for('home'))
+        else:
+            flash('Неверный email или пароль', 'danger')
+
+    return render_template('login.html')
+
+
+# Тесты только для пользователей
 @app.route('/club_tests')
 @login_required
 def club_tests():
@@ -162,6 +248,7 @@ def club_tests():
     return render_template('club_tests.html', tests=tests, clubs=RPL_CLUBS)
 
 
+# Удаление тестов
 @app.route('/delete_test/<int:test_id>', methods=['POST'])
 @login_required
 def delete_test(test_id):
@@ -216,6 +303,7 @@ def hard_quiz():
                            title='Сложный тест')
 
 
+# Проверка результатов
 @app.route('/check_quiz/<test_type>', methods=['POST'])
 @login_required
 def check_quiz(test_type):
@@ -317,21 +405,7 @@ def edit_test(test_id):
     return render_template('edit_test.html', test=test)
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    return db.session.get(User, int(user_id))
-
-
-@app.route('/uploads/<filename>')
-def uploaded_file(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-
-@app.context_processor
-def inject_current_tour():
-    return {'current_tour': app.config['CURRENT_TOUR_KEY']}
-
-
+# Загрузка текущего тура
 def load_current_tour():
     try:
         if TOUR_CONFIG_PATH.exists():
@@ -342,6 +416,7 @@ def load_current_tour():
     return 1
 
 
+# Сохранение текущего тура в json
 def save_current_tour(tour_number):
     with open(TOUR_CONFIG_PATH, 'w') as f:
         json.dump({'current_tour': tour_number}, f)
@@ -350,62 +425,7 @@ def save_current_tour(tour_number):
 app.config['CURRENT_TOUR_KEY'] = load_current_tour()
 
 
-@app.route('/')
-def home():
-    table = db.session.query(RPLTable).order_by(RPLTable.position).all()
-    tour_matches = db.session.query(Match).filter(Match.tour_number == app.config['CURRENT_TOUR_KEY']) \
-        .order_by(Match.match_date).all()
-
-    if current_user.is_authenticated:
-        return render_template('home.html', rpl_table=table, tour_matches=tour_matches)
-    return render_template('home.html', rpl_table=table, tour_matches=tour_matches, show_public_content=True)
-
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
-
-    if request.method == 'POST':
-        name = request.form['name']
-        email = request.form['email']
-        club = request.form['club']
-        password = request.form['password']
-        hashed_password = pw_secure.encrypt_password(password)
-        is_admin = (email == ADMIN_EMAIL)
-
-        if db.session.query(User).filter_by(email=email).first():
-            flash('Этот email уже занят!', 'danger')
-        else:
-            user = User(name=name, email=email, club=club, password=hashed_password, is_admin=is_admin)
-            db.session.add(user)
-            db.session.commit()
-
-            login_user(user)
-            return redirect(url_for('home'))
-
-    return render_template('register.html', clubs=RPL_CLUBS)
-
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
-
-    if request.method == 'POST':
-        email = request.form['email']
-        password = request.form['password']
-        user = db.session.query(User).filter_by(email=email).first()
-
-        if user and pw_secure.verify_password(user.password, password):
-            login_user(user)
-            return redirect(url_for('home'))
-        else:
-            flash('Неверный email или пароль', 'danger')
-
-    return render_template('login.html')
-
-
+# Изменение текущего тура
 @app.route('/set_current_tour', methods=['POST'])
 @login_required
 def set_current_tour():
@@ -422,6 +442,7 @@ def set_current_tour():
     return redirect(url_for('edit_matches'))
 
 
+# Изменение матчей
 @app.route('/edit_matches')
 @login_required
 def edit_matches():
@@ -508,6 +529,7 @@ def delete_match(match_id):
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
+    # Загрузка аваатара
     if request.method == 'POST':
         if 'avatar' in request.files:
             file = request.files['avatar']
@@ -532,9 +554,9 @@ def profile():
                 current_user.avatar = filename
                 db.session.commit()
                 return redirect(url_for('profile'))
-
+        # Сохранение нового имени
         new_name = request.form.get('name')
-        about_text = request.form.get('about', '')[:250] 
+        about_text = request.form.get('about', '')[:250]
 
         if new_name and new_name != current_user.name:
             current_user.name = new_name
@@ -545,6 +567,7 @@ def profile():
     return render_template('profile.html')
 
 
+# Просмотр пользователей
 @app.route('/users')
 @login_required
 def show_users():
@@ -552,6 +575,7 @@ def show_users():
     return render_template('users.html', users=users)
 
 
+# Просмотр профилей
 @app.route('/user/<int:user_id>')
 @login_required
 def view_user(user_id):
@@ -574,14 +598,6 @@ def delete_user(user_id):
     if user_to_delete.id == current_user.id:
         return redirect(url_for('show_users'))
 
-    if user_to_delete.avatar:
-        avatar_path = os.path.join(app.config['UPLOAD_FOLDER'], user_to_delete.avatar)
-        if os.path.exists(avatar_path):
-            try:
-                os.remove(avatar_path)
-            except Exception as e:
-                app.logger.error(f"Ошибка при удалении аватара пользователя: {e}")
-
     db.session.delete(user_to_delete)
     db.session.commit()
     return redirect(url_for('show_users'))
@@ -594,6 +610,7 @@ def show_rpl_table():
     return render_template('rpl_table.html', table=table)
 
 
+# Смена позиций в таблице
 def update_team_positions():
     teams = db.session.query(RPLTable).order_by(RPLTable.points.desc()).all()
     for index, team in enumerate(teams, start=1):
@@ -641,6 +658,7 @@ def edit_rpl_table():
     return render_template('edit_rpl_table.html', table=table)
 
 
+# Стрелочки при смене позиций
 @app.route('/move_up/<int:position>')
 @login_required
 def move_up(position):
@@ -687,8 +705,10 @@ def logout():
 
 if __name__ == '__main__':
     with app.app_context():
+        # Создание всех таблиц
         SqlAlchemyBase.metadata.create_all(db.engine)
 
+        # Создание администратора, если его нет
         if not db.session.query(User).filter_by(email=ADMIN_EMAIL).first():
             admin = User(
                 name='Admin',
@@ -700,6 +720,7 @@ if __name__ == '__main__':
             db.session.add(admin)
             db.session.commit()
 
+        # Заполнение таблицы клубов, если она пуста
         if db.session.query(RPLTable).count() == 0:
             for i, club in enumerate(RPL_CLUBS, 1):
                 team = RPLTable(
@@ -716,17 +737,18 @@ if __name__ == '__main__':
                 db.session.add(team)
             db.session.commit()
 
+        # Добавление тестовых данных, если нет матчей
         if db.session.query(Match).count() == 0:
             today = datetime.now()
             matches = [
                 Match(home_team="Зенит", away_team="Спартак",
                       match_date=today, tour_number=1)
             ]
-
             for match in matches:
                 db.session.add(match)
             db.session.commit()
 
+        # Добавление тестовых вопросов, если их нет
         if db.session.query(ClubTest).count() == 0:
             sample_tests = [
                 ClubTest(
@@ -742,4 +764,5 @@ if __name__ == '__main__':
             db.session.add_all(sample_tests)
             db.session.commit()
 
+        # Запуск приложения в режиме отладки
     app.run(debug=True)
