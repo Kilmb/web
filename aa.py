@@ -544,6 +544,7 @@ def profile():
 
     return render_template('profile.html')
 
+
 @app.route('/users')
 @login_required
 def show_users():
