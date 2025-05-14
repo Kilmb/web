@@ -7,6 +7,70 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
 </head>
 <body>
+    {% if not current_user.is_authenticated %}
+    <div class="welcome-container">
+        <div class="welcome-header">
+            <h1>Добро пожаловать на фан-сайт Российской Премьер-Лиги!</h1>
+            <div class="rpl-logo-group">
+                <img src="{{ url_for('static', filename='img/rpl_left.png') }}" alt="РПЛ" class="rpl-logo-side">
+                <img src="{{ url_for('static', filename='img/rpl.png') }}" alt="РПЛ" class="rpl-logo-main">
+                <img src="{{ url_for('static', filename='img/rpl_right.png') }}" alt="РПЛ" class="rpl-logo-side">
+            </div>
+        </div>
+
+        <div class="welcome-content">
+            <div class="welcome-card">
+                <h2>Возможности для зарегистрированных пользователей:</h2>
+                <ul class="features-list">
+                    <li>Просмотр полной турнирной таблицы</li>
+                    <li>Информация о всех клубах РПЛ</li>
+                    <li>Результаты матчей текущего тура</li>
+                    <li>Тесты на знание клубов и истории РПЛ</li>
+                    <li>Персонализированный профиль с вашим любимым клубом</li>
+                </ul>
+            </div>
+
+            <div class="welcome-card">
+                <h2>Присоединяйтесь к сообществу болельщиков!</h2>
+                <div class="action-buttons">
+                    <a href="{{ url_for('register') }}" class="btn-register">Зарегистрироваться</a>
+                    <a href="{{ url_for('login') }}" class="btn-login">Войти</a>
+                </div>
+                <p class="small-text">Уже зарегистрированы? Войдите в свой аккаунт</p>
+            </div>
+
+            <div class="welcome-card">
+                <h2>Пример таблицы РПЛ</h2>
+                <div class="table-preview">
+                    <div class="table-row header">
+                        <div>№</div>
+                        <div>Команда</div>
+                        <div>О</div>
+                    </div>
+                    <div class="table-row">
+                        <div>1</div>
+                        <div>Краснодар</div>
+                        <div>50</div>
+                    </div>
+                    <div class="table-row">
+                        <div>2</div>
+                        <div>Зенит</div>
+                        <div>45</div>
+                    </div>
+                    <div class="table-row">
+                        <div>3</div>
+                        <div>ЦСКА</div>
+                        <div>42</div>
+                    </div>
+                    <div class="table-row more-teams">
+                        <div colspan="3">И еще 13 команд...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     {% if current_user.is_authenticated %}
     <div class="profile-header">
         {% if current_user.avatar %}
@@ -15,14 +79,6 @@
         <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="profile-avatar">
         {% endif %}
         <a href="{{ url_for('profile') }}" class="profile-link">Профиль</a>
-    </div>
-    {% endif %}
-
-    {% if not current_user.is_authenticated %}
-    <h1>Добро пожаловать на сайт фанатов РПЛ!</h1>
-    <div class="public-welcome">
-        <p>Вы можете Посмотреть турнирную таблицу.</p>
-        <p>Для доступа ко всем функциям сайта, пожалуйста, войдите или зарегистрируйтесь ниже.</p>
     </div>
     {% endif %}
 
@@ -41,12 +97,10 @@
         {% endif %}
         <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
         {% else %}
-        <a href="{{ url_for('login') }}">Войти</a>
-        <a href="{{ url_for('register') }}">Зарегистрироваться</a>
         {% endif %}
     </div>
 
-    {% if tour_matches and (current_user.is_authenticated or show_public_content) %}
+    {% if tour_matches and current_user.is_authenticated %}
     <div class="matches-container">
         <h2>Матчи {{ current_tour }} тура</h2>
         <div class="matches-grid">
@@ -70,7 +124,6 @@
         </div>
     </div>
     {% endif %}
-
 
     {% set clubs = [
     {'name': 'Акрон', 'city': 'Тольятти', 'stadium': 'Солидарность Самара Арена', 'places': '45 000', 'year': '2018',
@@ -154,7 +207,7 @@
     'official_site': 'https://pfc-cska.com', 'wikipedia': 'https://ru.wikipedia.org/wiki/ЦСКА_(футбольный_клуб,_Москва)'}
     ] %}
 
-    {% if current_user.is_authenticated or show_public_content %}
+    {% if current_user.is_authenticated %}
     <h2>Турнирная таблица РПЛ</h2>
     <table>
         <tr>
