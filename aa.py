@@ -534,7 +534,7 @@ def profile():
                 return redirect(url_for('profile'))
 
         new_name = request.form.get('name')
-        about_text = request.form.get('about', '')[:250]  # Ограничиваем до 250 символов
+        about_text = request.form.get('about', '')[:250] 
 
         if new_name and new_name != current_user.name:
             current_user.name = new_name
