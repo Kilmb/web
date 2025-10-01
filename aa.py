@@ -13,6 +13,8 @@ from pathlib import Path
 from data import db_session
 from api import blueprint
 
+api = '8ftkpzresyxo7dqz'
+
 # Инициализация Flask-приложения
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
