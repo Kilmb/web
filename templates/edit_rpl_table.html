@@ -2,12 +2,27 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Пользователи</title>
+    <title>Редактирование таблицы РПЛ</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/rpl_table.css') }}">
 </head>
 <body>
     <a href="{{ url_for('home') }}">На главную</a>
     <h1>Редактирование таблицы РПЛ</h1>
+
+    <!-- Кнопка для обновления из API -->
+    <div style="margin-bottom: 20px;">
+        <form action="{{ url_for('update_table_from_api') }}" method="POST" style="display: inline;">
+            <button type="submit" style="background: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">
+                Обновить из API sstats.net
+            </button>
+        </form>
+        <form action="{{ url_for('restore_table') }}" method="POST" style="display: inline; margin-left: 10px;">
+    <button type="submit" style="background: #ffc107; color: black; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">
+        Восстановить таблицу
+    </button>
+</form>
+        <span style="margin-left: 10px; color: #666;">Автоматически обновит таблицу актуальными данными</span>
+    </div>
 
     <form method="POST">
         <table>
