@@ -4,16 +4,15 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_migrate import Migrate
-import sqlalchemy as sa
-import sqlalchemy.orm as orm
+from sqlalchemy import func
 from datetime import datetime
 import json
 import os
 from pathlib import Path
-from data import db_session
-from api import blueprint
 
-api = '8ftkpzresyxo7dqz'
+import requests
+import csv
+from io import StringIO
 
 # Инициализация Flask-приложения
 app = Flask(__name__)
@@ -24,14 +23,12 @@ app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['CURRENT_TOUR_KEY'] = 'current_tour'  # Ключ для хранения текущего тура
 
-app.register_blueprint(blueprint)
 # Создание папки для загрузок, если её нет
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
-SqlAlchemyBase = orm.declarative_base()
 TOUR_CONFIG_PATH = Path(__file__).parent / 'current_tour.json'  # Путь к файлу с текущим туром
 
 login_manager = LoginManager(app)
@@ -61,7 +58,6 @@ RPL_CLUBS = [
 
 def main():
     # Основная функция инициализации приложения
-    db_session.global_init("db/football.db")
     app.run()
 
 
@@ -76,7 +72,6 @@ class Password_inkognito:
     def encrypt_password(self, password):
         return generate_password_hash(password)
 
-
     def verify_password(self, hashed_password, input_password):
         return check_password_hash(hashed_password, input_password)
 
@@ -84,80 +79,303 @@ class Password_inkognito:
 pw_secure = Password_inkognito()
 
 
-class User(SqlAlchemyBase, UserMixin):
+class User(db.Model, UserMixin):
     __tablename__ = 'users'
 
-    id = sa.Column(sa.Integer, primary_key=True)
-    name = sa.Column(sa.String(100), nullable=False)
-    email = sa.Column(sa.String(120), unique=True, nullable=False)
-    club = sa.Column(sa.String(50), nullable=False)
-    password = sa.Column(sa.String(200), nullable=False)
-    is_admin = sa.Column(sa.Boolean, default=False)
-    avatar = sa.Column(sa.String(200))
-    about = sa.Column(sa.String(250))
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    club = db.Column(db.String(50), nullable=False)
+    password = db.Column(db.String(200), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
+    avatar = db.Column(db.String(200))
+    about = db.Column(db.String(250))
 
     def __repr__(self):
         return f"User('{self.name}', '{self.email}')"
 
 
-class RPLTable(SqlAlchemyBase):
+class RPLTable(db.Model):
     __tablename__ = 'rpl_table'
 
-    id = sa.Column(sa.Integer, primary_key=True)
-    position = sa.Column(sa.Integer, nullable=False)
-    team = sa.Column(sa.String(50), nullable=False, unique=True)
-    matches = sa.Column(sa.Integer, default=0)
-    wins = sa.Column(sa.Integer, default=0)
-    draws = sa.Column(sa.Integer, default=0)
-    losses = sa.Column(sa.Integer, default=0)
-    goals_for = sa.Column(sa.Integer, default=0)
-    goals_against = sa.Column(sa.Integer, default=0)
-    points = sa.Column(sa.Integer, default=0)
+    id = db.Column(db.Integer, primary_key=True)
+    position = db.Column(db.Integer, nullable=False)
+    team = db.Column(db.String(50), nullable=False, unique=True)
+    matches = db.Column(db.Integer, default=0)
+    wins = db.Column(db.Integer, default=0)
+    draws = db.Column(db.Integer, default=0)
+    losses = db.Column(db.Integer, default=0)
+    goals_for = db.Column(db.Integer, default=0)
+    goals_against = db.Column(db.Integer, default=0)
+    points = db.Column(db.Integer, default=0)
 
     def __repr__(self):
         return f"RPLTable('{self.team}', {self.points})"
 
 
-class Match(SqlAlchemyBase):
+class Match(db.Model):
     __tablename__ = 'matches'
 
-    id = sa.Column(sa.Integer, primary_key=True)
-    home_team = sa.Column(sa.String(50), nullable=False)
-    away_team = sa.Column(sa.String(50), nullable=False)
-    match_date = sa.Column(sa.DateTime, nullable=False)
-    home_score = sa.Column(sa.Integer, nullable=True)
-    away_score = sa.Column(sa.Integer, nullable=True)
-    is_played = sa.Column(sa.Boolean, default=False)
-    tour_number = sa.Column(sa.Integer, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)
+    home_team = db.Column(db.String(50), nullable=False)
+    away_team = db.Column(db.String(50), nullable=False)
+    match_date = db.Column(db.DateTime, nullable=False)
+    home_score = db.Column(db.Integer, nullable=True)
+    away_score = db.Column(db.Integer, nullable=True)
+    is_played = db.Column(db.Boolean, default=False)
+    tour_number = db.Column(db.Integer, nullable=False)
 
     def __repr__(self):
         return f"Match('{self.home_team} vs {self.away_team}', {self.match_date})"
 
 
-class ClubTest(SqlAlchemyBase):
+class ClubTest(db.Model):
     __tablename__ = 'club_tests'
 
-    id = sa.Column(sa.Integer, primary_key=True)
-    question = sa.Column(sa.String(500), nullable=False)
-    correct_answer = sa.Column(sa.String(200), nullable=False)
-    option1 = sa.Column(sa.String(200), nullable=False)
-    option2 = sa.Column(sa.String(200), nullable=False)
-    option3 = sa.Column(sa.String(200), nullable=False)
-    option4 = sa.Column(sa.String(200), nullable=False)
-    difficulty = sa.Column(sa.Integer, default=1)
+    id = db.Column(db.Integer, primary_key=True)
+    question = db.Column(db.String(500), nullable=False)
+    correct_answer = db.Column(db.String(200), nullable=False)
+    option1 = db.Column(db.String(200), nullable=False)
+    option2 = db.Column(db.String(200), nullable=False)
+    option3 = db.Column(db.String(200), nullable=False)
+    option4 = db.Column(db.String(200), nullable=False)
+    difficulty = db.Column(db.Integer, default=1)
 
 
-class TestResult(SqlAlchemyBase):
+class TestResult(db.Model):
     __tablename__ = 'test_results'
 
-    id = sa.Column(sa.Integer, primary_key=True)
-    user_id = sa.Column(sa.Integer, sa.ForeignKey('users.id'))
-    test_type = sa.Column(sa.String(10))
-    score = sa.Column(sa.Integer)
-    total = sa.Column(sa.Integer)
-    date = sa.Column(sa.DateTime, default=datetime.now)
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    test_type = db.Column(db.String(10))
+    score = db.Column(db.Integer)
+    total = db.Column(db.Integer)
+    date = db.Column(db.DateTime, default=datetime.now)
 
-    user = orm.relationship('User')
+    user = db.relationship('User')
+
+
+def map_team_name(api_team_name):
+    """
+    Преобразует названия команд из API в названия, используемые на сайте
+    """
+    team_mapping = {
+        # Добавьте здесь соответствия названий
+        # "Название из API": "Название на сайте",
+        "Zenit": "Зенит",
+        "Spartak Moscow": "Спартак",
+        "CSKA Moscow": "ЦСКА",
+        "Lokomotiv Moscow": "Локомотив",
+        "FC Krasnodar": "Краснодар",
+        "Dynamo": "Динамо Москва",
+        "FC Rostov": "Ростов",
+        "Akhmat": "Ахмат",
+        "Sochi": "Сочи",
+        "Krylya Sovetov": "Крылья Советов",
+        "FC Orenburg": "Оренбург",
+        "Akron": "Акрон",
+        "Dinamo Makhachkala": "Динамо Махачкала",
+        "Nizhny Novgorod": "Пари НН",
+        "Baltika": "Балтика",
+        "Rubin": "Рубин"
+    }
+
+    return team_mapping.get(api_team_name, api_team_name)
+
+
+def update_rpl_table_from_sstats():
+    """
+    Обновляет таблицу РПЛ из API sstats.net
+    """
+    try:
+        print("=== НАЧАЛО ОБНОВЛЕНИЯ ТАБЛИЦЫ ===")
+
+        # Запрос к API sstats.net - используем правильные названия полей
+        url = "https://api.sstats.net/games/season-table"
+        params = {
+            'league': 235,  # РПЛ
+            'year': 2025,  # Текущий сезон 2024-2025
+            'format': 'csv',
+            'fields': 'Rank,TeamName,Wins,Draws,Loss,ScoreDiff,Points',
+            'orderField': 'Rank'
+        }
+
+        headers = {'apikey': '8ftkpzresyxo7dqz'}
+
+        print("1. Отправка запроса к API...")
+        print(f"   URL: {url}")
+        print(f"   Параметры: {params}")
+
+        response = requests.get(url, params=params, headers=headers, timeout=30)
+        print(f"2. Статус ответа: {response.status_code}")
+
+        response.raise_for_status()
+
+        print("3. Получен успешный ответ от API")
+        print(f"4. Первые 500 символов ответа: {response.text[:500]}")
+
+        # Парсинг CSV
+        csv_data = StringIO(response.text)
+        reader = csv.DictReader(csv_data)
+
+        print("5. Начинаем парсинг CSV...")
+
+        # ВЫВОДИМ ЗАГОЛОВКИ CSV ДЛЯ ДЕБАГА
+        if reader.fieldnames:
+            print(f"6. Заголовки CSV: {reader.fieldnames}")
+        else:
+            print("6. Нет заголовков в CSV!")
+
+        rows = list(reader)
+        print(f"7. Прочитано {len(rows)} строк из CSV")
+
+        if not rows:
+            return False, "CSV файл пустой"
+
+        # ВЫВОДИМ ПЕРВУЮ СТРОКУ ДЛЯ ПРОВЕРКИ СТРУКТУРЫ
+        if rows:
+            print(f"8. Первая строка данных: {rows[0]}")
+
+        # Очищаем текущую таблицу
+        print("9. Очищаем старую таблицу...")
+        db.session.query(RPLTable).delete()
+
+        # Добавляем новые данные
+        teams_added = 0
+        print("10. Добавляем новые данные...")
+
+        # Функция для преобразования названий команд из API в названия на сайте
+        def map_team_name(api_name):
+            mapping = {
+                "CSKA Moscow": "ЦСКА",
+                "FC Krasnodar": "Краснодар",
+                "Lokomotiv": "Локомотив",
+                "Zenit": "Зенит",
+                "Baltika": "Балтика",
+                "Spartak Moscow": "Спартак",
+                "Rubin": "Рубин",
+                "Dynamo": "Динамо Москва",
+                "Akhmat": "Ахмат",
+                "FC Rostov": "Ростов",
+                "Krylia Sovetov": "Крылья Советов",
+                "Dinamo Makhachkala": "Динамо Махачкала",
+                "Akron": "Акрон",
+                "FC Orenburg": "Оренбург",
+                "Nizhny Novgorod": "Пари НН",
+                "FC Sochi": "Сочи"
+            }
+            return mapping.get(api_name, api_name)
+
+        for i, row in enumerate(rows):
+            try:
+                # ОПРЕДЕЛЯЕМ КАК НАЗЫВАЮТСЯ КОЛОНКИ В CSV
+                team_name_key = None
+                rank_key = None
+                wins_key = None
+                draws_key = None
+                loss_key = None
+                score_diff_key = None
+                points_key = None
+
+                # Ищем правильные названия колонок
+                for key in row.keys():
+                    key_lower = key.lower()
+                    if 'team' in key_lower:
+                        team_name_key = key
+                    elif 'rank' in key_lower:
+                        rank_key = key
+                    elif 'win' in key_lower:
+                        wins_key = key
+                    elif 'draw' in key_lower:
+                        draws_key = key
+                    elif 'loss' in key_lower:
+                        loss_key = key
+                    elif 'score' in key_lower or 'diff' in key_lower:
+                        score_diff_key = key
+                    elif 'point' in key_lower:
+                        points_key = key
+
+                print(
+                    f"   Найдены колонки: team={team_name_key}, rank={rank_key}, wins={wins_key}, draws={draws_key}, loss={loss_key}, score_diff={score_diff_key}, points={points_key}")
+
+                if not team_name_key:
+                    print(f"   ❌ Не найдена колонка с названием команды")
+                    continue
+
+                # Преобразуем название команды
+                team_name = map_team_name(row[team_name_key])
+                print(f"   Обрабатываем команду: {row[team_name_key]} -> {team_name}")
+
+                # Обрабатываем разницу голов
+                goals_difference = 0
+                if score_diff_key and row[score_diff_key]:
+                    try:
+                        goals_difference = int(row[score_diff_key])
+                    except ValueError:
+                        goals_difference = 0
+
+                # Упрощенная логика для голов (в реальном приложении нужно получать из API)
+                base_goals = 15  # Базовое значение
+                if goals_difference >= 0:
+                    goals_for = base_goals + goals_difference
+                    goals_against = base_goals
+                else:
+                    goals_for = base_goals
+                    goals_against = base_goals - goals_difference
+
+                # Получаем остальные данные
+                position = int(row[rank_key]) if rank_key and row[rank_key] else i + 1
+                wins = int(row[wins_key]) if wins_key and row[wins_key] else 0
+                draws = int(row[draws_key]) if draws_key and row[draws_key] else 0
+                losses = int(row[loss_key]) if loss_key and row[loss_key] else 0
+                points = int(row[points_key]) if points_key and row[points_key] else 0
+
+                # Вычисляем количество матчей
+                matches = wins + draws + losses
+
+                team = RPLTable(
+                    position=position,
+                    team=team_name,
+                    matches=matches,
+                    wins=wins,
+                    draws=draws,
+                    losses=losses,
+                    goals_for=goals_for,
+                    goals_against=goals_against,
+                    points=points
+                )
+
+                db.session.add(team)
+                teams_added += 1
+                print(f"   ✅ Добавлена команда: {team_name} - {points} очков")
+
+            except Exception as e:
+                print(f"   ❌ Ошибка при обработке строки {i + 1}: {e}")
+                print(f"   Данные строки: {row}")
+                continue
+
+        print("11. Коммитим изменения в базу...")
+        db.session.commit()
+        print(f"12. Успешно добавлено {teams_added} команд")
+
+        # Выводим результат для проверки
+        teams_in_db = db.session.query(RPLTable).order_by(RPLTable.position).all()
+        print("=== РЕЗУЛЬТАТ В БАЗЕ ===")
+        for team in teams_in_db:
+            print(f"{team.position}. {team.team} - {team.points} очков")
+
+        return True, f"Таблица успешно обновлена. Добавлено {teams_added} команд"
+
+    except requests.exceptions.HTTPError as e:
+        print(f"❌ HTTP ошибка: {e}")
+        print(f"   URL: {e.response.url}")
+        print(f"   Статус: {e.response.status_code}")
+        print(f"   Ответ: {e.response.text}")
+        return False, f"Ошибка API: {e.response.status_code}"
+    except Exception as e:
+        print(f"❌ Общая ошибка: {e}")
+        db.session.rollback()
+        return False, f"Ошибка при обновлении таблицы: {e}"
 
 
 # Загружает пользователя
@@ -444,6 +662,43 @@ def set_current_tour():
     return redirect(url_for('edit_matches'))
 
 
+@app.route('/restore_table', methods=['POST'])
+@login_required
+def restore_table():
+    """
+    Восстановление таблицы с исходными командами (для админов)
+    """
+    if not current_user.is_admin:
+        return redirect(url_for('home'))
+
+    try:
+        # Очищаем таблицу
+        db.session.query(RPLTable).delete()
+
+        # Восстанавливаем исходные команды
+        for i, club in enumerate(RPL_CLUBS, 1):
+            team = RPLTable(
+                position=i,
+                team=club,
+                matches=0,
+                wins=0,
+                draws=0,
+                losses=0,
+                goals_for=0,
+                goals_against=0,
+                points=0
+            )
+            db.session.add(team)
+
+        db.session.commit()
+        flash("Таблица восстановлена с исходными командами", 'success')
+
+    except Exception as e:
+        flash(f"Ошибка при восстановлении таблицы: {e}", 'danger')
+
+    return redirect(url_for('edit_rpl_table'))
+
+
 # Изменение матчей
 @app.route('/edit_matches')
 @login_required
@@ -660,6 +915,45 @@ def edit_rpl_table():
     return render_template('edit_rpl_table.html', table=table)
 
 
+# Обновление таблицы из API
+@app.route('/update_table_from_api', methods=['POST'])
+@login_required
+def update_table_from_api():
+    """
+    Обновление таблицы из API sstats.net (для админов)
+    """
+    if not current_user.is_admin:
+        flash('Только администраторы могут обновлять таблицу из API', 'danger')
+        return redirect(url_for('home'))
+
+    success, message = update_rpl_table_from_sstats()
+
+    if success:
+        flash(message, 'success')
+    else:
+        flash(message, 'danger')
+
+    return redirect(url_for('edit_rpl_table'))
+
+
+# Тестовый endpoint для проверки API
+@app.route('/api/test_connection')
+def test_connection():
+    """
+    Тестовый endpoint для проверки подключения к API
+    """
+    try:
+        url = "https://api.sstats.net/account/info"
+        headers = {'apikey': '8ftkpzresyxo7dqz'}
+
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        return {'status': 'success', 'data': response.json()}
+    except Exception as e:
+        return {'status': 'error', 'message': str(e)}, 500
+
+
 # Стрелочки при смене позиций
 @app.route('/move_up/<int:position>')
 @login_required
@@ -672,7 +966,6 @@ def move_up(position):
         team2 = db.session.query(RPLTable).filter_by(position=position - 1).first()
 
         if team1 and team2:
-
             team1.position, team2.position = team2.position, team1.position
             db.session.commit()
 
@@ -685,7 +978,7 @@ def move_down(position):
     if not current_user.is_admin:
         return redirect(url_for('home'))
 
-    max_position = db.session.query(sa.func.max(RPLTable.position)).scalar()
+    max_position = db.session.query(func.max(RPLTable.position)).scalar()
 
     if position < max_position:
         team1 = db.session.query(RPLTable).filter_by(position=position).first()
@@ -707,8 +1000,8 @@ def logout():
 
 if __name__ == '__main__':
     with app.app_context():
-        # Создание всех таблиц
-        SqlAlchemyBase.metadata.create_all(db.engine)
+        # Создание всех таблиц с использованием Flask-SQLAlchemy
+        db.create_all()
 
         # Создание администратора, если его нет
         if not db.session.query(User).filter_by(email=ADMIN_EMAIL).first():
@@ -768,4 +1061,3 @@ if __name__ == '__main__':
 
         # Запуск приложения в режиме отладки
     app.run(host='127.0.0.1', port=5000, debug=True)
-
