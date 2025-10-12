@@ -8,7 +8,6 @@ from datetime import datetime
 import json
 import os
 from pathlib import Path
-
 import requests
 import csv
 from io import StringIO
@@ -161,7 +160,7 @@ def update_rpl_table_from_sstats():
             'league': 235,
             'year': 2025,
             'format': 'csv',
-            'fields': 'Rank,TeamName,Wins,Draws,Loss,ScoreDiff,Points',
+            'fields': 'Rank,TeamName,Wins,Draws,Loss,GoalsScored,GoalsMissed,Points',
             'orderField': 'Rank'
         }
 
@@ -177,6 +176,7 @@ def update_rpl_table_from_sstats():
         rows = list(reader)
         db.session.query(RPLTable).delete()
         teams_added = 0
+
         def map_team_name(api_name):
             mapping = {
                 "CSKA Moscow": "ЦСКА",
@@ -205,7 +205,8 @@ def update_rpl_table_from_sstats():
                 wins_key = None
                 draws_key = None
                 loss_key = None
-                score_diff_key = None
+                goals_scored_key = None
+                goals_missed_key = None
                 points_key = None
 
                 for key in row.keys():
@@ -220,32 +221,21 @@ def update_rpl_table_from_sstats():
                         draws_key = key
                     elif 'loss' in key_lower:
                         loss_key = key
-                    elif 'score' in key_lower or 'diff' in key_lower:
-                        score_diff_key = key
+                    elif 'score' in key_lower:
+                        goals_scored_key = key
+                    elif 'goals' in key_lower:
+                        goals_missed_key = key
                     elif 'point' in key_lower:
                         points_key = key
-
                 # Преобразуем название команды
                 team_name = map_team_name(row[team_name_key])
-                goals_difference = 0
-                if score_diff_key and row[score_diff_key]:
-                    try:
-                        goals_difference = int(row[score_diff_key])
-                    except ValueError:
-                        goals_difference = 0
-
-                base_goals = 15
-                if goals_difference >= 0:
-                    goals_for = base_goals + goals_difference
-                    goals_against = base_goals
-                else:
-                    goals_for = base_goals
-                    goals_against = base_goals - goals_difference
 
                 position = int(row[rank_key]) if rank_key and row[rank_key] else i + 1
                 wins = int(row[wins_key]) if wins_key and row[wins_key] else 0
                 draws = int(row[draws_key]) if draws_key and row[draws_key] else 0
                 losses = int(row[loss_key]) if loss_key and row[loss_key] else 0
+                goals_scored = int(row[goals_scored_key]) if goals_scored_key and row[goals_scored_key] else 0
+                goals_missed = int(row[goals_missed_key]) if goals_missed_key and row[goals_missed_key] else 0
                 points = int(row[points_key]) if points_key and row[points_key] else 0
 
                 matches = wins + draws + losses
@@ -257,8 +247,8 @@ def update_rpl_table_from_sstats():
                     wins=wins,
                     draws=draws,
                     losses=losses,
-                    goals_for=goals_for,
-                    goals_against=goals_against,
+                    goals_for=goals_scored,
+                    goals_against=goals_missed,
                     points=points
                 )
 
