@@ -4,7 +4,6 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_migrate import Migrate
-from sqlalchemy import func
 from datetime import datetime
 import json
 import os
@@ -155,46 +154,12 @@ class TestResult(db.Model):
     user = db.relationship('User')
 
 
-def map_team_name(api_team_name):
-    """
-    Преобразует названия команд из API в названия, используемые на сайте
-    """
-    team_mapping = {
-        # Добавьте здесь соответствия названий
-        # "Название из API": "Название на сайте",
-        "Zenit": "Зенит",
-        "Spartak Moscow": "Спартак",
-        "CSKA Moscow": "ЦСКА",
-        "Lokomotiv Moscow": "Локомотив",
-        "FC Krasnodar": "Краснодар",
-        "Dynamo": "Динамо Москва",
-        "FC Rostov": "Ростов",
-        "Akhmat": "Ахмат",
-        "Sochi": "Сочи",
-        "Krylya Sovetov": "Крылья Советов",
-        "FC Orenburg": "Оренбург",
-        "Akron": "Акрон",
-        "Dinamo Makhachkala": "Динамо Махачкала",
-        "Nizhny Novgorod": "Пари НН",
-        "Baltika": "Балтика",
-        "Rubin": "Рубин"
-    }
-
-    return team_mapping.get(api_team_name, api_team_name)
-
-
 def update_rpl_table_from_sstats():
-    """
-    Обновляет таблицу РПЛ из API sstats.net
-    """
     try:
-        print("=== НАЧАЛО ОБНОВЛЕНИЯ ТАБЛИЦЫ ===")
-
-        # Запрос к API sstats.net - используем правильные названия полей
         url = "https://api.sstats.net/games/season-table"
         params = {
-            'league': 235,  # РПЛ
-            'year': 2025,  # Текущий сезон 2024-2025
+            'league': 235,
+            'year': 2025,
             'format': 'csv',
             'fields': 'Rank,TeamName,Wins,Draws,Loss,ScoreDiff,Points',
             'orderField': 'Rank'
@@ -202,49 +167,16 @@ def update_rpl_table_from_sstats():
 
         headers = {'apikey': '8ftkpzresyxo7dqz'}
 
-        print("1. Отправка запроса к API...")
-        print(f"   URL: {url}")
-        print(f"   Параметры: {params}")
-
         response = requests.get(url, params=params, headers=headers, timeout=30)
-        print(f"2. Статус ответа: {response.status_code}")
 
         response.raise_for_status()
 
-        print("3. Получен успешный ответ от API")
-        print(f"4. Первые 500 символов ответа: {response.text[:500]}")
-
-        # Парсинг CSV
         csv_data = StringIO(response.text)
         reader = csv.DictReader(csv_data)
 
-        print("5. Начинаем парсинг CSV...")
-
-        # ВЫВОДИМ ЗАГОЛОВКИ CSV ДЛЯ ДЕБАГА
-        if reader.fieldnames:
-            print(f"6. Заголовки CSV: {reader.fieldnames}")
-        else:
-            print("6. Нет заголовков в CSV!")
-
         rows = list(reader)
-        print(f"7. Прочитано {len(rows)} строк из CSV")
-
-        if not rows:
-            return False, "CSV файл пустой"
-
-        # ВЫВОДИМ ПЕРВУЮ СТРОКУ ДЛЯ ПРОВЕРКИ СТРУКТУРЫ
-        if rows:
-            print(f"8. Первая строка данных: {rows[0]}")
-
-        # Очищаем текущую таблицу
-        print("9. Очищаем старую таблицу...")
         db.session.query(RPLTable).delete()
-
-        # Добавляем новые данные
         teams_added = 0
-        print("10. Добавляем новые данные...")
-
-        # Функция для преобразования названий команд из API в названия на сайте
         def map_team_name(api_name):
             mapping = {
                 "CSKA Moscow": "ЦСКА",
@@ -268,7 +200,6 @@ def update_rpl_table_from_sstats():
 
         for i, row in enumerate(rows):
             try:
-                # ОПРЕДЕЛЯЕМ КАК НАЗЫВАЮТСЯ КОЛОНКИ В CSV
                 team_name_key = None
                 rank_key = None
                 wins_key = None
@@ -277,7 +208,6 @@ def update_rpl_table_from_sstats():
                 score_diff_key = None
                 points_key = None
 
-                # Ищем правильные названия колонок
                 for key in row.keys():
                     key_lower = key.lower()
                     if 'team' in key_lower:
@@ -295,18 +225,8 @@ def update_rpl_table_from_sstats():
                     elif 'point' in key_lower:
                         points_key = key
 
-                print(
-                    f"   Найдены колонки: team={team_name_key}, rank={rank_key}, wins={wins_key}, draws={draws_key}, loss={loss_key}, score_diff={score_diff_key}, points={points_key}")
-
-                if not team_name_key:
-                    print(f"   ❌ Не найдена колонка с названием команды")
-                    continue
-
                 # Преобразуем название команды
                 team_name = map_team_name(row[team_name_key])
-                print(f"   Обрабатываем команду: {row[team_name_key]} -> {team_name}")
-
-                # Обрабатываем разницу голов
                 goals_difference = 0
                 if score_diff_key and row[score_diff_key]:
                     try:
@@ -314,8 +234,7 @@ def update_rpl_table_from_sstats():
                     except ValueError:
                         goals_difference = 0
 
-                # Упрощенная логика для голов (в реальном приложении нужно получать из API)
-                base_goals = 15  # Базовое значение
+                base_goals = 15
                 if goals_difference >= 0:
                     goals_for = base_goals + goals_difference
                     goals_against = base_goals
@@ -323,14 +242,12 @@ def update_rpl_table_from_sstats():
                     goals_for = base_goals
                     goals_against = base_goals - goals_difference
 
-                # Получаем остальные данные
                 position = int(row[rank_key]) if rank_key and row[rank_key] else i + 1
                 wins = int(row[wins_key]) if wins_key and row[wins_key] else 0
                 draws = int(row[draws_key]) if draws_key and row[draws_key] else 0
                 losses = int(row[loss_key]) if loss_key and row[loss_key] else 0
                 points = int(row[points_key]) if points_key and row[points_key] else 0
 
-                # Вычисляем количество матчей
                 matches = wins + draws + losses
 
                 team = RPLTable(
@@ -347,20 +264,14 @@ def update_rpl_table_from_sstats():
 
                 db.session.add(team)
                 teams_added += 1
-                print(f"   ✅ Добавлена команда: {team_name} - {points} очков")
 
             except Exception as e:
                 print(f"   ❌ Ошибка при обработке строки {i + 1}: {e}")
                 print(f"   Данные строки: {row}")
                 continue
 
-        print("11. Коммитим изменения в базу...")
         db.session.commit()
-        print(f"12. Успешно добавлено {teams_added} команд")
-
-        # Выводим результат для проверки
         teams_in_db = db.session.query(RPLTable).order_by(RPLTable.position).all()
-        print("=== РЕЗУЛЬТАТ В БАЗЕ ===")
         for team in teams_in_db:
             print(f"{team.position}. {team.team} - {team.points} очков")
 
@@ -665,36 +576,26 @@ def set_current_tour():
 @app.route('/restore_table', methods=['POST'])
 @login_required
 def restore_table():
-    """
-    Восстановление таблицы с исходными командами (для админов)
-    """
     if not current_user.is_admin:
         return redirect(url_for('home'))
 
-    try:
-        # Очищаем таблицу
-        db.session.query(RPLTable).delete()
+    db.session.query(RPLTable).delete()
 
-        # Восстанавливаем исходные команды
-        for i, club in enumerate(RPL_CLUBS, 1):
-            team = RPLTable(
-                position=i,
-                team=club,
-                matches=0,
-                wins=0,
-                draws=0,
-                losses=0,
-                goals_for=0,
-                goals_against=0,
-                points=0
-            )
-            db.session.add(team)
+    for i, club in enumerate(RPL_CLUBS, 1):
+        team = RPLTable(
+            position=i,
+            team=club,
+            matches=0,
+            wins=0,
+            draws=0,
+            losses=0,
+            goals_for=0,
+            goals_against=0,
+            points=0
+        )
+        db.session.add(team)
 
-        db.session.commit()
-        flash("Таблица восстановлена с исходными командами", 'success')
-
-    except Exception as e:
-        flash(f"Ошибка при восстановлении таблицы: {e}", 'danger')
+    db.session.commit()
 
     return redirect(url_for('edit_rpl_table'))
 
@@ -739,7 +640,6 @@ def update_match(match_id):
             match.is_played = False
 
         db.session.commit()
-        update_team_positions()
     except Exception as e:
         db.session.rollback()
 
@@ -860,21 +760,6 @@ def delete_user(user_id):
     return redirect(url_for('show_users'))
 
 
-@app.route('/rpl_table')
-@login_required
-def show_rpl_table():
-    table = db.session.query(RPLTable).order_by(RPLTable.position).all()
-    return render_template('rpl_table.html', table=table)
-
-
-# Смена позиций в таблице
-def update_team_positions():
-    teams = db.session.query(RPLTable).order_by(RPLTable.points.desc()).all()
-    for index, team in enumerate(teams, start=1):
-        team.position = index
-    db.session.commit()
-
-
 @app.route('/edit_rpl_table', methods=['GET', 'POST'])
 @login_required
 def edit_rpl_table():
@@ -908,8 +793,7 @@ def edit_rpl_table():
             db.session.add(new_record)
 
         db.session.commit()
-        update_team_positions()
-        return redirect(url_for('show_rpl_table'))
+        return redirect(url_for('home'))
 
     table = db.session.query(RPLTable).order_by(RPLTable.position).all()
     return render_template('edit_rpl_table.html', table=table)
@@ -919,11 +803,7 @@ def edit_rpl_table():
 @app.route('/update_table_from_api', methods=['POST'])
 @login_required
 def update_table_from_api():
-    """
-    Обновление таблицы из API sstats.net (для админов)
-    """
     if not current_user.is_admin:
-        flash('Только администраторы могут обновлять таблицу из API', 'danger')
         return redirect(url_for('home'))
 
     success, message = update_rpl_table_from_sstats()
@@ -936,61 +816,6 @@ def update_table_from_api():
     return redirect(url_for('edit_rpl_table'))
 
 
-# Тестовый endpoint для проверки API
-@app.route('/api/test_connection')
-def test_connection():
-    """
-    Тестовый endpoint для проверки подключения к API
-    """
-    try:
-        url = "https://api.sstats.net/account/info"
-        headers = {'apikey': '8ftkpzresyxo7dqz'}
-
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
-
-        return {'status': 'success', 'data': response.json()}
-    except Exception as e:
-        return {'status': 'error', 'message': str(e)}, 500
-
-
-# Стрелочки при смене позиций
-@app.route('/move_up/<int:position>')
-@login_required
-def move_up(position):
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-
-    if position > 1:
-        team1 = db.session.query(RPLTable).filter_by(position=position).first()
-        team2 = db.session.query(RPLTable).filter_by(position=position - 1).first()
-
-        if team1 and team2:
-            team1.position, team2.position = team2.position, team1.position
-            db.session.commit()
-
-    return redirect(url_for('show_rpl_table'))
-
-
-@app.route('/move_down/<int:position>')
-@login_required
-def move_down(position):
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-
-    max_position = db.session.query(func.max(RPLTable.position)).scalar()
-
-    if position < max_position:
-        team1 = db.session.query(RPLTable).filter_by(position=position).first()
-        team2 = db.session.query(RPLTable).filter_by(position=position + 1).first()
-
-        if team1 and team2:
-            team1.position, team2.position = team2.position, team1.position
-            db.session.commit()
-
-    return redirect(url_for('show_rpl_table'))
-
-
 @app.route('/logout')
 @login_required
 def logout():
@@ -1000,10 +825,8 @@ def logout():
 
 if __name__ == '__main__':
     with app.app_context():
-        # Создание всех таблиц с использованием Flask-SQLAlchemy
         db.create_all()
 
-        # Создание администратора, если его нет
         if not db.session.query(User).filter_by(email=ADMIN_EMAIL).first():
             admin = User(
                 name='Admin',
