@@ -793,8 +793,6 @@ def edit_rpl_table():
 @app.route('/update_table_from_api', methods=['POST'])
 @login_required
 def update_table_from_api():
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
 
     success, message = update_rpl_table_from_sstats()
 
@@ -803,7 +801,7 @@ def update_table_from_api():
     else:
         flash(message, 'danger')
 
-    return redirect(url_for('edit_rpl_table'))
+    return redirect(url_for('home'))
 
 
 @app.route('/logout')
