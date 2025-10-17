@@ -84,6 +84,11 @@
 
     <div class="menu">
         {% if current_user.is_authenticated %}
+        <form action="{{ url_for('update_table_from_api') }}" method="POST" style="display: inline;">
+            <button type="submit" style="background: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">
+                Обновить таблицу
+            </button>
+        </form>
         {% if current_user.is_admin %}
         <a href="{{ url_for('show_users') }}">Список пользователей</a>
         <a href="{{ url_for('edit_rpl_table') }}">Редактировать таблицу</a>
