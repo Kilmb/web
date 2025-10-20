@@ -4,7 +4,7 @@ from flask_login import LoginManager, UserMixin, login_user, login_required, log
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from flask_migrate import Migrate
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import os
 from pathlib import Path
@@ -256,8 +256,8 @@ def update_rpl_table_from_sstats():
                 teams_added += 1
 
             except Exception as e:
-                print(f"   ❌ Ошибка при обработке строки {i + 1}: {e}")
-                print(f"   Данные строки: {row}")
+                print(f"Ошибка при обработке строки {i + 1}: {e}")
+                print(f"Данные строки: {row}")
                 continue
 
         db.session.commit()
@@ -265,18 +265,132 @@ def update_rpl_table_from_sstats():
         for team in teams_in_db:
             print(f"{team.position}. {team.team} - {team.points} очков")
 
-        return True, f"Таблица успешно обновлена. Добавлено {teams_added} команд"
+        return True, f"Добавлено {teams_added} команд"
 
     except requests.exceptions.HTTPError as e:
-        print(f"❌ HTTP ошибка: {e}")
-        print(f"   URL: {e.response.url}")
-        print(f"   Статус: {e.response.status_code}")
-        print(f"   Ответ: {e.response.text}")
+        print(f"HTTP ошибка: {e}")
+        print(f"URL: {e.response.url}")
+        print(f"Статус: {e.response.status_code}")
+        print(f"Ответ: {e.response.text}")
         return False, f"Ошибка API: {e.response.status_code}"
     except Exception as e:
-        print(f"❌ Общая ошибка: {e}")
+        print(f"Общая ошибка: {e}")
         db.session.rollback()
         return False, f"Ошибка при обновлении таблицы: {e}"
+
+
+def update_matches_from_sstats():
+    try:
+        current_tour = app.config['CURRENT_TOUR_KEY']
+
+        offset = (current_tour - 1) * 8
+
+        url = "https://api.sstats.net/games/list?"
+        params = {
+            'leagueId': 235,
+            'year': 2025,
+            'format': 'json',
+            'offset': offset,
+            'limit': 8
+        }
+
+        headers = {'apikey': '8ftkpzresyxo7dqz'}
+
+        response = requests.get(url, params=params, headers=headers, timeout=30)
+        response.raise_for_status()
+
+        data = response.json()
+
+        matches_data = data['data']
+        matches_added = 0
+        matches_updated = 0
+
+        def map_team_name(api_name):
+            mapping = {
+                "CSKA Moscow": "ЦСКА",
+                "FC Krasnodar": "Краснодар",
+                "Lokomotiv": "Локомотив",
+                "Zenit": "Зенит",
+                "Baltika": "Балтика",
+                "Spartak Moscow": "Спартак",
+                "Rubin": "Рубин",
+                "Dynamo": "Динамо Москва",
+                "Akhmat": "Ахмат",
+                "FC Rostov": "Ростов",
+                "Krylia Sovetov": "Крылья Советов",
+                "Dinamo Makhachkala": "Динамо Махачкала",
+                "Akron": "Акрон",
+                "FC Orenburg": "Оренбург",
+                "Nizhny Novgorod": "Пари НН",
+                "FC Sochi": "Сочи"
+            }
+            return mapping.get(api_name, api_name)
+
+        for match_data in matches_data:
+            try:
+                home_team_api = match_data['homeTeam']['name']
+                away_team_api = match_data['awayTeam']['name']
+
+                home_team = map_team_name(home_team_api)
+                away_team = map_team_name(away_team_api)
+
+                match_date_str = match_data['date']
+                match_date_utc = datetime.fromisoformat(match_date_str.replace('Z', '+00:00'))
+                match_date_msk = match_date_utc.replace(tzinfo=None) + timedelta(hours=3)
+                tour_number = current_tour
+
+                home_score = match_data.get('homeResult')
+                away_score = match_data.get('awayResult')
+
+                is_played = match_data.get('status') == 8
+
+                existing_match = db.session.query(Match).filter(
+                    Match.home_team == home_team,
+                    Match.away_team == away_team,
+                    Match.match_date == match_date_msk
+                ).first()
+
+                if existing_match:
+                    existing_match.home_score = home_score if is_played else None
+                    existing_match.away_score = away_score if is_played else None
+                    existing_match.is_played = is_played
+                    existing_match.tour_number = tour_number
+                    matches_updated += 1
+                else:
+                    new_match = Match(
+                        home_team=home_team,
+                        away_team=away_team,
+                        match_date=match_date_msk,
+                        home_score=home_score if is_played else None,
+                        away_score=away_score if is_played else None,
+                        is_played=is_played,
+                        tour_number=tour_number
+                    )
+                    db.session.add(new_match)
+                    matches_added += 1
+
+            except Exception as e:
+                print(f"Ошибка при обработке матча {home_team_api} vs {away_team_api}: {e}")
+                continue
+
+        db.session.commit()
+
+        print(
+            f" тур {current_tour}. Добавлено: {matches_added}, Обновлено: {matches_updated}")
+
+        return True, f"тур {current_tour}. Добавлено: {matches_added}, Обновлено: {matches_updated}"
+
+    except requests.exceptions.HTTPError as e:
+        print(f"HTTP ошибка: {e}")
+        return False, f"Ошибка API: {e.response.status_code}"
+    except requests.exceptions.RequestException as e:
+        print(f"Ошибка подключения: {e}")
+        return False, f"Ошибка подключения: {e}"
+    except Exception as e:
+        print(f"Общая ошибка: {e}")
+        db.session.rollback()
+        return False, f"Ошибка при обновлении матчей: {e}"
+
 
 
 # Загружает пользователя
@@ -632,6 +746,22 @@ def update_match(match_id):
         db.session.commit()
     except Exception as e:
         db.session.rollback()
+
+    return redirect(url_for('edit_matches'))
+
+
+@app.route('/update_matches_from_api', methods=['POST'])
+@login_required
+def update_matches_from_api():
+    if not current_user.is_admin:
+        return redirect(url_for('home'))
+
+    success, message = update_matches_from_sstats()
+
+    if success:
+        flash(message, 'success')
+    else:
+        flash(message, 'danger')
 
     return redirect(url_for('edit_matches'))
 
