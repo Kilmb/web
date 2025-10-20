@@ -1,3 +1,5 @@
+[file name]: home.html
+[file content begin]
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -5,6 +7,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Главная</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+    <!-- Добавляем Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
     {% if not current_user.is_authenticated %}
@@ -135,100 +139,117 @@
     'founded': '21.04.2018', 'first_name': 'Акрон','logo': 'Акрон.png', 'color1': '#D00027', 'color2': '#000000',
     'best_bombardier': 'Андрес Понсе', 'goals': '17', 'best_assistant': 'Константин Савичев', 'assists': '21',
     'official_site': 'https://fcakron.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Акрон_(футбольный_клуб)',
-    'transfermarkt': 'https://www.transfermarkt.world/akron-togliatti/startseite/verein/71985'},
+    'transfermarkt': 'https://www.transfermarkt.world/akron-togliatti/startseite/verein/71985',
+    'latitude': 53.2123, 'longitude': 50.2251},
 
     {'name': 'Ахмат', 'city': 'Грозный', 'stadium': 'Ахмат-Арена', 'places': '30 597', 'year': '2011',
     'founded': '11.05.1945', 'first_name': 'Динамо', 'logo': 'Ахмат.png', 'color1': '#228B22', 'color2': '#32CD32',
     'best_bombardier': 'Андрей Федьков', 'goals': '54', 'best_assistant': 'Олег Иванов', 'assists': '30',
     'official_site': 'https://fc-akhmat.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Ахмат_(футбольный_клуб)',
-    'transfermarkt': 'https://www.transfermarkt.world/akhmat-grozny/startseite/verein/3725'},
+    'transfermarkt': 'https://www.transfermarkt.world/akhmat-grozny/startseite/verein/3725',
+    'latitude': 43.3188, 'longitude': 45.6942},
 
     {'name': 'Динамо Махачкала', 'city': 'Махачкала', 'stadium': 'Анжи-Арена', 'places': '28 000', 'year': '2003',
     'founded': '11.04.1927', 'first_name': 'Динамо', 'logo': 'Динамо Мхч.png', 'color1': '#87CEFA', 'color2': '#1E90FF',
     'best_bombardier': 'Абакар Гаджиев', 'goals': '28', 'best_assistant': 'Абакар Гаджиев', 'assists': '22',
     'official_site': 'https://dinamo-mx.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Динамо_(футбольный_клуб,_Махачкала)',
-    'transfermarkt': 'https://www.transfermarkt.world/fk-makhachkala/startseite/verein/75231'},
+    'transfermarkt': 'https://www.transfermarkt.world/fk-makhachkala/startseite/verein/75231',
+    'latitude': 42.9831, 'longitude': 47.5047},
 
     {'name': 'Динамо Москва', 'city': 'Москва', 'stadium': 'ВТБ Арена', 'places': '25 716', 'year': '2018',
     'founded': '18.04.1923', 'first_name': 'Динамо', 'logo': 'Динамо.png', 'color1': '#4169E1', 'color2': '#00BFFF',
     'best_bombardier': 'Сергей Соловьев', 'goals': '152', 'best_assistant': 'Андрей Миронов', 'assists': '128',
     'official_site': 'https://fcdynamo.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Динамо_(футбольный_клуб,_Москва)',
-    'transfermarkt': 'https://www.transfermarkt.world/dinamo-moskau/startseite/verein/121'},
+    'transfermarkt': 'https://www.transfermarkt.world/dinamo-moskau/startseite/verein/121',
+    'latitude': 55.7919, 'longitude': 37.5597},
 
     {'name': 'Зенит', 'city': 'Санкт-Петербург', 'stadium': 'Газпром Арена', 'places': '68 134', 'year': '2017',
     'founded': '25.05.1925', 'first_name': 'Ленинградский металлический завод', 'logo': 'Зенит.png', 'color1': '#0000FF', 'color2': '#00BFFF',
     'best_bombardier': 'Александр Кержаковв', 'goals': '162', 'best_assistant': 'Андрей Аршавин', 'assists': '108',
     'official_site': 'https://fc-zenit.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Зенит_(футбольный_клуб)',
-    'transfermarkt': 'https://www.transfermarkt.world/zenit-st-petersburg/startseite/verein/964'},
+    'transfermarkt': 'https://www.transfermarkt.world/zenit-st-petersburg/startseite/verein/964',
+    'latitude': 59.9727, 'longitude': 30.2208},
 
     {'name': 'Краснодар', 'city': 'Краснодар', 'stadium': 'Озон Арена', 'places': '35 074', 'year': '2016',
     'founded': '22.02.2008', 'first_name': 'Краснодар', 'logo': 'Краснодар.png', 'color1': '#008000', 'color2': '#000000',
     'best_bombardier': 'Федор Смолов', 'goals': '68', 'best_assistant': 'Жоазиньо', 'assists': '60',
     'official_site': 'https://fckrasnodar.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Краснодар_(футбольный_клуб)',
-    'transfermarkt': 'https://www.transfermarkt.world/fk-krasnodar/startseite/verein/16704'},
+    'transfermarkt': 'https://www.transfermarkt.world/fk-krasnodar/startseite/verein/16704',
+    'latitude': 45.0392, 'longitude': 38.9872},
 
     {'name': 'Крылья Советов', 'city': 'Самара', 'stadium': 'Солидарность Самара Арена', 'places': '45 000', 'year': '2018',
     'founded': '03.05.1942', 'first_name': 'Команда капитана Карелина', 'logo': 'КС.png', 'color1': '#87CEFA', 'color2': '#00BFFF',
     'best_bombardier': 'Борис Казаков', 'goals': '67', 'best_assistant': 'Антон Зиньковский', 'assists': '32',
     'official_site': 'https://pfcks.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Крылья_Советов_(футбольный_клуб)',
-    'transfermarkt': 'https://www.transfermarkt.world/krylya-sovetov-samara/startseite/verein/2696'},
+    'transfermarkt': 'https://www.transfermarkt.world/krylya-sovetov-samara/startseite/verein/2696',
+    'latitude': 53.2123, 'longitude': 50.2251},
 
     {'name': 'Локомотив', 'city': 'Москва', 'stadium': 'РЖД Арена', 'places': '28 800', 'year': '2002',
     'founded': '23.07.1922', 'first_name': 'Кружок футболистов Казанской дороги', 'logo': 'Локомотив.png', 'color1': '#008000', 'color2': '#D00027',
     'best_bombardier': 'Дмитрий Лоськов', 'goals': '128', 'best_assistant': 'Дмитрий Лоськов', 'assists': '139',
     'official_site': 'https://fclm.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Локомотив_(футбольный_клуб,_Москва)',
-    'transfermarkt': 'https://www.transfermarkt.world/lokomotiv-moskau/startseite/verein/932'},
+    'transfermarkt': 'https://www.transfermarkt.world/lokomotiv-moskau/startseite/verein/932',
+    'latitude': 55.8036, 'longitude': 37.5575},
 
     {'name': 'Оренбург', 'city': 'Оренбург', 'stadium': 'Газовик', 'places': '10 046', 'year': '2002',
     'founded': '01.01.1976', 'first_name': 'Газовик', 'logo': 'Оренбург.png', 'color1': '#0000FF', 'color2': '#1E90FF',
     'best_bombardier': 'Марат Шогенов', 'goals': '44', 'best_assistant': 'Андрей Малых', 'assists': '37',
     'official_site': 'https://fcorenburg.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Оренбург_(футбольный_клуб)',
-    'transfermarkt': 'https://www.transfermarkt.world/fk-orenburg/startseite/verein/14589'},
+    'transfermarkt': 'https://www.transfermarkt.world/fk-orenburg/startseite/verein/14589',
+    'latitude': 51.7727, 'longitude': 55.0988},
 
     {'name': 'Пари НН', 'city': 'Нижний Новгород', 'stadium': 'Нижний Новгород', 'places': '44 899', 'year': '2018',
     'founded': '01.06.2015', 'first_name': 'Волга-Олимпиец', 'logo': 'Пари НН.png', 'color1': '#0000FF', 'color2': '#1E90FF',
     'best_bombardier': 'Николай Калинский', 'goals': '26', 'best_assistant': 'Николай Калинский', 'assists': '22',
     'official_site': 'https://fcnn.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Пари_Нижний_Новгород_(футбольный_клуб)',
-    'transfermarkt': 'https://www.transfermarkt.world/fk-nizhny-novgorod/startseite/verein/49702'},
+    'transfermarkt': 'https://www.transfermarkt.world/fk-nizhny-novgorod/startseite/verein/49702',
+    'latitude': 56.2965, 'longitude': 43.9361},
 
     {'name': 'Ростов', 'city': 'Ростов-на-Дону', 'stadium': 'Ростов Арена', 'places': '45 000', 'year': '2018',
     'founded': '10.05.1930', 'first_name': 'Сельмашстрой', 'logo': 'Ростов.png', 'color1': '#FFD700', 'color2': '#0041A3',
     'best_bombardier': 'Александр Маслов', 'goals': '97', 'best_assistant': 'Тимофей Калачев', 'assists': '74',
     'official_site': 'https://www.fc-rostov.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Ростов_(футбольный_клуб)',
-    'transfermarkt': 'https://www.transfermarkt.world/fk-rostov/startseite/verein/1083'},
+    'transfermarkt': 'https://www.transfermarkt.world/fk-rostov/startseite/verein/1083',
+    'latitude': 47.2096, 'longitude': 39.7388},
 
     {'name': 'Рубин', 'city': 'Казань', 'stadium': 'Ак Барс Арена', 'places': '45 379', 'year': '2013',
     'founded': '20.04.1958', 'first_name': 'Искра', 'logo': 'Рубин.png', 'color1': '#8B0000', 'color2': '#D00027',
     'best_bombardier': 'Гекдениз Карадениз', 'goals': '52', 'best_assistant': 'Гёкдениз Карадениз', 'assists': '56',
     'official_site': 'https://www.rubin-kazan.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Рубин_(футбольный_клуб)',
-    'transfermarkt': 'https://www.transfermarkt.world/rubin-kazan/startseite/verein/2698'},
+    'transfermarkt': 'https://www.transfermarkt.world/rubin-kazan/startseite/verein/2698',
+    'latitude': 55.8204, 'longitude': 49.1592},
 
     {'name': 'Спартак', 'city': 'Москва', 'stadium': 'Лукойл Арена', 'places': '45 360', 'year': '2014',
     'founded': '18.04.1922', 'first_name': 'Московский клуб спорта', 'logo': 'Спартак.png', 'color1': '#FF0000', 'color2': '#B22222',
     'best_bombardier': 'Никита Симонян', 'goals': '159', 'best_assistant': 'Егор Титов', 'assists': '86',
     'official_site': 'https://spartak.com', 'wikipedia': 'https://ru.wikipedia.org/wiki/Спартак_(футбольный_клуб,_Москва)',
-    'transfermarkt': 'https://www.transfermarkt.world/spartak-moskau/startseite/verein/232'},
+    'transfermarkt': 'https://www.transfermarkt.world/spartak-moskau/startseite/verein/232',
+    'latitude': 55.8178, 'longitude': 37.4403},
 
     {'name': 'Балтика', 'city': 'Калининград', 'stadium': 'Ростех Арена', 'places': '30 600', 'year': '2018',
     'founded': '23.08.1954', 'first_name': 'Пищевик', 'logo': 'Baltica.png', 'color1': '#E0FFFF', 'color2': '#0000FF',
     'best_bombardier': 'Юрий Бондарев', 'goals': '185', 'best_assistant': 'Максим Кузьмин', 'assists': '29',
     'official_site': 'https://fc-baltika.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Балтика_(футбольный_клуб,_Воронеж)',
-    'transfermarkt': 'https://www.transfermarkt.world/baltika-kaliningrad/startseite/verein/2741'},
+    'transfermarkt': 'https://www.transfermarkt.world/baltika-kaliningrad/startseite/verein/2741',
+    'latitude': 54.7104, 'longitude': 20.4522},
 
     {'name': 'Сочи', 'city': 'Сочи', 'stadium': 'Фишт', 'places': '45 959', 'year': '2013',
     'founded': '04.07.2018', 'first_name': 'Сочи', 'logo': 'Химки.png', 'color1': '#FF0000', 'color2': '#000000',
     'best_bombardier': 'Кристиан Нобоа', 'goals': '40', 'best_assistant': 'Никита Бурмистров', 'assists': '28',
     'official_site': 'https://pfcsochi.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Сочи_(футбольный_клуб)',
-    'transfermarkt': 'https://www.transfermarkt.world/fk-sochi/startseite/verein/41231'},
+    'transfermarkt': 'https://www.transfermarkt.world/fk-sochi/startseite/verein/41231',
+    'latitude': 43.4025, 'longitude': 39.9553},
 
     {'name': 'ЦСКА', 'city': 'Москва', 'stadium': 'ВЭБ Арена', 'places': '30 000', 'year': '2016',
     'founded': '27.08.1911', 'first_name': 'Общество любителей лыжного спорта', 'logo': 'ЦСКА.png', 'color1': '#D00027', 'color2': '#0041A3',
     'best_bombardier': 'Григорий Федотов', 'goals': '137', 'best_assistant': 'Алан Дзагоев', 'assists': '93',
     'official_site': 'https://pfc-cska.com', 'wikipedia': 'https://ru.wikipedia.org/wiki/ЦСКА_(футбольный_клуб,_Москва)',
-    'transfermarkt': 'https://www.transfermarkt.world/zska-moskau/startseite/verein/2410'}
+    'transfermarkt': 'https://www.transfermarkt.world/zska-moskau/startseite/verein/2410',
+    'latitude': 55.7919, 'longitude': 37.5597}
     ] %}
 
     {% if current_user.is_authenticated %}
+    <!-- ТУРНИРНАЯ ТАБЛИЦА -->
     <h2>Турнирная таблица РПЛ</h2>
     <table>
         <tr>
@@ -298,6 +319,17 @@
                            <strong>Количество голов:</strong> {{ club.goals }}.</p>
                         <p><strong>Лучший ассистент в истории:</strong> {{ club.best_assistant }}. &ensp;
                            <strong>Количество ассистов:</strong> {{ club.assists }}.</p>
+                        
+                        <!-- Блок с картой -->
+                        <div class="stadium-map-container">
+                            <h4>Местоположение стадиона</h4>
+                            <div id="map-{{ club.name|replace(' ', '-') }}" class="stadium-map" 
+                                 data-lat="{{ club.latitude }}" 
+                                 data-lng="{{ club.longitude }}"
+                                 data-stadium="{{ club.stadium }}"
+                                 data-city="{{ club.city }}"></div>
+                        </div>
+
                         <div class="club-links">
                            <a href="{{ club.official_site }}" target="_blank" class="club-link">Официальный сайт</a>
                            <a href="{{ club.wikipedia }}" target="_blank" class="club-link">Википедия</a>
@@ -334,6 +366,16 @@
                     <p><strong>Лучший ассистент в истории:</strong> {{ club.best_assistant }}. &ensp;
                         <strong>Количество ассистов:</strong> {{ club.assists }}.</p>
 
+                    <!-- Блок с картой -->
+                    <div class="stadium-map-container">
+                        <h4>Местоположение стадиона</h4>
+                        <div id="map-{{ club.name|replace(' ', '-') }}" class="stadium-map" 
+                             data-lat="{{ club.latitude }}" 
+                             data-lng="{{ club.longitude }}"
+                             data-stadium="{{ club.stadium }}"
+                             data-city="{{ club.city }}"></div>
+                    </div>
+
                     <div class="club-links">
                        <a href="{{ club.official_site }}" target="_blank" class="club-link">Официальный сайт</a>
                        <a href="{{ club.wikipedia }}" target="_blank" class="club-link">Википедия</a>
@@ -344,6 +386,40 @@
         {% endfor %}
     </div>
     {% endif %}
+
+    <!-- Добавляем Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Функция для инициализации карт
+        function initializeMaps() {
+            const mapElements = document.querySelectorAll('.stadium-map');
+            
+            mapElements.forEach(mapElement => {
+                const lat = parseFloat(mapElement.dataset.lat);
+                const lng = parseFloat(mapElement.dataset.lng);
+                const stadium = mapElement.dataset.stadium;
+                const city = mapElement.dataset.city;
+                
+                if (lat && lng) {
+                    const map = L.map(mapElement).setView([lat, lng], 13);
+                    
+                    // Добавляем слой карты
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors'
+                    }).addTo(map);
+                    
+                    // Добавляем маркер
+                    L.marker([lat, lng])
+                        .addTo(map)
+                        .bindPopup(`<b>${stadium}</b><br>${city}`)
+                        .openPopup();
+                }
+            });
+        }
+
+        // Инициализируем карты после загрузки страницы
+        document.addEventListener('DOMContentLoaded', initializeMaps);
+    </script>
 </body>
 </html>
-
+[file content end]
