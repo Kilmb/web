@@ -1,5 +1,3 @@
-[file name]: home.html
-[file content begin]
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -165,7 +163,7 @@
 
     {'name': 'Зенит', 'city': 'Санкт-Петербург', 'stadium': 'Газпром Арена', 'places': '68 134', 'year': '2017',
     'founded': '25.05.1925', 'first_name': 'Ленинградский металлический завод', 'logo': 'Зенит.png', 'color1': '#0000FF', 'color2': '#00BFFF',
-    'best_bombardier': 'Александр Кержаковв', 'goals': '162', 'best_assistant': 'Андрей Аршавин', 'assists': '108',
+    'best_bombardier': 'Александр Кержаков', 'goals': '162', 'best_assistant': 'Андрей Аршавин', 'assists': '108',
     'official_site': 'https://fc-zenit.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Зенит_(футбольный_клуб)',
     'transfermarkt': 'https://www.transfermarkt.world/zenit-st-petersburg/startseite/verein/964',
     'latitude': 59.9727, 'longitude': 30.2208},
@@ -249,7 +247,6 @@
     ] %}
 
     {% if current_user.is_authenticated %}
-    <!-- ТУРНИРНАЯ ТАБЛИЦА -->
     <h2>Турнирная таблица РПЛ</h2>
     <table>
         <tr>
@@ -403,10 +400,25 @@
                 if (lat && lng) {
                     const map = L.map(mapElement).setView([lat, lng], 13);
                     
-                    // Добавляем слой карты
-                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                        attribution: '© OpenStreetMap contributors'
+                    // Яндекс.Карты - схема
+                    L.tileLayer('https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU', {
+                        attribution: '© Яндекс.Карты',
+                        maxZoom: 19
                     }).addTo(map);
+
+                    /*
+                    // Альтернатива: Яндекс.Карты - спутник
+                    L.tileLayer('https://core-sat.maps.yandex.net/tiles?l=sat&x={x}&y={y}&z={z}&scale=1&lang=ru_RU', {
+                        attribution: '© Яндекс.Карты',
+                        maxZoom: 19
+                    }).addTo(map);
+
+                    // Альтернатива: Яндекс.Карты - гибрид (схема + спутник)
+                    L.tileLayer('https://core-renderer-tiles.maps.yandex.net/tiles?l=skl&x={x}&y={y}&z={z}&scale=1&lang=ru_RU', {
+                        attribution: '© Яндекс.Карты',
+                        maxZoom: 19
+                    }).addTo(map);
+                    */
                     
                     // Добавляем маркер
                     L.marker([lat, lng])
@@ -422,4 +434,3 @@
     </script>
 </body>
 </html>
-[file content end]
