@@ -413,12 +413,32 @@ def inject_current_tour():
 @app.route('/')
 def home():
     table = db.session.query(RPLTable).order_by(RPLTable.position).all()
-    tour_matches = db.session.query(Match).filter(Match.tour_number == app.config['CURRENT_TOUR_KEY']) \
+    current_tour = app.config['CURRENT_TOUR_KEY']
+
+    # Получаем матчи для предыдущего, текущего и следующего туров
+    prev_tour_matches = db.session.query(Match).filter(Match.tour_number == current_tour - 1) \
+        .order_by(Match.match_date).all() if current_tour > 1 else []
+
+    current_tour_matches = db.session.query(Match).filter(Match.tour_number == current_tour) \
+        .order_by(Match.match_date).all()
+
+    next_tour_matches = db.session.query(Match).filter(Match.tour_number == current_tour + 1) \
         .order_by(Match.match_date).all()
 
     if current_user.is_authenticated:
-        return render_template('home.html', rpl_table=table, tour_matches=tour_matches)
-    return render_template('home.html', rpl_table=table, tour_matches=tour_matches, show_public_content=True)
+        return render_template('home.html',
+                               rpl_table=table,
+                               current_tour_matches=current_tour_matches,
+                               prev_tour_matches=prev_tour_matches,
+                               next_tour_matches=next_tour_matches,
+                               current_tour=current_tour)
+    return render_template('home.html',
+                           rpl_table=table,
+                           current_tour_matches=current_tour_matches,
+                           prev_tour_matches=prev_tour_matches,
+                           next_tour_matches=next_tour_matches,
+                           current_tour=current_tour,
+                           show_public_content=True)
 
 
 # Регистрация
