@@ -107,30 +107,115 @@
         {% endif %}
     </div>
 
-    {% if tour_matches and current_user.is_authenticated %}
-    <div class="matches-container">
-        <h2>Матчи {{ current_tour }} тура</h2>
-        <div class="matches-grid">
-            {% for match in tour_matches %}
-            <div class="match-card">
-                <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
-                    {{ match.home_team }} vs {{ match.away_team }}
-                </div>
-                <div style="text-align: center; font-size: 24px; margin: 10px 0;">
-                    {% if match.is_played %}
-                    {{ match.home_score }} : {{ match.away_score }}
-                    {% else %}
-                    vs
-                    {% endif %}
-                </div>
-                <div style="text-align: center; color: #666;">
-                    {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
-                </div>
-            </div>
-            {% endfor %}
-        </div>
+{% if current_user.is_authenticated %}
+<div class="matches-container">
+    <h2>Матчи</h2>
+
+    <!-- Переключение между турами -->
+    <div class="tour-navigation">
+        <button class="tour-btn {% if not prev_tour_matches %}disabled{% endif %}"
+                onclick="showTour('prev')"
+                {% if not prev_tour_matches %}disabled{% endif %}>
+            ← Предыдущий тур ({{ current_tour - 1 }})
+        </button>
+
+        <button class="tour-btn active" onclick="showTour('current')">
+            Текущий тур ({{ current_tour }})
+        </button>
+
+        <button class="tour-btn {% if not next_tour_matches %}disabled{% endif %}"
+                onclick="showTour('next')"
+                {% if not next_tour_matches %}disabled{% endif %}>
+            Следующий тур ({{ current_tour + 1 }}) →
+        </button>
     </div>
-    {% endif %}
+
+    <!-- Матчи предыдущего тура -->
+    <div class="tour-content" id="prev-tour">
+        {% if prev_tour_matches %}
+            <h3>Матчи {{ current_tour - 1 }} тура</h3>
+            <div class="matches-grid">
+                {% for match in prev_tour_matches %}
+                <div class="match-card">
+                    <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
+                        {{ match.home_team }} vs {{ match.away_team }}
+                    </div>
+                    <div style="text-align: center; font-size: 24px; margin: 10px 0;">
+                        {% if match.is_played %}
+                        {{ match.home_score }} : {{ match.away_score }}
+                        {% else %}
+                        vs
+                        {% endif %}
+                    </div>
+                    <div style="text-align: center; color: #666;">
+                        {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="text-align: center; color: #666;">Нет матчей предыдущего тура</p>
+        {% endif %}
+    </div>
+
+    <!-- Матчи текущего тура -->
+    <div class="tour-content active" id="current-tour">
+        {% if current_tour_matches %}
+            <h3>Матчи {{ current_tour }} тура</h3>
+            <div class="matches-grid">
+                {% for match in current_tour_matches %}
+                <div class="match-card">
+                    <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
+                        {{ match.home_team }} vs {{ match.away_team }}
+                    </div>
+                    <div style="text-align: center; font-size: 24px; margin: 10px 0;">
+                        {% if match.is_played %}
+                        {{ match.home_score }} : {{ match.away_score }}
+                        {% else %}
+                        vs
+                        {% endif %}
+                    </div>
+                    <div style="text-align: center; color: #666;">
+                        {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="text-align: center; color: #666;">Нет матчей текущего тура</p>
+        {% endif %}
+    </div>
+
+    <!-- Матчи следующего тура -->
+    <div class="tour-content" id="next-tour">
+        {% if next_tour_matches %}
+            <h3>Матчи {{ current_tour + 1 }} тура</h3>
+            <div class="matches-grid">
+                {% for match in next_tour_matches %}
+                <div class="match-card">
+                    <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
+                        {{ match.home_team }} vs {{ match.away_team }}
+                    </div>
+                    <div style="text-align: center; font-size: 24px; margin: 10px 0;">
+                        {% if match.is_played %}
+                        {{ match.home_score }} : {{ match.away_score }}
+                        {% else %}
+                        vs
+                        {% endif %}
+                    </div>
+                    <div style="text-align: center; color: #666;">
+                        {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p style="text-align: center; color: #666;">Нет матчей следующего тура</p>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
 
     {% set clubs = [
     {'name': 'Акрон', 'city': 'Тольятти', 'stadium': 'Солидарность Самара Арена', 'places': '45 000', 'year': '2018',
@@ -432,5 +517,22 @@
         // Инициализируем карты после загрузки страницы
         document.addEventListener('DOMContentLoaded', initializeMaps);
     </script>
+<script>
+function showTour(tourType) {
+    // Скрыть все блоки с матчами
+    document.querySelectorAll('.tour-content').forEach(content => {
+        content.classList.remove('active');
+    });
+
+    // Убрать активный класс со всех кнопок
+    document.querySelectorAll('.tour-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    // Показать выбранный блок и активировать кнопку
+    document.getElementById(tourType + '-tour').classList.add('active');
+    event.target.classList.add('active');
+}
+</script>
 </body>
 </html>
