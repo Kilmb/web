@@ -316,12 +316,12 @@
                            <strong>Количество голов:</strong> {{ club.goals }}.</p>
                         <p><strong>Лучший ассистент в истории:</strong> {{ club.best_assistant }}. &ensp;
                            <strong>Количество ассистов:</strong> {{ club.assists }}.</p>
-                        
+
                         <!-- Блок с картой -->
                         <div class="stadium-map-container">
                             <h4>Местоположение стадиона</h4>
-                            <div id="map-{{ club.name|replace(' ', '-') }}" class="stadium-map" 
-                                 data-lat="{{ club.latitude }}" 
+                            <div id="map-{{ club.name|replace(' ', '-') }}" class="stadium-map"
+                                 data-lat="{{ club.latitude }}"
                                  data-lng="{{ club.longitude }}"
                                  data-stadium="{{ club.stadium }}"
                                  data-city="{{ club.city }}"></div>
@@ -366,8 +366,8 @@
                     <!-- Блок с картой -->
                     <div class="stadium-map-container">
                         <h4>Местоположение стадиона</h4>
-                        <div id="map-{{ club.name|replace(' ', '-') }}" class="stadium-map" 
-                             data-lat="{{ club.latitude }}" 
+                        <div id="map-{{ club.name|replace(' ', '-') }}" class="stadium-map"
+                             data-lat="{{ club.latitude }}"
                              data-lng="{{ club.longitude }}"
                              data-stadium="{{ club.stadium }}"
                              data-city="{{ club.city }}"></div>
@@ -390,16 +390,16 @@
         // Функция для инициализации карт
         function initializeMaps() {
             const mapElements = document.querySelectorAll('.stadium-map');
-            
+
             mapElements.forEach(mapElement => {
                 const lat = parseFloat(mapElement.dataset.lat);
                 const lng = parseFloat(mapElement.dataset.lng);
                 const stadium = mapElement.dataset.stadium;
                 const city = mapElement.dataset.city;
-                
+
                 if (lat && lng) {
                     const map = L.map(mapElement).setView([lat, lng], 13);
-                    
+
                     // Яндекс.Карты - схема
                     L.tileLayer('https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU', {
                         attribution: '© Яндекс.Карты',
@@ -419,7 +419,7 @@
                         maxZoom: 19
                     }).addTo(map);
                     */
-                    
+
                     // Добавляем маркер
                     L.marker([lat, lng])
                         .addTo(map)
