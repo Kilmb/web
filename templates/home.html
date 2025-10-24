@@ -62,7 +62,6 @@
 
         .stadium-map-container h4 {
             margin-bottom: 10px;
-            color: #333;
             font-size: 18px;
         }
 
@@ -483,6 +482,7 @@
                         <!-- Блок с картой -->
                         <div class="stadium-map-container">
                             <h4>Местоположение стадиона</h4>
+
                             <div id="map-{{ club.name|replace(' ', '-') }}" class="stadium-map"
                                  data-lat="{{ club.latitude }}"
                                  data-lng="{{ club.longitude }}"
