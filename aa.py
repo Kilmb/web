@@ -20,6 +20,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['CURRENT_TOUR_KEY'] = 'current_tour'  # Ключ для хранения текущего тура
+app.config['LAST_TOUR_UPDATE'] = 'last_tour_update'  # Время последнего обновления тура
 
 # Создание папки для загрузок, если её нет
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -151,6 +152,111 @@ class TestResult(db.Model):
     date = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('User')
+
+
+def get_current_tour_from_api():
+    """
+    Автоматически определяет текущий тур через API на основе времени
+    """
+    try:
+        url = "https://api.sstats.net/games/list?"
+        params = {
+            'leagueId': 235,
+            'year': 2025,
+            'format': 'json',
+            'limit': 200  # Получаем достаточно матчей для анализа
+        }
+
+        headers = {'apikey': '8ftkpzresyxo7dqz'}
+
+        response = requests.get(url, params=params, headers=headers, timeout=30)
+        response.raise_for_status()
+
+        data = response.json()
+        matches_data = data['data']
+
+        if not matches_data:
+            return 1
+
+        current_time = datetime.now().replace(tzinfo=None)
+
+        # Сортируем матчи по дате
+        matches_data.sort(key=lambda x: x['date'])
+
+        # Группируем матчи по турам (по 8 матчей в туре)
+        tours = {}
+        for i, match in enumerate(matches_data):
+            tour_number = (i // 8) + 1
+            if tour_number not in tours:
+                tours[tour_number] = []
+
+            match_date_str = match['date']
+            match_date_utc = datetime.fromisoformat(match_date_str.replace('Z', '+00:00'))
+            match_date_msk = match_date_utc.replace(tzinfo=None) + timedelta(hours=3)
+
+            tours[tour_number].append({
+                'date': match_date_msk,
+                'is_played': match.get('status') == 8
+            })
+
+        # Определяем текущий тур на основе времени
+        for tour_number in sorted(tours.keys()):
+            tour_matches = tours[tour_number]
+
+            # Проверяем, есть ли в этом туре матчи, которые еще не начались
+            future_matches = [m for m in tour_matches if m['date'] > current_time]
+            played_matches = [m for m in tour_matches if m['is_played']]
+
+            # Если в туре есть будущие матчи или тур только что завершился
+            if future_matches or (not future_matches and len(played_matches) == len(tour_matches)):
+                return tour_number
+
+        # Если дошли до конца, возвращаем последний тур
+        return max(tours.keys()) if tours else 1
+
+    except Exception as e:
+        print(f"Ошибка при определении текущего тура через API: {e}")
+        return 1
+
+
+def should_update_tour():
+    """
+    Проверяет, нужно ли обновлять тур (раз в час)
+    """
+    last_update = app.config.get('LAST_TOUR_UPDATE')
+    if not last_update:
+        return True
+
+    time_since_update = datetime.now() - last_update
+    return time_since_update.total_seconds() > 3600  # 1 час
+
+
+def update_current_tour_automatically():
+    """
+    Автоматически обновляет текущий тур на основе времени
+    """
+    try:
+        # Проверяем, нужно ли обновлять (раз в час)
+        if not should_update_tour():
+            return False
+
+        new_current_tour = get_current_tour_from_api()
+        old_current_tour = app.config['CURRENT_TOUR_KEY']
+
+        if new_current_tour != old_current_tour:
+            app.config['CURRENT_TOUR_KEY'] = new_current_tour
+            app.config['LAST_TOUR_UPDATE'] = datetime.now()
+            save_current_tour(new_current_tour)
+            print(f"Текущий тур автоматически обновлен: {old_current_tour} -> {new_current_tour}")
+            return True
+
+        # Обновляем время даже если тур не изменился
+        app.config['LAST_TOUR_UPDATE'] = datetime.now()
+        return False
+
+    except Exception as e:
+        print(f"Ошибка при автоматическом обновлении тура: {e}")
+        return False
 
 
 def update_rpl_table_from_sstats():
@@ -392,7 +498,6 @@ def update_matches_from_sstats():
         return False, f"Ошибка при обновлении матчей: {e}"
 
 
-
 # Загружает пользователя
 @login_manager.user_loader
 def load_user(user_id):
@@ -412,6 +517,9 @@ def inject_current_tour():
 # Главная страница
 @app.route('/')
 def home():
+    # Автоматически обновляем текущий тур при загрузке главной страницы (с ограничением по времени)
+    update_current_tour_automatically()
+
     table = db.session.query(RPLTable).order_by(RPLTable.position).all()
     current_tour = app.config['CURRENT_TOUR_KEY']
 
@@ -665,16 +773,24 @@ def load_current_tour():
     try:
         if TOUR_CONFIG_PATH.exists():
             with open(TOUR_CONFIG_PATH, 'r') as f:
-                return json.load(f).get('current_tour', 1)
+                data = json.load(f)
+                app.config['LAST_TOUR_UPDATE'] = datetime.fromisoformat(
+                    data.get('last_update', datetime.now().isoformat()))
+                return data.get('current_tour', 1)
     except Exception:
         pass
+    app.config['LAST_TOUR_UPDATE'] = datetime.now()
     return 1
 
 
 # Сохранение текущего тура в json
 def save_current_tour(tour_number):
+    data = {
+        'current_tour': tour_number,
+        'last_update': datetime.now().isoformat()
+    }
     with open(TOUR_CONFIG_PATH, 'w') as f:
-        json.dump({'current_tour': tour_number}, f)
+        json.dump(data, f)
 
 
 app.config['CURRENT_TOUR_KEY'] = load_current_tour()
@@ -690,9 +806,29 @@ def set_current_tour():
     try:
         new_tour = int(request.form['current_tour'])
         app.config['CURRENT_TOUR_KEY'] = new_tour
+        app.config['LAST_TOUR_UPDATE'] = datetime.now()
         save_current_tour(new_tour)
+        flash(f'Текущий тур изменен на {new_tour}', 'success')
     except ValueError:
         flash('Некорректный номер тура', 'danger')
+
+    return redirect(url_for('edit_matches'))
+
+
+# Автоматическое обновление текущего тура
+@app.route('/update_current_tour_auto', methods=['POST'])
+@login_required
+def update_current_tour_auto():
+    if not current_user.is_admin:
+        return redirect(url_for('home'))
+
+    try:
+        if update_current_tour_automatically():
+            flash('Текущий тур успешно обновлен автоматически', 'success')
+        else:
+            flash('Текущий тур уже актуален', 'info')
+    except Exception as e:
+        flash(f'Ошибка при автоматическом обновлении тура: {e}', 'danger')
 
     return redirect(url_for('edit_matches'))
 
@@ -943,7 +1079,6 @@ def edit_rpl_table():
 @app.route('/update_table_from_api', methods=['POST'])
 @login_required
 def update_table_from_api():
-
     success, message = update_rpl_table_from_sstats()
 
     if success:
