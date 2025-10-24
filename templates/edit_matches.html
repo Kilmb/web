@@ -27,6 +27,11 @@
             Обновить матчи текущего тура
         </button>
     </form>
+        <form method="POST" action="{{ url_for('update_current_tour_auto') }}" style="display: inline-block; margin-left: 20px;">
+    <button type="submit" class="btn-update" style="padding: 5px 10px; background: #17a2b8;">
+        Автообновление текущего тура
+    </button>
+</form>
 
         <div style="margin-bottom: 30px;">
             <h3>Добавить новый матч</h3>
