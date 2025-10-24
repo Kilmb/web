@@ -7,6 +7,85 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
     <!-- Добавляем Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        /* Стили для навигации по турам */
+        .tour-navigation {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tour-btn {
+            padding: 10px 15px;
+            border: 2px solid #007bff;
+            background: white;
+            color: #007bff;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .tour-btn:hover:not(.disabled) {
+            background: #007bff;
+            color: white;
+        }
+
+        .tour-btn.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .tour-btn.disabled {
+            border-color: #ccc;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Стили для контента туров */
+        .tour-content {
+            display: none;
+        }
+
+        .tour-content.active {
+            display: block;
+        }
+
+        /* Стили для карт стадионов */
+        .stadium-map-container {
+            margin: 20px 0;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .stadium-map-container h4 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 18px;
+        }
+
+        .stadium-map {
+            height: 300px;
+            width: 100%;
+            border-radius: 8px;
+            z-index: 1;
+        }
+
+        /* Адаптивность для карт */
+        @media (max-width: 768px) {
+            .stadium-map {
+                height: 250px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stadium-map {
+                height: 200px;
+            }
+        }
+    </style>
 </head>
 <body>
     {% if not current_user.is_authenticated %}
@@ -107,115 +186,114 @@
         {% endif %}
     </div>
 
-{% if current_user.is_authenticated %}
-<div class="matches-container">
-    <h2>Матчи</h2>
+    {% if current_user.is_authenticated %}
+    <div class="matches-container">
+        <h2>Матчи</h2>
 
-    <!-- Переключение между турами -->
-    <div class="tour-navigation">
-        <button class="tour-btn {% if not prev_tour_matches %}disabled{% endif %}"
-                onclick="showTour('prev')"
-                {% if not prev_tour_matches %}disabled{% endif %}>
-            ← Предыдущий тур ({{ current_tour - 1 }})
-        </button>
+        <!-- Переключение между турами -->
+        <div class="tour-navigation">
+            <button class="tour-btn {% if not prev_tour_matches %}disabled{% endif %}"
+                    onclick="showTour('prev')"
+                    {% if not prev_tour_matches %}disabled{% endif %}>
+                ← Предыдущий тур ({{ current_tour - 1 }})
+            </button>
 
-        <button class="tour-btn active" onclick="showTour('current')">
-            Текущий тур ({{ current_tour }})
-        </button>
+            <button class="tour-btn active" onclick="showTour('current')">
+                Текущий тур ({{ current_tour }})
+            </button>
 
-        <button class="tour-btn {% if not next_tour_matches %}disabled{% endif %}"
-                onclick="showTour('next')"
-                {% if not next_tour_matches %}disabled{% endif %}>
-            Следующий тур ({{ current_tour + 1 }}) →
-        </button>
-    </div>
+            <button class="tour-btn {% if not next_tour_matches %}disabled{% endif %}"
+                    onclick="showTour('next')"
+                    {% if not next_tour_matches %}disabled{% endif %}>
+                Следующий тур ({{ current_tour + 1 }}) →
+            </button>
+        </div>
 
-    <!-- Матчи предыдущего тура -->
-    <div class="tour-content" id="prev-tour">
-        {% if prev_tour_matches %}
-            <h3>Матчи {{ current_tour - 1 }} тура</h3>
-            <div class="matches-grid">
-                {% for match in prev_tour_matches %}
-                <div class="match-card">
-                    <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
-                        {{ match.home_team }} vs {{ match.away_team }}
+        <!-- Матчи предыдущего тура -->
+        <div class="tour-content" id="prev-tour">
+            {% if prev_tour_matches %}
+                <h3>Матчи {{ current_tour - 1 }} тура</h3>
+                <div class="matches-grid">
+                    {% for match in prev_tour_matches %}
+                    <div class="match-card">
+                        <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
+                            {{ match.home_team }} vs {{ match.away_team }}
+                        </div>
+                        <div style="text-align: center; font-size: 24px; margin: 10px 0;">
+                            {% if match.is_played %}
+                            {{ match.home_score }} : {{ match.away_score }}
+                            {% else %}
+                            vs
+                            {% endif %}
+                        </div>
+                        <div style="text-align: center; color: #666;">
+                            {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
+                        </div>
                     </div>
-                    <div style="text-align: center; font-size: 24px; margin: 10px 0;">
-                        {% if match.is_played %}
-                        {{ match.home_score }} : {{ match.away_score }}
-                        {% else %}
-                        vs
-                        {% endif %}
-                    </div>
-                    <div style="text-align: center; color: #666;">
-                        {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
-                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p style="text-align: center; color: #666;">Нет матчей предыдущего тура</p>
-        {% endif %}
-    </div>
+            {% else %}
+                <p style="text-align: center; color: #666;">Нет матчей предыдущего тура</p>
+            {% endif %}
+        </div>
 
-    <!-- Матчи текущего тура -->
-    <div class="tour-content active" id="current-tour">
-        {% if current_tour_matches %}
-            <h3>Матчи {{ current_tour }} тура</h3>
-            <div class="matches-grid">
-                {% for match in current_tour_matches %}
-                <div class="match-card">
-                    <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
-                        {{ match.home_team }} vs {{ match.away_team }}
+        <!-- Матчи текущего тура -->
+        <div class="tour-content active" id="current-tour">
+            {% if current_tour_matches %}
+                <h3>Матчи {{ current_tour }} тура</h3>
+                <div class="matches-grid">
+                    {% for match in current_tour_matches %}
+                    <div class="match-card">
+                        <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
+                            {{ match.home_team }} vs {{ match.away_team }}
+                        </div>
+                        <div style="text-align: center; font-size: 24px; margin: 10px 0;">
+                            {% if match.is_played %}
+                            {{ match.home_score }} : {{ match.away_score }}
+                            {% else %}
+                            vs
+                            {% endif %}
+                        </div>
+                        <div style="text-align: center; color: #666;">
+                            {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
+                        </div>
                     </div>
-                    <div style="text-align: center; font-size: 24px; margin: 10px 0;">
-                        {% if match.is_played %}
-                        {{ match.home_score }} : {{ match.away_score }}
-                        {% else %}
-                        vs
-                        {% endif %}
-                    </div>
-                    <div style="text-align: center; color: #666;">
-                        {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
-                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p style="text-align: center; color: #666;">Нет матчей текущего тура</p>
-        {% endif %}
-    </div>
+            {% else %}
+                <p style="text-align: center; color: #666;">Нет матчей текущего тура</p>
+            {% endif %}
+        </div>
 
-    <!-- Матчи следующего тура -->
-    <div class="tour-content" id="next-tour">
-        {% if next_tour_matches %}
-            <h3>Матчи {{ current_tour + 1 }} тура</h3>
-            <div class="matches-grid">
-                {% for match in next_tour_matches %}
-                <div class="match-card">
-                    <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
-                        {{ match.home_team }} vs {{ match.away_team }}
+        <!-- Матчи следующего тура -->
+        <div class="tour-content" id="next-tour">
+            {% if next_tour_matches %}
+                <h3>Матчи {{ current_tour + 1 }} тура</h3>
+                <div class="matches-grid">
+                    {% for match in next_tour_matches %}
+                    <div class="match-card">
+                        <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
+                            {{ match.home_team }} vs {{ match.away_team }}
+                        </div>
+                        <div style="text-align: center; font-size: 24px; margin: 10px 0;">
+                            {% if match.is_played %}
+                            {{ match.home_score }} : {{ match.away_score }}
+                            {% else %}
+                            vs
+                            {% endif %}
+                        </div>
+                        <div style="text-align: center; color: #666;">
+                            {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
+                        </div>
                     </div>
-                    <div style="text-align: center; font-size: 24px; margin: 10px 0;">
-                        {% if match.is_played %}
-                        {{ match.home_score }} : {{ match.away_score }}
-                        {% else %}
-                        vs
-                        {% endif %}
-                    </div>
-                    <div style="text-align: center; color: #666;">
-                        {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
-                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
-            </div>
-        {% else %}
-            <p style="text-align: center; color: #666;">Нет матчей следующего тура</p>
-        {% endif %}
+            {% else %}
+                <p style="text-align: center; color: #666;">Нет матчей следующего тура</p>
+            {% endif %}
+        </div>
     </div>
-</div>
-{% endif %}
-
+    {% endif %}
 
     {% set clubs = [
     {'name': 'Акрон', 'city': 'Тольятти', 'stadium': 'Солидарность Самара Арена', 'places': '45 000', 'year': '2018',
@@ -265,7 +343,7 @@
     'best_bombardier': 'Борис Казаков', 'goals': '67', 'best_assistant': 'Антон Зиньковский', 'assists': '32',
     'official_site': 'https://pfcks.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Крылья_Советов_(футбольный_клуб)',
     'transfermarkt': 'https://www.transfermarkt.world/krylya-sovetov-samara/startseite/verein/2696',
-    'latitude': 53.2123, 'longitude': 50.2251},
+    'latitude': 53.3387, 'longitude': 50.2439},
 
     {'name': 'Локомотив', 'city': 'Москва', 'stadium': 'РЖД Арена', 'places': '28 800', 'year': '2002',
     'founded': '23.07.1922', 'first_name': 'Кружок футболистов Казанской дороги', 'logo': 'Локомотив.png', 'color1': '#008000', 'color2': '#D00027',
@@ -286,7 +364,7 @@
     'best_bombardier': 'Николай Калинский', 'goals': '26', 'best_assistant': 'Николай Калинский', 'assists': '22',
     'official_site': 'https://fcnn.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Пари_Нижний_Новгород_(футбольный_клуб)',
     'transfermarkt': 'https://www.transfermarkt.world/fk-nizhny-novgorod/startseite/verein/49702',
-    'latitude': 56.2965, 'longitude': 43.9361},
+    'latitude': 56.3374, 'longitude': 43.9633},
 
     {'name': 'Ростов', 'city': 'Ростов-на-Дону', 'stadium': 'Ростов Арена', 'places': '45 000', 'year': '2018',
     'founded': '10.05.1930', 'first_name': 'Сельмашстрой', 'logo': 'Ростов.png', 'color1': '#FFD700', 'color2': '#0041A3',
@@ -314,7 +392,7 @@
     'best_bombardier': 'Юрий Бондарев', 'goals': '185', 'best_assistant': 'Максим Кузьмин', 'assists': '29',
     'official_site': 'https://fc-baltika.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Балтика_(футбольный_клуб,_Воронеж)',
     'transfermarkt': 'https://www.transfermarkt.world/baltika-kaliningrad/startseite/verein/2741',
-    'latitude': 54.7104, 'longitude': 20.4522},
+    'latitude': 54.6982, 'longitude': 20.5449},
 
     {'name': 'Сочи', 'city': 'Сочи', 'stadium': 'Фишт', 'places': '45 959', 'year': '2013',
     'founded': '04.07.2018', 'first_name': 'Сочи', 'logo': 'Химки.png', 'color1': '#FF0000', 'color2': '#000000',
@@ -328,7 +406,7 @@
     'best_bombardier': 'Григорий Федотов', 'goals': '137', 'best_assistant': 'Алан Дзагоев', 'assists': '93',
     'official_site': 'https://pfc-cska.com', 'wikipedia': 'https://ru.wikipedia.org/wiki/ЦСКА_(футбольный_клуб,_Москва)',
     'transfermarkt': 'https://www.transfermarkt.world/zska-moskau/startseite/verein/2410',
-    'latitude': 55.7919, 'longitude': 37.5597}
+    'latitude': 55.7919, 'longitude': 37.516197}
     ] %}
 
     {% if current_user.is_authenticated %}
@@ -483,56 +561,78 @@
                 const city = mapElement.dataset.city;
 
                 if (lat && lng) {
-                    const map = L.map(mapElement).setView([lat, lng], 13);
+                    // Создаем карту с правильными координатами
+                    const map = L.map(mapElement).setView([lat, lng], 14);
 
-                    // Яндекс.Карты - схема
-                    L.tileLayer('https://core-renderer-tiles.maps.yandex.net/tiles?l=map&x={x}&y={y}&z={z}&scale=1&lang=ru_RU', {
-                        attribution: '© Яндекс.Карты',
+                    // Используем OpenStreetMap вместо Яндекс.Карт для надежности
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                        attribution: '© OpenStreetMap contributors',
                         maxZoom: 19
                     }).addTo(map);
 
-                    /*
-                    // Альтернатива: Яндекс.Карты - спутник
-                    L.tileLayer('https://core-sat.maps.yandex.net/tiles?l=sat&x={x}&y={y}&z={z}&scale=1&lang=ru_RU', {
-                        attribution: '© Яндекс.Карты',
-                        maxZoom: 19
-                    }).addTo(map);
-
-                    // Альтернатива: Яндекс.Карты - гибрид (схема + спутник)
-                    L.tileLayer('https://core-renderer-tiles.maps.yandex.net/tiles?l=skl&x={x}&y={y}&z={z}&scale=1&lang=ru_RU', {
-                        attribution: '© Яндекс.Карты',
-                        maxZoom: 19
-                    }).addTo(map);
-                    */
+                    // Создаем кастомную иконку
+                    const stadiumIcon = L.divIcon({
+                        className: 'stadium-marker',
+                        html: '🏟️',
+                        iconSize: [30, 30],
+                        iconAnchor: [15, 30]
+                    });
 
                     // Добавляем маркер
-                    L.marker([lat, lng])
+                    L.marker([lat, lng], {icon: stadiumIcon})
                         .addTo(map)
                         .bindPopup(`<b>${stadium}</b><br>${city}`)
                         .openPopup();
+
+                    // Добавляем круг для лучшей видимости
+                    L.circle([lat, lng], {
+                        color: 'blue',
+                        fillColor: '#007bff',
+                        fillOpacity: 0.1,
+                        radius: 500
+                    }).addTo(map);
                 }
             });
         }
 
         // Инициализируем карты после загрузки страницы
-        document.addEventListener('DOMContentLoaded', initializeMaps);
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMaps();
+        });
+
+        // Также инициализируем карты при переключении между клубами
+        document.addEventListener('DOMContentLoaded', function() {
+            // Добавляем обработчики для плавной инициализации карт
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList') {
+                        initializeMaps();
+                    }
+                });
+            });
+
+            // Наблюдаем за изменениями в контейнере с клубами
+            const clubContainer = document.querySelector('[style="margin-top: 40px;"]');
+            if (clubContainer) {
+                observer.observe(clubContainer, { childList: true, subtree: true });
+            }
+        });
+
+        function showTour(tourType) {
+            // Скрыть все блоки с матчами
+            document.querySelectorAll('.tour-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Убрать активный класс со всех кнопок
+            document.querySelectorAll('.tour-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Показать выбранный блок и активировать кнопку
+            document.getElementById(tourType + '-tour').classList.add('active');
+            event.target.classList.add('active');
+        }
     </script>
-<script>
-function showTour(tourType) {
-    // Скрыть все блоки с матчами
-    document.querySelectorAll('.tour-content').forEach(content => {
-        content.classList.remove('active');
-    });
-
-    // Убрать активный класс со всех кнопок
-    document.querySelectorAll('.tour-btn').forEach(btn => {
-        btn.classList.remove('active');
-    });
-
-    // Показать выбранный блок и активировать кнопку
-    document.getElementById(tourType + '-tour').classList.add('active');
-    event.target.classList.add('active');
-}
-</script>
 </body>
 </html>
