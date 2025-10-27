@@ -10,28 +10,18 @@
     <div class="admin-container">
         <a href="{{ url_for('home') }}">На главную</a>
         <h2 style="text-align: center; margin-bottom: 20px;">Управление матчами</h2>
-        <div class="current-tour-control" style="margin-bottom: 20px; text-align: center;">
-    <h3>Текущий тур: {{ current_tour }}</h3>
-    <form method="POST" action="{{ url_for('set_current_tour') }}" style="display: inline-block;">
-        <div style="display: flex; align-items: center; gap: 10px;">
-            <label for="current_tour">Изменить текущий тур:</label>
-            <input type="number" name="current_tour" min="1" value="{{ current_tour }}"
-                   style="width: 60px; padding: 5px;">
-            <button type="submit" class="btn-update" style="padding: 5px 10px;">Сохранить</button>
+
+        <!-- Отображаем текущий тур (только для информации) -->
+        <div class="current-tour-info" style="margin-bottom: 20px; text-align: center;">
+            <h3>Текущий тур: {{ current_tour }} (определяется автоматически)</h3>
         </div>
-    </form>
-    </div>
-    <!-- Кнопка для обновления текущего тура -->
-    <form method="POST" action="{{ url_for('update_matches_from_api') }}" style="display: inline-block; margin-left: 20px;">
-        <button type="submit" class="btn-update" style="padding: 5px 10px; background: #28a745;">
-            Обновить матчи текущего тура
-        </button>
-    </form>
-        <form method="POST" action="{{ url_for('update_current_tour_auto') }}" style="display: inline-block; margin-left: 20px;">
-    <button type="submit" class="btn-update" style="padding: 5px 10px; background: #17a2b8;">
-        Автообновление текущего тура
-    </button>
-</form>
+
+        <!-- Кнопка для обновления текущего тура -->
+        <form method="POST" action="{{ url_for('update_matches_from_api') }}" style="display: inline-block; margin-left: 20px;">
+            <button type="submit" class="btn-update" style="padding: 5px 10px; background: #28a745;">
+                Обновить матчи текущего тура
+            </button>
+        </form>
 
         <div style="margin-bottom: 30px;">
             <h3>Добавить новый матч</h3>
