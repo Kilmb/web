@@ -11,6 +11,8 @@ from pathlib import Path
 import requests
 import csv
 from io import StringIO
+import threading
+import time
 
 # Инициализация Flask-приложения
 app = Flask(__name__)
@@ -20,7 +22,6 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
 app.config['CURRENT_TOUR_KEY'] = 'current_tour'  # Ключ для хранения текущего тура
-app.config['LAST_TOUR_UPDATE'] = 'last_tour_update'  # Время последнего обновления тура
 
 # Создание папки для загрузок, если её нет
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
@@ -156,15 +157,16 @@ class TestResult(db.Model):
 
 def get_current_tour_from_api():
     """
-    Автоматически определяет текущий тур через API на основе времени
+    Автоматически определяет текущий тур на основе API матчей
     """
     try:
+        # Получаем все матчи сезона
         url = "https://api.sstats.net/games/list?"
         params = {
             'leagueId': 235,
             'year': 2025,
             'format': 'json',
-            'limit': 200  # Получаем достаточно матчей для анализа
+            'limit': 300
         }
 
         headers = {'apikey': '8ftkpzresyxo7dqz'}
@@ -178,85 +180,68 @@ def get_current_tour_from_api():
         if not matches_data:
             return 1
 
-        current_time = datetime.now().replace(tzinfo=None)
+        # Простой подход: считаем что текущий тур = (количество завершенных матчей // 8) + 1
+        completed_matches = [m for m in matches_data if m.get('status') == 8]
+        current_tour = (len(completed_matches) // 8) + 1
 
-        # Сортируем матчи по дате
-        matches_data.sort(key=lambda x: x['date'])
-
-        # Группируем матчи по турам (по 8 матчей в туре)
-        tours = {}
-        for i, match in enumerate(matches_data):
-            tour_number = (i // 8) + 1
-            if tour_number not in tours:
-                tours[tour_number] = []
-
-            match_date_str = match['date']
-            match_date_utc = datetime.fromisoformat(match_date_str.replace('Z', '+00:00'))
-            match_date_msk = match_date_utc.replace(tzinfo=None) + timedelta(hours=3)
-
-            tours[tour_number].append({
-                'date': match_date_msk,
-                'is_played': match.get('status') == 8
-            })
-
-        # Определяем текущий тур на основе времени
-        for tour_number in sorted(tours.keys()):
-            tour_matches = tours[tour_number]
-
-            # Проверяем, есть ли в этом туре матчи, которые еще не начались
-            future_matches = [m for m in tour_matches if m['date'] > current_time]
-            played_matches = [m for m in tour_matches if m['is_played']]
-
-            # Если в туре есть будущие матчи или тур только что завершился
-            if future_matches or (not future_matches and len(played_matches) == len(tour_matches)):
-                return tour_number
-
-        # Если дошли до конца, возвращаем последний тур
-        return max(tours.keys()) if tours else 1
+        return min(current_tour, 30)
 
     except Exception as e:
-        print(f"Ошибка при определении текущего тура через API: {e}")
-        return 1
+        print(f"Ошибка при определении текущего тура: {e}")
+        return load_current_tour_from_file()
 
 
-def should_update_tour():
-    """
-    Проверяет, нужно ли обновлять тур (раз в час)
-    """
-    last_update = app.config.get('LAST_TOUR_UPDATE')
-    if not last_update:
-        return True
-
-    time_since_update = datetime.now() - last_update
-    return time_since_update.total_seconds() > 3600  # 1 час
-
-
-def update_current_tour_automatically():
-    """
-    Автоматически обновляет текущий тур на основе времени
-    """
+def load_current_tour_from_file():
     try:
-        # Проверяем, нужно ли обновлять (раз в час)
-        if not should_update_tour():
-            return False
+        if TOUR_CONFIG_PATH.exists():
+            with open(TOUR_CONFIG_PATH, 'r') as f:
+                return json.load(f).get('current_tour', 1)
+    except Exception:
+        pass
+    return 1
 
-        new_current_tour = get_current_tour_from_api()
-        old_current_tour = app.config['CURRENT_TOUR_KEY']
 
-        if new_current_tour != old_current_tour:
-            app.config['CURRENT_TOUR_KEY'] = new_current_tour
-            app.config['LAST_TOUR_UPDATE'] = datetime.now()
-            save_current_tour(new_current_tour)
-            print(f"Текущий тур автоматически обновлен: {old_current_tour} -> {new_current_tour}")
-            return True
+def save_current_tour(tour_number):
+    try:
+        with open(TOUR_CONFIG_PATH, 'w') as f:
+            json.dump({'current_tour': tour_number}, f)
+    except Exception as e:
+        print(f"Ошибка при сохранении текущего тура: {e}")
 
-        # Обновляем время даже если тур не изменился
-        app.config['LAST_TOUR_UPDATE'] = datetime.now()
-        return False
+
+def load_current_tour():
+    try:
+        current_tour = get_current_tour_from_api()
+
+        save_current_tour(current_tour)
+
+        print(f"Текущий тур автоматически определен: {current_tour}")
+        return current_tour
 
     except Exception as e:
-        print(f"Ошибка при автоматическом обновлении тура: {e}")
-        return False
+        print(f"Ошибка при автоматическом определении тура: {e}")
+        return load_current_tour_from_file()
+
+
+def schedule_tour_update():
+    def update_job():
+        while True:
+            try:
+                # Обновляем каждые 6 часов
+                time.sleep(6 * 60 * 60)
+
+                with app.app_context():
+                    current_tour = get_current_tour_from_api()
+                    if current_tour != app.config['CURRENT_TOUR_KEY']:
+                        app.config['CURRENT_TOUR_KEY'] = current_tour
+                        save_current_tour(current_tour)
+                        print(f"Автоматически обновлен текущий тур: {current_tour}")
+
+            except Exception as e:
+                print(f"Ошибка в фоновом обновлении тура: {e}")
+
+    thread = threading.Thread(target=update_job, daemon=True)
+    thread.start()
 
 
 def update_rpl_table_from_sstats():
@@ -517,9 +502,6 @@ def inject_current_tour():
 # Главная страница
 @app.route('/')
 def home():
-    # Автоматически обновляем текущий тур при загрузке главной страницы (с ограничением по времени)
-    update_current_tour_automatically()
-
     table = db.session.query(RPLTable).order_by(RPLTable.position).all()
     current_tour = app.config['CURRENT_TOUR_KEY']
 
@@ -768,71 +750,6 @@ def edit_test(test_id):
     return render_template('edit_test.html', test=test)
 
 
-# Загрузка текущего тура
-def load_current_tour():
-    try:
-        if TOUR_CONFIG_PATH.exists():
-            with open(TOUR_CONFIG_PATH, 'r') as f:
-                data = json.load(f)
-                app.config['LAST_TOUR_UPDATE'] = datetime.fromisoformat(
-                    data.get('last_update', datetime.now().isoformat()))
-                return data.get('current_tour', 1)
-    except Exception:
-        pass
-    app.config['LAST_TOUR_UPDATE'] = datetime.now()
-    return 1
-
-
-# Сохранение текущего тура в json
-def save_current_tour(tour_number):
-    data = {
-        'current_tour': tour_number,
-        'last_update': datetime.now().isoformat()
-    }
-    with open(TOUR_CONFIG_PATH, 'w') as f:
-        json.dump(data, f)
-
-
-app.config['CURRENT_TOUR_KEY'] = load_current_tour()
-
-
-# Изменение текущего тура
-@app.route('/set_current_tour', methods=['POST'])
-@login_required
-def set_current_tour():
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-
-    try:
-        new_tour = int(request.form['current_tour'])
-        app.config['CURRENT_TOUR_KEY'] = new_tour
-        app.config['LAST_TOUR_UPDATE'] = datetime.now()
-        save_current_tour(new_tour)
-        flash(f'Текущий тур изменен на {new_tour}', 'success')
-    except ValueError:
-        flash('Некорректный номер тура', 'danger')
-
-    return redirect(url_for('edit_matches'))
-
-
-# Автоматическое обновление текущего тура
-@app.route('/update_current_tour_auto', methods=['POST'])
-@login_required
-def update_current_tour_auto():
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-
-    try:
-        if update_current_tour_automatically():
-            flash('Текущий тур успешно обновлен автоматически', 'success')
-        else:
-            flash('Текущий тур уже актуален', 'info')
-    except Exception as e:
-        flash(f'Ошибка при автоматическом обновлении тура: {e}', 'danger')
-
-    return redirect(url_for('edit_matches'))
-
-
 @app.route('/restore_table', methods=['POST'])
 @login_required
 def restore_table():
@@ -906,21 +823,152 @@ def update_match(match_id):
     return redirect(url_for('edit_matches'))
 
 
-@app.route('/update_matches_from_api', methods=['POST'])
+# Обновление таблицы из API
+# Обновление таблицы из API
+@app.route('/update_table_from_api', methods=['POST'])
 @login_required
-def update_matches_from_api():
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
+def update_table_from_api():
+    try:
+        # Обновляем турнирную таблицу
+        success_table, message_table = update_rpl_table_from_sstats()
 
-    success, message = update_matches_from_sstats()
+        # Обновляем матчи текущего тура
+        current_tour = app.config['CURRENT_TOUR_KEY']
+        success_current, message_current = update_matches_for_tour(current_tour)
 
-    if success:
-        flash(message, 'success')
-    else:
-        flash(message, 'danger')
+        # Обновляем матчи следующего тура
+        next_tour = current_tour + 1
+        success_next, message_next = update_matches_for_tour(next_tour)
 
-    return redirect(url_for('edit_matches'))
+        # Формируем общее сообщение
+        messages = []
+        if success_table:
+            messages.append(message_table)
 
+        if success_current:
+            messages.append(f"Текущий тур: {message_current}")
+
+        if success_next:
+            messages.append(f"Следующий тур: {message_next}")
+
+        if messages:
+            flash(" | ".join(messages), 'success')
+        else:
+            flash("Не удалось обновить данные", 'warning')
+
+    except Exception as e:
+        flash(f"Ошибка при обновлении данных: {e}", 'danger')
+
+    return redirect(url_for('home'))
+
+
+def update_matches_for_tour(tour_number):
+    """
+    Обновляет матчи для указанного тура
+    """
+    try:
+        offset = (tour_number - 1) * 8
+
+        url = "https://api.sstats.net/games/list?"
+        params = {
+            'leagueId': 235,
+            'year': 2025,
+            'format': 'json',
+            'offset': offset,
+            'limit': 8
+        }
+
+        headers = {'apikey': '8ftkpzresyxo7dqz'}
+
+        response = requests.get(url, params=params, headers=headers, timeout=30)
+        response.raise_for_status()
+
+        data = response.json()
+        matches_data = data['data']
+
+        if not matches_data:
+            return False, f"Нет данных для тура {tour_number}"
+
+        matches_added = 0
+        matches_updated = 0
+
+        def map_team_name(api_name):
+            mapping = {
+                "CSKA Moscow": "ЦСКА",
+                "FC Krasnodar": "Краснодар",
+                "Lokomotiv": "Локомотив",
+                "Zenit": "Зенит",
+                "Baltika": "Балтика",
+                "Spartak Moscow": "Спартак",
+                "Rubin": "Рубин",
+                "Dynamo": "Динамо Москва",
+                "Akhmat": "Ахмат",
+                "FC Rostov": "Ростов",
+                "Krylia Sovetov": "Крылья Советов",
+                "Dinamo Makhachkala": "Динамо Махачкала",
+                "Akron": "Акрон",
+                "FC Orenburg": "Оренбург",
+                "Nizhny Novgorod": "Пари НН",
+                "FC Sochi": "Сочи"
+            }
+            return mapping.get(api_name, api_name)
+
+        for match_data in matches_data:
+            try:
+                home_team_api = match_data['homeTeam']['name']
+                away_team_api = match_data['awayTeam']['name']
+
+                home_team = map_team_name(home_team_api)
+                away_team = map_team_name(away_team_api)
+
+                match_date_str = match_data['date']
+                match_date_utc = datetime.fromisoformat(match_date_str.replace('Z', '+00:00'))
+                match_date_msk = match_date_utc.replace(tzinfo=None) + timedelta(hours=3)
+
+                home_score = match_data.get('homeResult')
+                away_score = match_data.get('awayResult')
+
+                is_played = match_data.get('status') == 8
+
+                # Ищем существующий матч
+                existing_match = db.session.query(Match).filter(
+                    Match.home_team == home_team,
+                    Match.away_team == away_team,
+                    Match.tour_number == tour_number
+                ).first()
+
+                if existing_match:
+                    existing_match.home_score = home_score if is_played else None
+                    existing_match.away_score = away_score if is_played else None
+                    existing_match.is_played = is_played
+                    existing_match.match_date = match_date_msk
+                    matches_updated += 1
+                else:
+                    new_match = Match(
+                        home_team=home_team,
+                        away_team=away_team,
+                        match_date=match_date_msk,
+                        home_score=home_score if is_played else None,
+                        away_score=away_score if is_played else None,
+                        is_played=is_played,
+                        tour_number=tour_number
+                    )
+                    db.session.add(new_match)
+                    matches_added += 1
+
+            except Exception as e:
+                print(f"Ошибка при обработке матча {home_team_api} vs {away_team_api}: {e}")
+                continue
+
+        db.session.commit()
+
+        message = f"добавлено {matches_added}, обновлено {matches_updated}"
+        return True, message
+
+    except Exception as e:
+        print(f"Ошибка при обновлении матчей тура {tour_number}: {e}")
+        db.session.rollback()
+        return False, f"ошибка API"
 
 @app.route('/add_match', methods=['POST'])
 @login_required
@@ -1075,20 +1123,6 @@ def edit_rpl_table():
     return render_template('edit_rpl_table.html', table=table)
 
 
-# Обновление таблицы из API
-@app.route('/update_table_from_api', methods=['POST'])
-@login_required
-def update_table_from_api():
-    success, message = update_rpl_table_from_sstats()
-
-    if success:
-        flash(message, 'success')
-    else:
-        flash(message, 'danger')
-
-    return redirect(url_for('home'))
-
-
 @app.route('/logout')
 @login_required
 def logout():
@@ -1155,5 +1189,12 @@ if __name__ == '__main__':
             db.session.add_all(sample_tests)
             db.session.commit()
 
+        # Автоматически определяем и устанавливаем текущий тур
+        app.config['CURRENT_TOUR_KEY'] = load_current_tour()
+        print(f"Текущий тур установлен: {app.config['CURRENT_TOUR_KEY']}")
+
+        # Запускаем фоновое обновление тура
+        schedule_tour_update()
+
         # Запуск приложения в режиме отладки
-    app.run(host='127.0.0.1', port=5000, debug=True)
+        app.run(host='127.0.0.1', port=5000, debug=True)
