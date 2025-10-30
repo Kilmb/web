@@ -155,6 +155,31 @@ class TestResult(db.Model):
     user = db.relationship('User')
 
 
+class UserBalance(db.Model):
+    __tablename__ = 'user_balances'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True)
+    balance = db.Column(db.Integer, default=100)  # Начальный баланс 100 монет
+
+    user = db.relationship('User')
+
+
+class Bet(db.Model):
+    __tablename__ = 'bets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    match_id = db.Column(db.Integer, db.ForeignKey('matches.id'))
+    bet_type = db.Column(db.String(20), nullable=False)  # 'home_win', 'draw', 'away_win'
+    amount = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    is_settled = db.Column(db.Boolean, default=False)
+    won = db.Column(db.Boolean, default=False)
+
+    user = db.relationship('User')
+    match = db.relationship('Match')
+
 def get_current_tour_from_api():
     """
     Автоматически определяет текущий тур на основе API матчей
@@ -938,11 +963,19 @@ def update_matches_for_tour(tour_number):
                 ).first()
 
                 if existing_match:
+                    # Сохраняем предыдущее состояние матча для проверки ставок
+                    was_played_before = existing_match.is_played
+
                     existing_match.home_score = home_score if is_played else None
                     existing_match.away_score = away_score if is_played else None
                     existing_match.is_played = is_played
                     existing_match.match_date = match_date_msk
                     matches_updated += 1
+
+                    # Если матч завершен и ранее не был сыгран, рассчитываем ставки
+                    if is_played and not was_played_before:
+                        settle_bets(existing_match.id)
+
                 else:
                     new_match = Match(
                         home_team=home_team,
@@ -1123,6 +1156,110 @@ def edit_rpl_table():
     return render_template('edit_rpl_table.html', table=table)
 
 
+@app.route('/place_bet/<int:match_id>', methods=['POST'])
+@login_required
+def place_bet(match_id):
+    match = db.session.get(Match, match_id)
+    if not match:
+        flash('Матч не найден', 'danger')
+        return redirect(url_for('home'))
+
+    if match.is_played:
+        flash('Нельзя делать ставки на завершенные матчи', 'danger')
+        return redirect(url_for('home'))
+
+    bet_type = request.form.get('bet_type')
+    amount = int(request.form.get('amount', 0))
+
+    # Проверяем валидность ставки
+    if bet_type not in ['home_win', 'draw', 'away_win']:
+        flash('Неверный тип ставки', 'danger')
+        return redirect(url_for('home'))
+
+    if amount <= 0:
+        flash('Сумма ставки должна быть положительной', 'danger')
+        return redirect(url_for('home'))
+
+    # Проверяем баланс пользователя
+    user_balance = UserBalance.query.filter_by(user_id=current_user.id).first()
+    if not user_balance:
+        user_balance = UserBalance(user_id=current_user.id, balance=100)
+        db.session.add(user_balance)
+        db.session.commit()
+
+    if user_balance.balance < amount:
+        flash('Недостаточно средств для ставки', 'danger')
+        return redirect(url_for('home'))
+
+    # Проверяем, не делал ли пользователь уже ставку на этот матч
+    existing_bet = Bet.query.filter_by(user_id=current_user.id, match_id=match_id).first()
+    if existing_bet:
+        flash('Вы уже сделали ставку на этот матч', 'danger')
+        return redirect(url_for('home'))
+
+    # Создаем ставку и списываем средства
+    new_bet = Bet(
+        user_id=current_user.id,
+        match_id=match_id,
+        bet_type=bet_type,
+        amount=amount
+    )
+
+    user_balance.balance -= amount
+
+    db.session.add(new_bet)
+    db.session.commit()
+
+    flash(f'Ставка на {amount} монет успешно размещена!', 'success')
+    return redirect(url_for('home'))
+
+
+@app.route('/my_bets')
+@login_required
+def my_bets():
+    user_balance = UserBalance.query.filter_by(user_id=current_user.id).first()
+    if not user_balance:
+        user_balance = UserBalance(user_id=current_user.id, balance=100)
+        db.session.add(user_balance)
+        db.session.commit()
+
+    bets = Bet.query.filter_by(user_id=current_user.id).order_by(Bet.created_at.desc()).all()
+    return render_template('my_bets.html', bets=bets, balance=user_balance.balance)
+
+
+# Функция для расчета результатов ставок
+def settle_bets(match_id):
+    match = db.session.get(Match, match_id)
+    if not match or not match.is_played:
+        return
+
+    # Определяем результат матча
+    if match.home_score > match.away_score:
+        actual_result = 'home_win'
+    elif match.home_score == match.away_score:
+        actual_result = 'draw'
+    else:
+        actual_result = 'away_win'
+
+    # Находим все ставки на этот матч
+    bets = Bet.query.filter_by(match_id=match_id, is_settled=False).all()
+
+    for bet in bets:
+        bet.is_settled = True
+
+        if bet.bet_type == actual_result:
+            # Ставка выиграла - удваиваем сумму
+            user_balance = UserBalance.query.filter_by(user_id=bet.user_id).first()
+            user_balance.balance += bet.amount * 2
+            bet.won = True
+            flash(f'Ставка на матч {match.home_team} vs {match.away_team} выиграла! +{bet.amount * 2} монет', 'success')
+        else:
+            # Ставка проиграла - деньги уже списаны
+            bet.won = False
+
+    db.session.commit()
+
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -1172,7 +1309,15 @@ if __name__ == '__main__':
             for match in matches:
                 db.session.add(match)
             db.session.commit()
+        users_without_balance = db.session.query(User).filter(
+            ~User.id.in_(db.session.query(UserBalance.user_id))
+        ).all()
 
+        for user in users_without_balance:
+            user_balance = UserBalance(user_id=user.id, balance=100)
+            db.session.add(user_balance)
+
+        db.session.commit()
         # Добавление тестовых вопросов, если их нет
         if db.session.query(ClubTest).count() == 0:
             sample_tests = [
@@ -1196,5 +1341,5 @@ if __name__ == '__main__':
         # Запускаем фоновое обновление тура
         schedule_tour_update()
 
+        # Запуск приложения в режиме отладки
         app.run(host='127.0.0.1', port=5000, debug=True)
-
