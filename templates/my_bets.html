@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мои ставки</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+</head>
+<body>
+    <div class="menu">
+        <a href="{{ url_for('home') }}">На главную</a>
+        <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
+    </div>
+
+    <div class="bets-container">
+        <h1>Мои ставки</h1>
+
+        <div class="balance-info">
+            <h2>Баланс: {{ balance }} монет</h2>
+        </div>
+
+        {% if bets %}
+            <div class="bets-list">
+                <h3>История ставок:</h3>
+                <table>
+                    <tr>
+                        <th>Матч</th>
+                        <th>Ставка</th>
+                        <th>Сумма</th>
+                        <th>Дата</th>
+                        <th>Статус</th>
+                        <th>Результат</th>
+                    </tr>
+                    {% for bet in bets %}
+                    <tr>
+                        <td>{{ bet.match.home_team }} vs {{ bet.match.away_team }}</td>
+                        <td>
+                            {% if bet.bet_type == 'home_win' %}
+                                Победа {{ bet.match.home_team }}
+                            {% elif bet.bet_type == 'away_win' %}
+                                Победа {{ bet.match.away_team }}
+                            {% else %}
+                                Ничья
+                            {% endif %}
+                        </td>
+                        <td>{{ bet.amount }} монет</td>
+                        <td>{{ bet.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                        <td>
+                            {% if bet.is_settled %}
+                                Рассчитана
+                            {% else %}
+                                Ожидает
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if bet.is_settled %}
+                                {% if bet.won %}
+                                    <span style="color: green;">+{{ bet.amount * 2 }} монет</span>
+                                {% else %}
+                                    <span style="color: red;">-{{ bet.amount }} монет</span>
+                                {% endif %}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% else %}
+            <p>У вас пока нет ставок.</p>
+        {% endif %}
+    </div>
+</body>
+</html>

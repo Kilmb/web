@@ -8,6 +8,7 @@
     <!-- Добавляем Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
+        /* Стили для навигации по турам */
         .tour-navigation {
             display: flex;
             justify-content: center;
@@ -151,6 +152,7 @@
     {% endif %}
 
     {% if current_user.is_authenticated %}
+    <a href="{{ url_for('my_bets') }}">Мои ставки</a>
     <div class="profile-header">
         {% if current_user.avatar %}
         <img src="{{ url_for('uploaded_file', filename=current_user.avatar) }}" class="profile-avatar">
@@ -171,7 +173,6 @@
         {% if current_user.is_admin %}
         <a href="{{ url_for('show_users') }}">Список пользователей</a>
         <a href="{{ url_for('edit_rpl_table') }}">Редактировать таблицу</a>
-        <a href="{{ url_for('edit_matches') }}">Редактировать матчи</a>
         <a href="{{ url_for('club_tests') }}">Редактировать тесты</a>
         {% else %}
         <a href="{{ url_for('show_users') }}">Список пользователей</a>
@@ -254,7 +255,26 @@
                         </div>
                         <div style="text-align: center; color: #666;">
                             {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
+
                         </div>
+                        {% if current_user.is_authenticated and not match.is_played %}
+<div class="bet-form">
+    <form action="{{ url_for('place_bet', match_id=match.id) }}" method="POST"
+          style="display: flex; flex-direction: column; gap: 5px; margin-top: 10px;">
+        <select name="bet_type" required style="padding: 5px;">
+            <option value="">Выберите ставку</option>
+            <option value="home_win">Победа {{ match.home_team }}</option>
+            <option value="draw">Ничья</option>
+            <option value="away_win">Победа {{ match.away_team }}</option>
+        </select>
+        <input type="number" name="amount" min="1" placeholder="Сумма" required
+               style="padding: 5px; width: 100%;">
+        <button type="submit" style="padding: 5px; background: #28a745; color: white; border: none; border-radius: 3px;">
+            Сделать ставку
+        </button>
+    </form>
+</div>
+{% endif %}
                     </div>
                     {% endfor %}
                 </div>
@@ -635,4 +655,3 @@
     </script>
 </body>
 </html>
-
