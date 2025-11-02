@@ -3,10 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Главная</title>
+    <title>Профиль</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
 </head>
-<body>
+<body class="theme-{{ current_theme }}">
     <a href="{{ url_for('home') }}">На главную</a>
     <h1>Профиль пользователя</h1>
 
@@ -43,6 +44,56 @@
                 </div>
                 <button type="submit">Сохранить изменения</button>
             </form>
+        </div>
+
+        <!-- Блок выбора темы -->
+        <div class="themes-section">
+            <h2>Выбор темы</h2>
+            <div class="balance-info">
+                Ваш баланс: <strong>{{ balance }} монет</strong>
+            </div>
+
+            <div class="themes-grid">
+                {% for theme_key, theme_info in themes.items() %}
+                <div class="theme-card {% if theme_key in owned_themes %}owned{% else %}locked{% endif %} {% if theme_key == active_theme %}active{% endif %}">
+                    <div class="theme-preview theme-preview-{{ theme_key }}">
+                        <div class="theme-sample">
+                            <div class="sample-header"></div>
+                            <div class="sample-content"></div>
+                            <div class="sample-footer"></div>
+                        </div>
+                    </div>
+
+                    <div class="theme-info">
+                        <h3>{{ theme_info.name }}</h3>
+                        <p class="theme-description">{{ theme_info.description }}</p>
+
+                        {% if theme_key in owned_themes %}
+                            {% if theme_key == active_theme %}
+                                <span class="theme-status active">Активна</span>
+                            {% else %}
+                                <form method="POST" class="theme-form">
+                                    <input type="hidden" name="theme" value="{{ theme_key }}">
+                                    <button type="submit" class="btn-activate">Активировать</button>
+                                </form>
+                            {% endif %}
+                        {% else %}
+                            <div class="theme-price">
+                                Цена: {{ theme_info.price }} монет
+                                {% if balance >= theme_info.price %}
+                                    <form method="POST" class="theme-form">
+                                        <input type="hidden" name="theme" value="{{ theme_key }}">
+                                        <button type="submit" class="btn-buy">Купить</button>
+                                    </form>
+                                {% else %}
+                                    <span class="not-enough">Недостаточно средств</span>
+                                {% endif %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </body>
