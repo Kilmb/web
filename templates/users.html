@@ -3,46 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <title>Пользователи</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .menu { margin-bottom: 20px; }
+        .menu a { margin-right: 10px; text-decoration: none; color: #007bff; }
+        .menu a:hover { text-decoration: underline; }
+        .profile-link { color: #007bff; text-decoration: none; }
+        .profile-link:hover { text-decoration: underline; }
+    </style>
 </head>
 <body>
-<a href="{{ url_for('home') }}">На главную</a>
-<h1>Список пользователей</h1>
+    <div class="menu">
+        <a href="{{ url_for('home') }}">На главную</a>
+        <a href="{{ url_for('logout') }}">Выйти</a>
+    </div>
 
-<table>
-    <tr>
-        <th>ID</th>
-        <th>Имя</th>
-        <th>Email</th>
-        <th>Клуб</th>
-        <th>Аватар</th>
-        <th>Действия</th>
-    </tr>
-    {% for user in users %}
-    <tr>
-        <td>{{ user.id }}</td>
-        <td>{{ user.name }}</td>
-        <td>{{ user.email }}</td>
-        <td>{{ user.club }}</td>
-        <td>
-            {% if user.avatar %}
-            <img src="{{ url_for('uploaded_file', filename=user.avatar) }}" class="avatar-thumbnail">
-            {% else %}
-            <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="avatar-thumbnail">
-            {% endif %}
-        </td>
-        <td>
-            <a href="{{ url_for('view_user', user_id=user.id) }}" style="display: inline-block; padding: 6px 12px; background-color: #4682B4; color: white; text-decoration: none; border-radius: 4px; margin-right: 5px;">Профиль</a>
-            {% if current_user.is_admin and user.id != current_user.id %}
-            <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" style="display: inline;">
-                <button type="submit" class="delete-btn"
-                        onclick="return confirm('Вы уверены, что хотите удалить этого пользователя?')">Удалить
-                </button>
-            </form>
-            {% endif %}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+    <h1>Список пользователей</h1>
+
+    {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            {% for message in messages %}
+                <div style="color: red; margin: 10px 0;">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% if users %}
+    <table>
+        <tr>
+            <th>ID</th>
+            <th>Имя</th>
+            <th>Email</th>
+            <th>Клуб</th>
+            <th>Баланс</th>
+            <th>Действия</th>
+        </tr>
+        {% for user in users %}
+        <tr>
+            <td>{{ user.id }}</td>
+            <td>{{ user.name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.club }}</td>
+            <td>{{ user_balances.get(user.id, 100) }} монет</td>
+            <td>
+                <a href="{{ url_for('view_user', user_id=user.id) }}" class="profile-link">Профиль</a>
+                {% if current_user.is_admin and user.id != current_user.id %}
+                <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" style="display: inline;">
+                    <button type="submit" onclick="return confirm('Удалить пользователя {{ user.name }}?')"
+                            style="background: #dc3545; color: white; border: none; padding: 2px 8px; border-radius: 3px; margin-left: 5px; cursor: pointer;">
+                        Удалить
+                    </button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% else %}
+    <p>Пользователи не найдены</p>
+    {% endif %}
+
+    <div style="margin-top: 20px;">
+        <p><strong>Всего пользователей:</strong> {{ users|length }}</p>
+    </div>
 </body>
 </html>
