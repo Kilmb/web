@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>Профиль пользователя</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .menu { margin-bottom: 20px; }
@@ -56,6 +57,12 @@
             border-radius: 4px;
             cursor: pointer;
         }
+        strong{
+            --text-color: #000;
+        }
+        p{
+            --text-color: #000;
+        }
         .balance-btn:hover { background-color: #218838; }
         .debug-info {
             background-color: #f8f9fa;
@@ -66,7 +73,7 @@
         }
     </style>
 </head>
-<body>
+<body class="theme-{{ current_theme }}">
     <div class="menu">
         <a href="{{ url_for('home') }}">На главную</a>
         <a href="{{ url_for('show_users') }}">Список пользователей</a>
@@ -77,12 +84,6 @@
 
     <!-- Отладочная информация -->
     <div class="debug-info">
-        <strong>Отладка:</strong><br>
-        current_user.is_authenticated: {{ current_user.is_authenticated }}<br>
-        current_user.is_admin: {{ current_user.is_admin }}<br>
-        current_user.id: {{ current_user.id }}<br>
-        user.id: {{ user.id }}<br>
-        Условие (is_admin and id != user.id): {{ current_user.is_admin and current_user.id != user.id }}
     </div>
 
     <div class="profile-container">
@@ -100,6 +101,7 @@
 
             <div class="balance-section">
                 <p><strong>Баланс:</strong>
+                     </style>
                     <span class="current-balance">{{ user_balance }}</span> монет
                 </p>
 
