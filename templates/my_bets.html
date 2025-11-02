@@ -5,21 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мои ставки</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
 </head>
-<body>
+<body class="theme-{{ current_theme }}">
     <div class="menu">
         <a href="{{ url_for('home') }}">На главную</a>
+        {% if current_user.is_admin %}
+        <a href="{{ url_for('show_users') }}">Список пользователей</a>
+        <a href="{{ url_for('edit_rpl_table') }}">Редактировать таблицу</a>
+        <a href="{{ url_for('edit_matches') }}">Редактировать матчи</a>
+        <a href="{{ url_for('club_tests') }}">Редактировать тесты</a>
+        {% else %}
+        <a href="{{ url_for('show_users') }}">Список пользователей</a>
+        <a href="{{ url_for('easy_quiz') }}">Лёгкий тест</a>
+        <a href="{{ url_for('medium_quiz') }}">Средний тест</a>
+        <a href="{{ url_for('hard_quiz') }}">Сложный тест</a>
+        {% endif %}
         <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
     </div>
 
     <div class="bets-container">
         <h1>Мои ставки</h1>
 
+        {% if error %}
+            <div class="error-message" style="color: red; margin: 20px 0;">
+                {{ error }}
+            </div>
+        {% endif %}
+
         <div class="balance-info">
             <h2>Баланс: {{ balance }} монет</h2>
         </div>
 
-        {% if bets %}
+        {% if bets_data %}
             <div class="bets-list">
                 <h3>История ставок:</h3>
                 <table>
@@ -31,33 +49,33 @@
                         <th>Статус</th>
                         <th>Результат</th>
                     </tr>
-                    {% for bet in bets %}
+                    {% for item in bets_data %}
                     <tr>
-                        <td>{{ bet.match.home_team }} vs {{ bet.match.away_team }}</td>
+                        <td>{{ item.match.home_team }} vs {{ item.match.away_team }}</td>
                         <td>
-                            {% if bet.bet_type == 'home_win' %}
-                                Победа {{ bet.match.home_team }}
-                            {% elif bet.bet_type == 'away_win' %}
-                                Победа {{ bet.match.away_team }}
+                            {% if item.bet.bet_type == 'home_win' %}
+                                Победа {{ item.match.home_team }}
+                            {% elif item.bet.bet_type == 'away_win' %}
+                                Победа {{ item.match.away_team }}
                             {% else %}
                                 Ничья
                             {% endif %}
                         </td>
-                        <td>{{ bet.amount }} монет</td>
-                        <td>{{ bet.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                        <td>{{ item.bet.amount }} монет</td>
+                        <td>{{ item.bet.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
                         <td>
-                            {% if bet.is_settled %}
+                            {% if item.bet.is_settled %}
                                 Рассчитана
                             {% else %}
                                 Ожидает
                             {% endif %}
                         </td>
                         <td>
-                            {% if bet.is_settled %}
-                                {% if bet.won %}
-                                    <span style="color: green;">+{{ bet.amount * 2 }} монет</span>
+                            {% if item.bet.is_settled %}
+                                {% if item.bet.won %}
+                                    <span style="color: green;">+{{ item.bet.amount * 2 }} монет</span>
                                 {% else %}
-                                    <span style="color: red;">-{{ bet.amount }} монет</span>
+                                    <span style="color: red;">-{{ item.bet.amount }} монет</span>
                                 {% endif %}
                             {% else %}
                                 -
@@ -69,6 +87,7 @@
             </div>
         {% else %}
             <p>У вас пока нет ставок.</p>
+            <p><a href="{{ url_for('home') }}">Перейти к матчам для размещения ставок</a></p>
         {% endif %}
     </div>
 </body>
