@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Главная</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
     <!-- Добавляем Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -86,7 +87,7 @@
         }
     </style>
 </head>
-<body>
+<body class="theme-{{ current_theme }}">
     {% if not current_user.is_authenticated %}
     <div class="welcome-container">
         <div class="welcome-header">
@@ -152,7 +153,6 @@
     {% endif %}
 
     {% if current_user.is_authenticated %}
-    <a href="{{ url_for('my_bets') }}">Мои ставки</a>
     <div class="profile-header">
         {% if current_user.avatar %}
         <img src="{{ url_for('uploaded_file', filename=current_user.avatar) }}" class="profile-avatar">
@@ -164,26 +164,28 @@
     {% endif %}
 
     <div class="menu">
-        {% if current_user.is_authenticated %}
-        <form action="{{ url_for('update_table_from_api') }}" method="POST" style="display: inline;">
-            <button type="submit" style="background: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">
-                Обновить таблицу
-            </button>
-        </form>
-        {% if current_user.is_admin %}
-        <a href="{{ url_for('show_users') }}">Список пользователей</a>
-        <a href="{{ url_for('edit_rpl_table') }}">Редактировать таблицу</a>
-        <a href="{{ url_for('club_tests') }}">Редактировать тесты</a>
-        {% else %}
-        <a href="{{ url_for('show_users') }}">Список пользователей</a>
-        <a href="{{ url_for('easy_quiz') }}">Лёгкий тест</a>
-        <a href="{{ url_for('medium_quiz') }}">Средний тест</a>
-        <a href="{{ url_for('hard_quiz') }}">Сложный тест</a>
-        {% endif %}
-        <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
-        {% else %}
-        {% endif %}
-    </div>
+    {% if current_user.is_authenticated %}
+    <form action="{{ url_for('update_table_from_api') }}" method="POST" style="display: inline;">
+        <button type="submit" style="background: #28a745; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">
+            Обновить таблицу
+        </button>
+    </form>
+    {% if current_user.is_admin %}
+    <a href="{{ url_for('show_users') }}">Список пользователей</a>
+    <a href="{{ url_for('edit_rpl_table') }}">Редактировать таблицу</a>
+    <a href="{{ url_for('club_tests') }}">Редактировать тесты</a>
+    {% else %}
+    <a href="{{ url_for('show_users') }}">Список пользователей</a>
+    <a href="{{ url_for('easy_quiz') }}">Лёгкий тест</a>
+    <a href="{{ url_for('medium_quiz') }}">Средний тест</a>
+    <a href="{{ url_for('hard_quiz') }}">Сложный тест</a>
+    {% endif %}
+    <!-- ВАЖНО: Добавьте эту строку в основное меню -->
+    <a href="{{ url_for('my_bets') }}">Мои ставки</a>
+    <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
+    {% else %}
+    {% endif %}
+</div>
 
     {% if current_user.is_authenticated %}
     <div class="matches-container">
