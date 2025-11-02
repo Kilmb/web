@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ошибка</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
+</head>
+<body class="theme-{{ current_theme }}">
+    <div class="menu">
+        <a href="{{ url_for('home') }}">На главную</a>
+        <a href="{{ url_for('logout') }}" class="logout-btn">Выйти</a>
+    </div>
+
+    <div class="error-container">
+        <h1>Произошла ошибка</h1>
+        <p>При загрузке страницы ставок произошла ошибка:</p>
+        <p style="color: red;">{{ error }}</p>
+        <a href="{{ url_for('home') }}">Вернуться на главную</a>
+    </div>
+</body>
+</html>
