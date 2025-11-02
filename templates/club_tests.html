@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <title>Тесты про клубы РПЛ</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/club_tests.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
 </head>
-<body>
+<body class="theme-{{ current_theme }}">
     <div class="admin-container">
         <a href="{{ url_for('home') }}" class="btn-back">← На главную</a>
         <h1>Управление тестами про клубы</h1>
