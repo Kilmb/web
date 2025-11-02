@@ -2,181 +2,51 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Управление матчами</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/edit_matches.css') }}">
-    <style>
-        .match-item {
-            border: 1px solid #ddd;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 5px;
-            background: #f9f9f9;
-        }
-
-        .match-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-
-        .match-status {
-            font-size: 14px;
-            padding: 3px 8px;
-            border-radius: 3px;
-            background: #e9ecef;
-        }
-
-        .match-details {
-            margin-bottom: 10px;
-        }
-
-        .match-details p {
-            margin: 5px 0;
-            font-size: 14px;
-        }
-
-        .match-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .btn-edit {
-            padding: 5px 10px;
-            background: #17a2b8;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        .btn-edit:hover {
-            background: #138496;
-        }
-
-        .btn-settle {
-            padding: 5px 10px;
-            background: #ffc107;
-            color: black;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-        }
-
-        .btn-settle:hover {
-            background: #e0a800;
-        }
-    </style>
+    <title>Редактирование таблицы РПЛ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/rpl_table.css') }}">
 </head>
 <body>
-    <div class="admin-container">
-        <a href="{{ url_for('home') }}">На главную</a>
-        <h2 style="text-align: center; margin-bottom: 20px;">Управление матчами</h2>
+    <a href="{{ url_for('home') }}">На главную</a>
+    <h1>Редактирование таблицы РПЛ</h1>
 
-        <!-- Отображаем текущий тур (только для информации) -->
-        <div class="current-tour-info" style="margin-bottom: 20px; text-align: center;">
-            <h3>Текущий тур: {{ current_tour }} (определяется автоматически)</h3>
-        </div>
-
-        <!-- Кнопка для обновления текущего тура -->
-        <form method="POST" action="{{ url_for('update_matches_from_api') }}" style="display: inline-block; margin-left: 20px;">
-            <button type="submit" class="btn-update" style="padding: 5px 10px; background: #28a745;">
-                Обновить матчи текущего тура
-            </button>
-        </form>
-
-        <div style="margin-bottom: 30px;">
-            <h3>Добавить новый матч</h3>
-            <form method="POST" action="{{ url_for('add_match') }}" class="match-form">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Хозяева:</label>
-                        <select name="home_team" required>
-                            {% for club in clubs %}
-                                <option value="{{ club }}">{{ club }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Гости:</label>
-                        <select name="away_team" required>
-                            {% for club in clubs %}
-                                <option value="{{ club }}">{{ club }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Дата и время:</label>
-                        <input type="datetime-local" name="match_date" required>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Номер тура:</label>
-                        <input type="number" name="tour_number" min="1" required>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn-submit">Добавить матч</button>
-            </form>
-        </div>
-
-        {% for tour_number, matches in matches_by_tour.items() %}
-        <div class="tour-section">
-            <h3>Тур {{ tour_number }}</h3>
-
-            <div class="matches-list">
-                {% for match in matches %}
-                <div class="match-item">
-                    <div class="match-header">
-                        <strong>{{ match.home_team }} vs {{ match.away_team }}</strong>
-                        <span class="match-status">
-                            {% if match.is_played %}
-                                ✅ Завершен ({{ match.home_score }}:{{ match.away_score }})
-                            {% else %}
-                                ⏳ Ожидается
-                            {% endif %}
-                        </span>
-                    </div>
-
-                    <div class="match-details">
-                        <p><strong>Дата:</strong> {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}</p>
-                        <p><strong>Тур:</strong> {{ match.tour_number }}</p>
-                    </div>
-
-                    <div class="match-actions">
-                        <a href="{{ url_for('edit_match', match_id=match.id) }}" class="btn-edit">
-                            Редактировать
-                        </a>
-
-                        <form method="POST" action="{{ url_for('delete_match', match_id=match.id) }}" style="display: inline;">
-                            <button type="submit" class="btn-delete"
-                                    onclick="return confirm('Вы уверены, что хотите удалить этот матч?')">
-                                Удалить
-                            </button>
-                        </form>
-
-                        {% if match.is_played %}
-                        <form method="POST" action="{{ url_for('settle_bets_manual', match_id=match.id) }}" style="display: inline;">
-                            <button type="submit" class="btn-settle"
-                                    onclick="return confirm('Рассчитать ставки для этого матча?')">
-                                Рассчитать ставки
-                            </button>
-                        </form>
-                        {% endif %}
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endfor %}
+    <!-- Кнопка для обновления из API -->
+    <div style="margin-bottom: 20px;">
+        <form action="{{ url_for('restore_table') }}" method="POST" style="display: inline; margin-left: 10px;">
+    <button type="submit" style="background: #ffc107; color: black; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">
+        Восстановить таблицу
+    </button>
+</form>
+        <span style="margin-left: 10px; color: #666;">Автоматически обновит таблицу актуальными данными</span>
     </div>
+
+    <form method="POST">
+        <table>
+            <tr>
+                <th>№</th>
+                <th>Команда</th>
+                <th>И</th>
+                <th>В</th>
+                <th>Н</th>
+                <th>П</th>
+                <th>ЗМ</th>
+                <th>ПМ</th>
+                <th>О</th>
+            </tr>
+            {% for team in table %}
+            <tr>
+                <td>{{ team.position }}</td>
+                <td><input type="text" name="team[]" value="{{ team.team }}" class="team-name" required></td>
+                <td><input type="number" name="matches[]" value="{{ team.matches }}" min="0"></td>
+                <td><input type="number" name="wins[]" value="{{ team.wins }}" min="0"></td>
+                <td><input type="number" name="draws[]" value="{{ team.draws }}" min="0"></td>
+                <td><input type="number" name="losses[]" value="{{ team.losses }}" min="0"></td>
+                <td><input type="number" name="goals_for[]" value="{{ team.goals_for }}" min="0"></td>
+                <td><input type="number" name="goals_against[]" value="{{ team.goals_against }}" min="0"></td>
+                <td><strong>{{ team.points }}</strong></td>
+            </tr>
+            {% endfor %}
+        </table>
+        <button type="submit" style="margin-top: 20px;">Сохранить изменения</button>
+    </form>
 </body>
 </html>
