@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -13,6 +13,7 @@ import csv
 from io import StringIO
 import threading
 import time
+from clubs import CLUBS_DATA, RPL_CLUBS
 
 # Инициализация Flask-приложения
 app = Flask(__name__)
@@ -34,25 +35,6 @@ login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
 ADMIN_EMAIL = 'admin@example.com'
-
-RPL_CLUBS = [
-    "Акрон",
-    "Ахмат",
-    "Балтика",
-    "Динамо Махачкала",
-    "Динамо Москва",
-    "Зенит",
-    "Краснодар",
-    "Крылья Советов",
-    "Локомотив",
-    "Оренбург",
-    "Пари НН",
-    "Ростов",
-    "Рубин",
-    "Сочи",
-    "Спартак",
-    "ЦСКА"
-]
 
 
 def main():
@@ -78,65 +60,8 @@ class Password_inkognito:
 pw_secure = Password_inkognito()
 
 
-class UserTheme(db.Model):
-    __tablename__ = 'user_themes'
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
-    theme_name = db.Column(db.String(50), nullable=False)
-    is_active = db.Column(db.Boolean, default=False)
-    purchased_at = db.Column(db.DateTime, default=datetime.now)
-
-    user = db.relationship('User', backref='user_themes')
-
-
-# Список доступных тем
-AVAILABLE_THEMES = {
-    'light': {'name': 'Светлая', 'price': 0, 'description': 'Стандартная светлая тема'},
-    'dark': {'name': 'Темная', 'price': 0, 'description': 'Темная тема для комфортного использования ночью'},
-    'blue': {'name': 'Синяя', 'price': 15, 'description': 'Элегантная синяя тема'},
-    'green': {'name': 'Зеленая', 'price': 20, 'description': 'Спокойная зеленая тема'},
-    'red': {'name': 'Красная', 'price': 25, 'description': 'Энергичная красная тема'},
-    'purple': {'name': 'Фиолетовая', 'price': 30, 'description': 'Мистическая фиолетовая тема'},
-    'gold': {'name': 'Золотая', 'price': 40, 'description': 'Премиум золотая тема'},
-    'rpl': {'name': 'РПЛ', 'price': 50, 'description': 'Официальная тема Российской Премьер-Лиги'},
-    'orange': {'name': 'Оранжевая', 'price': 35, 'description': 'Яркая оранжевая тема'},
-    'pink': {'name': 'Розовая', 'price': 30, 'description': 'Нежная розовая тема'},
-    'steel': {'name': 'Стальная', 'price': 25, 'description': 'Минималистичная стальная тема'},
-    'ocean': {'name': 'Морская', 'price': 35, 'description': 'Свежая морская тема'},
-    'forest': {'name': 'Лесная', 'price': 30, 'description': 'Натуральная лесная тема'},
-    'premium-dark': {'name': 'Премиум Темная', 'price': 60, 'description': 'Эксклюзивная премиум темная тема'}
-}
-
-
-class UserBalance(db.Model):
-    __tablename__ = 'user_balances'
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'), unique=True, nullable=False)
-    balance = db.Column(db.Integer, default=100)
-
-    user = db.relationship('User', backref=db.backref('balance_record', uselist=False))
-
-
-class Bet(db.Model):
-    __tablename__ = 'bets'
-
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id', ondelete='CASCADE'))
-    match_id = db.Column(db.Integer, db.ForeignKey('matches.id', ondelete='CASCADE'))
-    bet_type = db.Column(db.String(20), nullable=False)
-    amount = db.Column(db.Integer, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.now)
-    is_settled = db.Column(db.Boolean, default=False)
-    won = db.Column(db.Boolean, default=False)
-
-    user = db.relationship('User', backref='user_bets')
-    match = db.relationship('Match', backref='match_bets')
-
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
-    __table_args__ = {'extend_existing': True}
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
@@ -146,6 +71,11 @@ class User(db.Model, UserMixin):
     is_admin = db.Column(db.Boolean, default=False)
     avatar = db.Column(db.String(200))
     about = db.Column(db.String(250))
+    theme = db.Column(db.String(50), default='default')
+
+    def __repr__(self):
+        return f"User('{self.name}', '{self.email}')"
+
 
 class RPLTable(db.Model):
     __tablename__ = 'rpl_table'
@@ -175,6 +105,7 @@ class Match(db.Model):
     home_score = db.Column(db.Integer, nullable=True)
     away_score = db.Column(db.Integer, nullable=True)
     is_played = db.Column(db.Boolean, default=False)
+    is_started = db.Column(db.Boolean, default=False)
     tour_number = db.Column(db.Integer, nullable=False)
 
     def __repr__(self):
@@ -205,6 +136,33 @@ class TestResult(db.Model):
     date = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('User')
+
+
+class UserBalance(db.Model):
+    __tablename__ = 'user_balances'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True)
+    balance = db.Column(db.Integer, default=100)  # Начальный баланс 100 монет
+
+    user = db.relationship('User')
+
+
+class Bet(db.Model):
+    __tablename__ = 'bets'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
+    match_id = db.Column(db.Integer, db.ForeignKey('matches.id'))
+    bet_type = db.Column(db.String(20), nullable=False)  # 'home_win', 'draw', 'away_win'
+    amount = db.Column(db.Integer, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    is_settled = db.Column(db.Boolean, default=False)
+    won = db.Column(db.Boolean, default=False)
+
+    user = db.relationship('User')
+    match = db.relationship('Match')
+
 
 def get_current_tour_from_api():
     """
@@ -419,136 +377,10 @@ def update_rpl_table_from_sstats():
         return False, f"Ошибка при обновлении таблицы: {e}"
 
 
-def update_matches_from_sstats():
-    try:
-        current_tour = load_current_tour()
-
-        offset = (current_tour - 1) * 8
-
-        url = "https://api.sstats.net/games/list?"
-        params = {
-            'leagueId': 235,
-            'year': 2025,
-            'format': 'json',
-            'offset': offset,
-            'limit': 8
-        }
-
-        headers = {'apikey': '8ftkpzresyxo7dqz'}
-
-        response = requests.get(url, params=params, headers=headers, timeout=30)
-        response.raise_for_status()
-
-        data = response.json()
-
-        matches_data = data['data']
-        matches_added = 0
-        matches_updated = 0
-
-        def map_team_name(api_name):
-            mapping = {
-                "CSKA Moscow": "ЦСКА",
-                "FC Krasnodar": "Краснодар",
-                "Lokomotiv": "Локомотив",
-                "Zenit": "Зенит",
-                "Baltika": "Балтика",
-                "Spartak Moscow": "Спартак",
-                "Rubin": "Рубин",
-                "Dynamo": "Динамо Москва",
-                "Akhmat": "Ахмат",
-                "FC Rostov": "Ростов",
-                "Krylia Sovetov": "Крылья Советов",
-                "Dinamo Makhachkala": "Динамо Махачкала",
-                "Akron": "Акрон",
-                "FC Orenburg": "Оренбург",
-                "Nizhny Novgorod": "Пари НН",
-                "FC Sochi": "Сочи"
-            }
-            return mapping.get(api_name, api_name)
-
-        for match_data in matches_data:
-            try:
-                home_team_api = match_data['homeTeam']['name']
-                away_team_api = match_data['awayTeam']['name']
-
-                home_team = map_team_name(home_team_api)
-                away_team = map_team_name(away_team_api)
-
-                match_date_str = match_data['date']
-                match_date_utc = datetime.fromisoformat(match_date_str.replace('Z', '+00:00'))
-                match_date_msk = match_date_utc.replace(tzinfo=None) + timedelta(hours=3)
-                tour_number = current_tour
-
-                home_score = match_data.get('homeResult')
-                away_score = match_data.get('awayResult')
-
-                is_played = match_data.get('status') == 8
-
-                existing_match = db.session.query(Match).filter(
-                    Match.home_team == home_team,
-                    Match.away_team == away_team,
-                    Match.match_date == match_date_msk
-                ).first()
-
-                if existing_match:
-                    existing_match.home_score = home_score if is_played else None
-                    existing_match.away_score = away_score if is_played else None
-                    existing_match.is_played = is_played
-                    existing_match.tour_number = tour_number
-                    matches_updated += 1
-                else:
-                    new_match = Match(
-                        home_team=home_team,
-                        away_team=away_team,
-                        match_date=match_date_msk,
-                        home_score=home_score if is_played else None,
-                        away_score=away_score if is_played else None,
-                        is_played=is_played,
-                        tour_number=tour_number
-                    )
-                    db.session.add(new_match)
-                    matches_added += 1
-
-            except Exception as e:
-                print(f"Ошибка при обработке матча {home_team_api} vs {away_team_api}: {e}")
-                continue
-
-        db.session.commit()
-
-        print(
-            f" тур {current_tour}. Добавлено: {matches_added}, Обновлено: {matches_updated}")
-
-        return True, f"тур {current_tour}. Добавлено: {matches_added}, Обновлено: {matches_updated}"
-
-    except requests.exceptions.HTTPError as e:
-        print(f"HTTP ошибка: {e}")
-        return False, f"Ошибка API: {e.response.status_code}"
-    except requests.exceptions.RequestException as e:
-        print(f"Ошибка подключения: {e}")
-        return False, f"Ошибка подключения: {e}"
-    except Exception as e:
-        print(f"Общая ошибка: {e}")
-        db.session.rollback()
-        return False, f"Ошибка при обновлении матчей: {e}"
-
-
 # Загружает пользователя
 @login_manager.user_loader
 def load_user(user_id):
     return db.session.get(User, int(user_id))
-
-@app.context_processor
-def inject_theme():
-    if current_user.is_authenticated:
-        active_theme = UserTheme.query.filter_by(
-            user_id=current_user.id,
-            is_active=True
-        ).first()
-        theme_name = active_theme.theme_name if active_theme else 'light'
-    else:
-        theme_name = 'light'
-
-    return {'current_theme': theme_name}
 
 
 @app.route('/uploads/<filename>')
@@ -577,20 +409,19 @@ def home():
     next_tour_matches = db.session.query(Match).filter(Match.tour_number == current_tour + 1) \
         .order_by(Match.match_date).all()
 
+    context = {
+        'rpl_table': table,
+        'current_tour_matches': current_tour_matches,
+        'prev_tour_matches': prev_tour_matches,
+        'next_tour_matches': next_tour_matches,
+        'current_tour': current_tour,
+        'clubs': CLUBS_DATA
+    }
+
     if current_user.is_authenticated:
-        return render_template('home.html',
-                               rpl_table=table,
-                               current_tour_matches=current_tour_matches,
-                               prev_tour_matches=prev_tour_matches,
-                               next_tour_matches=next_tour_matches,
-                               current_tour=current_tour)
-    return render_template('home.html',
-                           rpl_table=table,
-                           current_tour_matches=current_tour_matches,
-                           prev_tour_matches=prev_tour_matches,
-                           next_tour_matches=next_tour_matches,
-                           current_tour=current_tour,
-                           show_public_content=True)
+        return render_template('home.html', **context)
+
+    return render_template('home.html', **context, show_public_content=True)
 
 
 # Регистрация
@@ -614,6 +445,11 @@ def register():
         else:
             user = User(name=name, email=email, club=club, password=hashed_password, is_admin=is_admin)
             db.session.add(user)
+            db.session.commit()
+
+            # Создаем баланс для нового пользователя
+            new_balance = UserBalance(user_id=user.id, balance=100)
+            db.session.add(new_balance)
             db.session.commit()
 
             login_user(user)
@@ -839,53 +675,6 @@ def restore_table():
     return redirect(url_for('edit_rpl_table'))
 
 
-# Изменение матчей
-@app.route('/edit_matches')
-@login_required
-def edit_matches():
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-
-    tours = db.session.query(Match.tour_number).distinct().order_by(Match.tour_number).all()
-    matches_by_tour = {}
-    for tour in tours:
-        matches = db.session.query(Match).filter(Match.tour_number == tour[0]).order_by(Match.match_date).all()
-        matches_by_tour[tour[0]] = matches
-
-    return render_template('edit_matches.html', matches_by_tour=matches_by_tour, clubs=RPL_CLUBS,
-                           current_tour=load_current_tour())
-
-
-@app.route('/update_match/<int:match_id>', methods=['POST'])
-@login_required
-def update_match(match_id):
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-
-    match = db.session.get(Match, match_id)
-
-    try:
-        match.home_team = request.form['home_team']
-        match.away_team = request.form['away_team']
-        match.match_date = datetime.strptime(request.form['match_date'], '%Y-%m-%dT%H:%M')
-        match.tour_number = int(request.form['tour_number'])
-
-        if request.form['home_score'] and request.form['away_score']:
-            match.home_score = int(request.form['home_score'])
-            match.away_score = int(request.form['away_score'])
-            match.is_played = True
-        else:
-            match.home_score = None
-            match.away_score = None
-            match.is_played = False
-
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-
-    return redirect(url_for('edit_matches'))
-
-
 # Обновление таблицы из API
 @app.route('/update_table_from_api', methods=['POST'])
 @login_required
@@ -928,6 +717,7 @@ def update_table_from_api():
 
     return redirect(url_for('home'))
 
+
 def update_matches_for_tour(tour_number):
     """
     Обновляет матчи для указанного тура
@@ -957,7 +747,6 @@ def update_matches_for_tour(tour_number):
 
         matches_added = 0
         matches_updated = 0
-        settled_bets_count = 0
 
         def map_team_name(api_name):
             mapping = {
@@ -991,9 +780,15 @@ def update_matches_for_tour(tour_number):
                 match_date_str = match_data['date']
                 match_date_utc = datetime.fromisoformat(match_date_str.replace('Z', '+00:00'))
                 match_date_msk = match_date_utc.replace(tzinfo=None) + timedelta(hours=3)
+
                 home_score = match_data.get('homeResult')
                 away_score = match_data.get('awayResult')
-                is_played = match_data.get('status') == 8
+
+                status = match_data.get('status', 2)  # По умолчанию "Not Started"
+
+                # Определяем статусы матча
+                is_played = status in [8, 9, 10]  # Завершенные матчи
+                is_started = status in [3, 4, 5, 6, 7, 11]  # Матчи в процессе
 
                 # Ищем существующий матч
                 existing_match = db.session.query(Match).filter(
@@ -1005,26 +800,31 @@ def update_matches_for_tour(tour_number):
                 if existing_match:
                     # Сохраняем предыдущее состояние матча для проверки ставок
                     was_played_before = existing_match.is_played
+                    was_started_before = existing_match.is_started
 
-                    existing_match.home_score = home_score if is_played else None
-                    existing_match.away_score = away_score if is_played else None
+                    existing_match.home_score = home_score if is_played or is_started else None
+                    existing_match.away_score = away_score if is_played or is_started else None
                     existing_match.is_played = is_played
+                    existing_match.is_started = is_started
                     existing_match.match_date = match_date_msk
                     matches_updated += 1
 
                     # Если матч завершен и ранее не был сыгран, рассчитываем ставки
                     if is_played and not was_played_before:
                         settle_bets(existing_match.id)
-                        settled_bets_count += 1
+                    # Если матч начался и ранее не был начат, можно уведомить пользователей
+                    elif is_started and not was_started_before:
+                        print(f"Матч {home_team} vs {away_team} начался!")
 
                 else:
                     new_match = Match(
                         home_team=home_team,
                         away_team=away_team,
                         match_date=match_date_msk,
-                        home_score=home_score if is_played else None,
-                        away_score=away_score if is_played else None,
+                        home_score=home_score if is_played or is_started else None,
+                        away_score=away_score if is_played or is_started else None,
                         is_played=is_played,
+                        is_started=is_started,
                         tour_number=tour_number
                     )
                     db.session.add(new_match)
@@ -1037,8 +837,6 @@ def update_matches_for_tour(tour_number):
         db.session.commit()
 
         message = f"добавлено {matches_added}, обновлено {matches_updated}"
-        if settled_bets_count > 0:
-            message += f", рассчитано ставок: {settled_bets_count}"
         return True, message
 
     except Exception as e:
@@ -1046,68 +844,15 @@ def update_matches_for_tour(tour_number):
         db.session.rollback()
         return False, f"ошибка API"
 
-@app.route('/update_matches_from_api', methods=['POST'])
-@login_required
-def update_matches_from_api():
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-
-    try:
-        success, message = update_matches_from_sstats()
-        if success:
-            flash(f"Матчи обновлены: {message}", 'success')
-        else:
-            flash(f"Ошибка при обновлении матчей: {message}", 'danger')
-    except Exception as e:
-        flash(f"Ошибка: {e}", 'danger')
-
-    return redirect(url_for('edit_matches'))
-
-# Изменение матчей
-
-@app.route('/add_match', methods=['POST'])
-@login_required
-def add_match():
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-
-    try:
-        new_match = Match(
-            home_team=request.form['home_team'],
-            away_team=request.form['away_team'],
-            match_date=datetime.strptime(request.form['match_date'], '%Y-%m-%dT%H:%M'),
-            tour_number=int(request.form['tour_number']),
-            home_score=None,
-            away_score=None,
-            is_played=False
-        )
-        db.session.add(new_match)
-        db.session.commit()
-    except Exception as e:
-        db.session.rollback()
-
-    return redirect(url_for('edit_matches'))
-
-
-@app.route('/delete_match/<int:match_id>', methods=['POST'])
-@login_required
-def delete_match(match_id):
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-
-    match = db.session.get(Match, match_id)
-    db.session.delete(match)
-    db.session.commit()
-
-    return redirect(url_for('edit_matches'))
-
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    # Загрузка аватара
     if request.method == 'POST':
-        if 'avatar' in request.files:
+        form_type = request.form.get('form_type')
+
+        # --- Форма 1: Обновление Аватара ---
+        if 'avatar' in request.files and request.files['avatar'].filename != '':
             file = request.files['avatar']
             if file and allowed_file(file.filename):
                 file_ext = file.filename.rsplit('.', 1)[1].lower()
@@ -1129,89 +874,80 @@ def profile():
                 file.save(filepath)
                 current_user.avatar = filename
                 db.session.commit()
+                flash('Аватар успешно обновлен!', 'success')
                 return redirect(url_for('profile'))
 
-        # Обработка смены темы
-        if 'theme' in request.form:
-            theme_name = request.form['theme']
-            if theme_name in AVAILABLE_THEMES:
-                # Проверяем, есть ли уже эта тема у пользователя
-                user_theme = UserTheme.query.filter_by(
-                    user_id=current_user.id,
-                    theme_name=theme_name
-                ).first()
+        # --- Форма 2: Обновление Информации (Имя, О себе) ---
+        elif form_type == 'profile_info':
+            new_name = request.form.get('name')
+            about_text = request.form.get('about', '')[:250]
 
-                if not user_theme:
-                    # Покупка новой темы
-                    theme_price = AVAILABLE_THEMES[theme_name]['price']
-                    user_balance = UserBalance.query.filter_by(user_id=current_user.id).first()
+            if new_name and new_name != current_user.name:
+                current_user.name = new_name
+            current_user.about = about_text
+            db.session.commit()
+            flash('Информация профиля сохранена!', 'success')
+            return redirect(url_for('profile'))
 
-                    if not user_balance:
-                        user_balance = UserBalance(user_id=current_user.id, balance=100)
-                        db.session.add(user_balance)
+        # --- Форма 3: Покупка Темы ---
+        elif form_type == 'theme':
+            new_theme = request.form.get('theme')
 
-                    if user_balance.balance >= theme_price:
-                        # Списание средств
-                        user_balance.balance -= theme_price
+            # --- ИЗМЕНЕНИЕ: Добавлена 'dark' ---
+            THEME_COSTS = {
+                'default': 0,
+                'indigo': 100,
+                'sunset': 100,
+                'forest': 100,
+                'crimson': 100,
+                'dark': 100,
+                'gold': 150,
+                'club': 150
+            }
 
-                        # Добавление темы
-                        new_theme = UserTheme(
-                            user_id=current_user.id,
-                            theme_name=theme_name,
-                            is_active=False
-                        )
-                        db.session.add(new_theme)
-                        db.session.commit()
-                        flash(f'Тема "{AVAILABLE_THEMES[theme_name]["name"]}" успешно приобретена!', 'success')
-                    else:
-                        flash('Недостаточно средств для покупки темы', 'danger')
-                        return redirect(url_for('profile'))
+            theme_cost = THEME_COSTS.get(new_theme)
 
-                # Активация темы
-                UserTheme.query.filter_by(user_id=current_user.id).update({'is_active': False})
-                user_theme = UserTheme.query.filter_by(
-                    user_id=current_user.id,
-                    theme_name=theme_name
-                ).first()
-                user_theme.is_active = True
+            if theme_cost is None:
+                flash('Выбрана неизвестная тема.', 'danger')
+                return redirect(url_for('profile'))
+
+            if new_theme == 'club' and not current_user.club:
+                flash('Нельзя купить "Клубную" тему, не выбрав любимый клуб!', 'warning')
+                return redirect(url_for('profile'))
+
+            user_balance = UserBalance.query.filter_by(user_id=current_user.id).first()
+            if not user_balance:
+                user_balance = UserBalance(user_id=current_user.id, balance=100)
+                db.session.add(user_balance)
+
+            if current_user.theme == new_theme:
+                flash('Эта тема у вас уже есть.', 'info')
+            elif user_balance.balance >= theme_cost:
+                user_balance.balance -= theme_cost
+                current_user.theme = new_theme
                 db.session.commit()
+                flash(f'Тема успешно куплена!', 'success')
+            else:
+                flash('Недостаточно монет для покупки темы!', 'danger')
 
-                flash(f'Тема "{AVAILABLE_THEMES[theme_name]["name"]}" активирована!', 'success')
-                return redirect(url_for('profile'))
+            return redirect(url_for('profile'))
 
-        # Сохранение нового имени и информации о себе
-        new_name = request.form.get('name')
-        about_text = request.form.get('about', '')[:250]
+    # --- GET-запрос: Отображение страницы ---
 
-        if new_name and new_name != current_user.name:
-            current_user.name = new_name
-        current_user.about = about_text
-        db.session.commit()
-        return redirect(url_for('profile'))
-
-    # Получаем текущую активную тему пользователя
-    active_theme = UserTheme.query.filter_by(
-        user_id=current_user.id,
-        is_active=True
-    ).first()
-
-    # Получаем все темы пользователя
-    user_themes = UserTheme.query.filter_by(user_id=current_user.id).all()
-    owned_themes = {theme.theme_name for theme in user_themes}
-
-    # Добавляем бесплатные темы
-    owned_themes.add('light')
-    owned_themes.add('dark')
-
-    # Получаем баланс
-    user_balance = UserBalance.query.filter_by(user_id=current_user.id).first()
-    balance = user_balance.balance if user_balance else 100
+    user_balance_obj = UserBalance.query.filter_by(user_id=current_user.id).first()
+    user_balance = user_balance_obj.balance if user_balance_obj else 100
+    total_bets = Bet.query.filter_by(user_id=current_user.id).count()
+    bets_won = Bet.query.filter_by(user_id=current_user.id, won=True).count()
+    last_test = TestResult.query.filter_by(user_id=current_user.id).order_by(TestResult.date.desc()).first()
+    bets_history = Bet.query.filter_by(user_id=current_user.id).order_by(Bet.created_at.desc()).limit(10).all()
 
     return render_template('profile.html',
-                         themes=AVAILABLE_THEMES,
-                         owned_themes=owned_themes,
-                         active_theme=active_theme.theme_name if active_theme else 'light',
-                         balance=balance)
+                           user_balance=user_balance,
+                           total_bets=total_bets,
+                           bets_won=bets_won,
+                           last_test=last_test,
+                           bets_history=bets_history,
+                           clubs=CLUBS_DATA)
 
 
 # Просмотр пользователей
@@ -1221,11 +957,9 @@ def show_users():
     try:
         print("DEBUG: Начало функции show_users")
 
-        # Простой запрос пользователей
         users = User.query.all()
         print(f"DEBUG: Найдено пользователей: {len(users)}")
 
-        # Создаем словарь балансов
         user_balances = {}
         try:
             balances = UserBalance.query.all()
@@ -1235,7 +969,6 @@ def show_users():
                 print(f"DEBUG: Баланс для user_id {balance.user_id}: {balance.balance}")
         except Exception as e:
             print(f"DEBUG: Ошибка при запросе балансов: {e}")
-            # Если есть ошибка, используем значения по умолчанию
             for user in users:
                 user_balances[user.id] = 100
 
@@ -1257,7 +990,6 @@ def view_user(user_id):
     try:
         print(f"DEBUG: Загрузка профиля пользователя {user_id}")
 
-        # Используем db.session.get вместо User.query.get
         user = db.session.get(User, user_id)
         if not user:
             print(f"DEBUG: Пользователь {user_id} не найден")
@@ -1266,7 +998,6 @@ def view_user(user_id):
 
         print(f"DEBUG: Найден пользователь: {user.name}")
 
-        # Получаем баланс пользователя
         user_balance_obj = UserBalance.query.filter_by(user_id=user_id).first()
         print(f"DEBUG: Баланс объекта: {user_balance_obj}")
 
@@ -1274,7 +1005,6 @@ def view_user(user_id):
             user_balance = user_balance_obj.balance
             print(f"DEBUG: Баланс из БД: {user_balance}")
         else:
-            # Создаем баланс, если его нет
             user_balance = 100
             new_balance = UserBalance(user_id=user_id, balance=100)
             db.session.add(new_balance)
@@ -1289,6 +1019,7 @@ def view_user(user_id):
         traceback.print_exc()
         flash('Произошла ошибка при загрузке профиля', 'danger')
         return redirect(url_for('show_users'))
+
 
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
 @login_required
@@ -1350,170 +1081,64 @@ def edit_rpl_table():
 @app.route('/place_bet/<int:match_id>', methods=['POST'])
 @login_required
 def place_bet(match_id):
-    try:
-        print(f"DEBUG: Размещение ставки для матча {match_id} пользователем {current_user.id}")
-
-        match = db.session.get(Match, match_id)
-        if not match:
-            flash('Матч не найден', 'danger')
-            return redirect(url_for('home'))
-
-        if match.is_played:
-            flash('Нельзя делать ставки на завершенные матчи', 'danger')
-            return redirect(url_for('home'))
-
-        bet_type = request.form.get('bet_type')
-        amount = int(request.form.get('amount', 0))
-
-        # Проверяем валидность ставки
-        if bet_type not in ['home_win', 'draw', 'away_win']:
-            flash('Неверный тип ставки', 'danger')
-            return redirect(url_for('home'))
-
-        if amount <= 0:
-            flash('Сумма ставки должна быть положительной', 'danger')
-            return redirect(url_for('home'))
-
-        # Проверяем баланс пользователя
-        user_balance = UserBalance.query.filter_by(user_id=current_user.id).first()
-        if not user_balance:
-            user_balance = UserBalance(user_id=current_user.id, balance=100)
-            db.session.add(user_balance)
-            db.session.commit()
-
-        if user_balance.balance < amount:
-            flash('Недостаточно средств для ставки', 'danger')
-            return redirect(url_for('home'))
-
-        # Проверяем, не делал ли пользователь уже ставку на этот матч
-        existing_bet = Bet.query.filter_by(user_id=current_user.id, match_id=match_id).first()
-        if existing_bet:
-            flash('Вы уже сделали ставку на этот матч', 'danger')
-            return redirect(url_for('home'))
-
-        # Создаем ставку и списываем средства
-        new_bet = Bet(
-            user_id=current_user.id,
-            match_id=match_id,
-            bet_type=bet_type,
-            amount=amount
-        )
-
-        user_balance.balance -= amount
-
-        db.session.add(new_bet)
-        db.session.commit()
-
-        print(f"DEBUG: Ставка создана успешно: {new_bet.id}")
-        flash(f'Ставка на {amount} монет успешно размещена!', 'success')
-        return redirect(url_for('home'))
-
-    except Exception as e:
-        print(f"ERROR: Ошибка при размещении ставки: {e}")
-        db.session.rollback()
-        flash(f'Ошибка при размещении ставки: {e}', 'danger')
-        return redirect(url_for('home'))
-
-
-@app.route('/my_bets')
-@login_required
-def my_bets():
-    try:
-        # Получаем или создаем баланс пользователя
-        user_balance = UserBalance.query.filter_by(user_id=current_user.id).first()
-        if not user_balance:
-            user_balance = UserBalance(user_id=current_user.id, balance=100)
-            db.session.add(user_balance)
-            db.session.commit()
-            balance_amount = 100
-        else:
-            balance_amount = user_balance.balance
-
-        # Получаем все ставки пользователя
-        bets = Bet.query.filter_by(user_id=current_user.id).order_by(Bet.created_at.desc()).all()
-
-        # Собираем данные о матчах для каждой ставки
-        bets_data = []
-        for bet in bets:
-            match = Match.query.get(bet.match_id)
-            if match:  # Проверяем, что матч существует
-                bets_data.append({
-                    'bet': bet,
-                    'match': match
-                })
-
-        return render_template('my_bets.html',
-                               bets_data=bets_data,
-                               balance=balance_amount)
-
-    except Exception as e:
-        print(f"Ошибка в my_bets: {e}")
-        # Возвращаем простую страницу с ошибкой
-        return render_template('my_bets.html',
-                               bets_data=[],
-                               balance=100,
-                               error="Произошла ошибка при загрузке ставок")
-
-@app.route('/edit_match/<int:match_id>', methods=['GET', 'POST'])
-@login_required
-def edit_match(match_id):
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-
     match = db.session.get(Match, match_id)
     if not match:
         flash('Матч не найден', 'danger')
-        return redirect(url_for('edit_matches'))
+        return redirect(url_for('home'))
 
-    if request.method == 'POST':
-        try:
-            # Сохраняем предыдущее состояние для проверки ставок
-            was_played_before = match.is_played
+    if match.is_started or match.is_played:
+        flash('Нельзя делать ставки на начавшиеся или завершенные матчи', 'danger')
+        return redirect(url_for('home'))
 
-            # Обновляем данные матча
-            match.home_team = request.form['home_team']
-            match.away_team = request.form['away_team']
-            match.match_date = datetime.strptime(request.form['match_date'], '%Y-%m-%dT%H:%M')
-            match.tour_number = int(request.form['tour_number'])
+    bet_type = request.form.get('bet_type')
+    amount = int(request.form.get('amount', 0))
 
-            # Обрабатываем счет матча
-            home_score = request.form.get('home_score', '').strip()
-            away_score = request.form.get('away_score', '').strip()
+    if bet_type not in ['home_win', 'draw', 'away_win']:
+        flash('Неверный тип ставки', 'danger')
+        return redirect(url_for('home'))
 
-            if home_score and away_score:
-                match.home_score = int(home_score)
-                match.away_score = int(away_score)
-                match.is_played = True
+    if amount <= 0:
+        flash('Сумма ставки должна быть положительной', 'danger')
+        return redirect(url_for('home'))
 
-                # Автоматически рассчитываем ставки при установке счета
-                if not was_played_before:
-                    settle_bets(match.id)
-                    flash('Счет установлен и ставки рассчитаны', 'success')
-            else:
-                match.home_score = None
-                match.away_score = None
-                match.is_played = False
+    user_balance = UserBalance.query.filter_by(user_id=current_user.id).first()
+    if not user_balance:
+        user_balance = UserBalance(user_id=current_user.id, balance=100)
+        db.session.add(user_balance)
+        db.session.commit()
 
-            db.session.commit()
-            flash('Матч успешно обновлен', 'success')
-            return redirect(url_for('edit_matches'))
+    if user_balance.balance < amount:
+        flash('Недостаточно средств для ставки', 'danger')
+        return redirect(url_for('home'))
 
-        except Exception as e:
-            db.session.rollback()
-            flash(f'Ошибка при обновлении матча: {e}', 'danger')
+    existing_bet = Bet.query.filter_by(user_id=current_user.id, match_id=match_id).first()
+    if existing_bet:
+        flash('Вы уже сделали ставку на этот матч', 'danger')
+        return redirect(url_for('home'))
 
-    return render_template('edit_match.html', match=match, clubs=RPL_CLUBS)
+    new_bet = Bet(
+        user_id=current_user.id,
+        match_id=match_id,
+        bet_type=bet_type,
+        amount=amount
+    )
 
+    user_balance.balance -= amount
+
+    db.session.add(new_bet)
+    db.session.commit()
+
+    flash(f'Ставка на {amount} монет успешно размещена!', 'success')
+    return redirect(url_for('home'))
+
+
+# --- ИЗМЕНЕНИЕ: Маршрут /my_bets удален ---
 
 
 # Функция для расчета результатов ставок
 def settle_bets(match_id):
     match = db.session.get(Match, match_id)
     if not match or not match.is_played:
-        return
-
-    # Определяем результат матча
-    if match.home_score is None or match.away_score is None:
         return
 
     if match.home_score > match.away_score:
@@ -1523,75 +1148,21 @@ def settle_bets(match_id):
     else:
         actual_result = 'away_win'
 
-    # Находим все ставки на этот матч
     bets = Bet.query.filter_by(match_id=match_id, is_settled=False).all()
-
-    print(f"Рассчитываем ставки для матча {match.home_team} vs {match.away_team}")
-    print(f"Результат: {match.home_score}:{match.away_score}, тип: {actual_result}")
-    print(f"Найдено ставок для расчета: {len(bets)}")
 
     for bet in bets:
         bet.is_settled = True
 
         if bet.bet_type == actual_result:
-            # Ставка выиграла - удваиваем сумму
             user_balance = UserBalance.query.filter_by(user_id=bet.user_id).first()
-            if user_balance:
-                user_balance.balance += bet.amount * 2
-                bet.won = True
-                print(f"Ставка пользователя {bet.user_id} выиграла: +{bet.amount * 2} монет")
-            else:
-                print(f"Ошибка: не найден баланс пользователя {bet.user_id}")
+            user_balance.balance += bet.amount * 2
+            bet.won = True
+            # flash() здесь не будет работать, так как функция вызывается фоном
         else:
-            # Ставка проиграла - деньги уже списаны
             bet.won = False
-            print(f"Ставка пользователя {bet.user_id} проиграла")
 
-    try:
-        db.session.commit()
-        print(f"Ставки для матча {match_id} успешно рассчитаны")
-    except Exception as e:
-        print(f"Ошибка при сохранении результатов ставок: {e}")
-        db.session.rollback()
-
-
-@app.route('/settle_bets/<int:match_id>', methods=['POST'])
-@login_required
-def settle_bets_manual(match_id):
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-
-    try:
-        settle_bets(match_id)
-        flash('Ставки успешно рассчитаны', 'success')
-    except Exception as e:
-        flash(f'Ошибка при расчете ставок: {e}', 'danger')
-
-
-@app.route('/nuclear_db')
-def nuclear_db():
-    """Полное пересоздание базы"""
-    db.drop_all()
-    db.create_all()
-
-    # Создаем админа
-    admin = User(
-        name='Admin',
-        email=ADMIN_EMAIL,
-        club='Краснодар',
-        password=pw_secure.encrypt_password('admin123'),
-        is_admin=True
-    )
-    db.session.add(admin)
     db.session.commit()
 
-    # Баланс и темы
-    UserBalance(user_id=1, balance=1000)
-    UserTheme(user_id=1, theme_name='light', is_active=True)
-    UserTheme(user_id=1, theme_name='dark', is_active=False)
-    db.session.commit()
-
-    return "✅ База полностью пересоздана!"
 
 @app.route('/admin/update_balance_simple/<int:user_id>', methods=['POST'])
 @login_required
@@ -1613,7 +1184,6 @@ def admin_update_balance_simple(user_id):
             flash('Неверная сумма (должна быть от 1 до 100000)', 'danger')
             return redirect(url_for('view_user', user_id=user_id))
 
-        # Находим пользователя
         user = User.query.get(user_id)
         if not user:
             flash('Пользователь не найден', 'danger')
@@ -1621,7 +1191,6 @@ def admin_update_balance_simple(user_id):
 
         print(f"DEBUG: Найден пользователь: {user.name}")
 
-        # Получаем или создаем баланс пользователя
         user_balance = UserBalance.query.filter_by(user_id=user_id).first()
         if not user_balance:
             print("DEBUG: Создаем новый баланс")
@@ -1630,7 +1199,6 @@ def admin_update_balance_simple(user_id):
         else:
             print(f"DEBUG: Текущий баланс: {user_balance.balance}")
 
-        # Выполняем действие с балансом
         if action == 'add':
             user_balance.balance += amount
             message = f'Успешно добавлено {amount} монет пользователю {user.name}'
@@ -1682,11 +1250,6 @@ def debug_users():
     except Exception as e:
         return f"Ошибка: {e}"
 
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('home'))
 
 def init_user_balances():
     """Инициализирует балансы для всех пользователей, у которых их нет"""
@@ -1706,133 +1269,77 @@ def init_user_balances():
         db.session.rollback()
 
 
-    def init_user_themes():
-        """Инициализирует темы для всех пользователей"""
-        try:
-            users_without_themes = db.session.query(User).filter(
-                ~User.id.in_(db.session.query(UserTheme.user_id))
-            ).all()
-
-            for user in users_without_themes:
-                # Добавляем бесплатные темы по умолчанию
-                light_theme = UserTheme(
-                    user_id=user.id,
-                    theme_name='light',
-                    is_active=True
-                )
-                dark_theme = UserTheme(
-                    user_id=user.id,
-                    theme_name='dark',
-                    is_active=False
-                )
-                db.session.add(light_theme)
-                db.session.add(dark_theme)
-
-            db.session.commit()
-            print(f"Инициализировано тем: {len(users_without_themes) * 2}")
-        except Exception as e:
-            print(f"Ошибка при инициализации тем: {e}")
-            db.session.rollback()
+@app.route('/logout')
+@login_required
+def logout():
+    logout_user()
+    return redirect(url_for('home'))
 
 
 if __name__ == '__main__':
     with app.app_context():
-        print("=== СОЗДАЕМ БАЗУ С НУЛЯ ===")
+        db.create_all()
 
-        # ... предыдущий код создания таблиц ...
+        if not db.session.query(User).filter_by(email=ADMIN_EMAIL).first():
+            admin = User(
+                name='Admin',
+                email=ADMIN_EMAIL,
+                club='Краснодар',
+                password=pw_secure.encrypt_password('admin123'),
+                is_admin=True
+            )
+            db.session.add(admin)
+            db.session.commit()
 
-        # МАТЧИ - ВОТ ОНИ!
-        if Match.query.count() == 0:
-            # Создаем матчи на разные туры
+        # Заполнение таблицы клубов, если она пуста
+        if db.session.query(RPLTable).count() == 0:
+            for i, club in enumerate(RPL_CLUBS, 1):
+                team = RPLTable(
+                    position=i,
+                    team=club,
+                    matches=0,
+                    wins=0,
+                    draws=0,
+                    losses=0,
+                    goals_for=0,
+                    goals_against=0,
+                    points=0
+                )
+                db.session.add(team)
+            db.session.commit()
+
+        # Добавление тестовых данных, если нет матчей
+        if db.session.query(Match).count() == 0:
             today = datetime.now()
-
-            # МАТЧИ ПРЕДЫДУЩЕГО ТУРА (завершенные)
-            prev_match1 = Match(
-                home_team="Зенит",
-                away_team="Спартак",
-                match_date=today - timedelta(days=7),  # Прошлая неделя
-                home_score=2,
-                away_score=1,
-                is_played=True,
-                tour_number=1  # Предыдущий тур
-            )
-
-            prev_match2 = Match(
-                home_team="ЦСКА",
-                away_team="Динамо Москва",
-                match_date=today - timedelta(days=6),
-                home_score=0,
-                away_score=0,
-                is_played=True,
-                tour_number=1
-            )
-
-            prev_match3 = Match(
-                home_team="Краснодар",
-                away_team="Локомотив",
-                match_date=today - timedelta(days=5),
-                home_score=3,
-                away_score=2,
-                is_played=True,
-                tour_number=1
-            )
-
-            # МАТЧИ ТЕКУЩЕГО ТУРА
-            current_match1 = Match(
-                home_team="Ростов",
-                away_team="Ахмат",
-                match_date=today + timedelta(hours=2),  # Скоро
-                tour_number=2  # Текущий тур
-            )
-
-            current_match2 = Match(
-                home_team="Рубин",
-                away_team="Оренбург",
-                match_date=today + timedelta(days=1),
-                tour_number=2
-            )
-
-            # МАТЧИ СЛЕДУЮЩЕГО ТУРА
-            next_match1 = Match(
-                home_team="Спартак",
-                away_team="Краснодар",
-                match_date=today + timedelta(days=7),
-                tour_number=3  # Следующий тур
-            )
-
-            next_match2 = Match(
-                home_team="Зенит",
-                away_team="ЦСКА",
-                match_date=today + timedelta(days=8),
-                tour_number=3
-            )
-
-            # Добавляем все матчи
-            db.session.add_all([
-                prev_match1, prev_match2, prev_match3,
-                current_match1, current_match2,
-                next_match1, next_match2
-            ])
+            matches = [
+                Match(home_team="Зенит", away_team="Спартак",
+                      match_date=today, tour_number=1)
+            ]
+            for match in matches:
+                db.session.add(match)
             db.session.commit()
-            print("✅ Тестовые матчи созданы (предыдущий, текущий, следующий туры)")
 
-        # Тестовый вопрос
-        if ClubTest.query.count() == 0:
-            test = ClubTest(
-                question="В каком году основан Спартак?",
-                correct_answer="1922",
-                option1="1902",
-                option2="1920",
-                option3="1922",
-                option4="1912",
-                difficulty=1
-            )
-            db.session.add(test)
+        # Инициализация балансов для существующих пользователей
+        init_user_balances()
+
+        # Добавление тестовых вопросов, если их нет
+        if db.session.query(ClubTest).count() == 0:
+            sample_tests = [
+                ClubTest(
+                    question="В каком году основан Спартак?",
+                    correct_answer="1922",
+                    option1="1902",
+                    option2="1920",
+                    option3="1922",
+                    option4="1912",
+                    difficulty=1
+                )
+            ]
+            db.session.add_all(sample_tests)
             db.session.commit()
-            print("✅ Тестовый вопрос добавлен")
 
-        print("🎉 БАЗА ДАННЫХ ГОТОВА К РАБОТЕ!")
-        print("📅 Матчи созданы!")
+        # Запускаем фоновое обновление тура
+        schedule_tour_update()
 
-        # Запускаем приложение
+        # Запуск приложения в режиме отладки
         app.run(host='127.0.0.1', port=5000, debug=True)
