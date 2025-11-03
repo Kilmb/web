@@ -3,98 +3,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Профиль</title>
+    <title>Профиль пользователя</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
 </head>
-<body class="theme-{{ current_theme }}">
-    <a href="{{ url_for('home') }}">На главную</a>
-    <h1>Профиль пользователя</h1>
+<body class="theme-{{ current_user.theme or 'default' }} themed-body"
+    {% if current_user.theme =='club' and current_user.club %}
+        {% set user_club = clubs|selectattr('name','equalto', current_user.club)|first %}
+        {% if user_club %}
+            style="--club-color-1: {{ user_club.color1 }}; --club-color-2: {{ user_club.color2 }};"
+        {% endif %}
+    {% endif %}
+>
+
+    <a href="{{ url_for('logout') }}" class="logout-link-fixed">Выйти</a>
 
     <div class="profile-container">
-        <div class="avatar-container">
-            {% if current_user.avatar %}
-                <img src="{{ url_for('uploaded_file', filename=current_user.avatar) }}" class="avatar">
-            {% else %}
-                <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="avatar">
-            {% endif %}
-            <form method="POST" enctype="multipart/form-data" style="margin-top: 10px;">
-                <input type="file" name="avatar" accept="image/*" required>
-                <button type="submit">Обновить аватар</button>
-            </form>
+
+        <div class="profile-header">
+            <h1>Профиль</h1>
+            <a href="{{ url_for('home') }}" class="back-btn">На главную</a>
         </div>
 
-        <div class="profile-info">
-            <form method="POST">
-                <div class="form-group">
-                    <label for="name">Имя:</label>
-                    <input type="text" id="name" name="name" value="{{ current_user.name }}" required>
-                </div>
-                <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="email" id="email" value="{{ current_user.email }}" disabled>
-                </div>
-                <div class="form-group">
-                    <label for="club">Клуб:</label>
-                    <input type="text" id="club" value="{{ current_user.club }}" disabled>
-                </div>
-                <div class="form-group">
-                    <label for="about">О себе (до 250 символов):</label>
-                    <textarea id="about" name="about" maxlength="250" rows="4">{{ current_user.about or '' }}</textarea>
-                </div>
-                <button type="submit">Сохранить изменения</button>
-            </form>
-        </div>
+        <div class="profile-content">
 
-        <!-- Блок выбора темы -->
-        <div class="themes-section">
-            <h2>Выбор темы</h2>
-            <div class="balance-info">
-                Ваш баланс: <strong>{{ balance }} монет</strong>
-            </div>
+            <div class="profile-card">
 
-            <div class="themes-grid">
-                {% for theme_key, theme_info in themes.items() %}
-                <div class="theme-card {% if theme_key in owned_themes %}owned{% else %}locked{% endif %} {% if theme_key == active_theme %}active{% endif %}">
-                    <div class="theme-preview theme-preview-{{ theme_key }}">
-                        <div class="theme-sample">
-                            <div class="sample-header"></div>
-                            <div class="sample-content"></div>
-                            <div class="sample-footer"></div>
+                <div class="avatar-section">
+                    {% if current_user.avatar %}
+                        <img src="{{ url_for('uploaded_file', filename=current_user.avatar) }}" class="profile-avatar">
+                    {% else %}
+                        <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="profile-avatar">
+                    {% endif %}
+
+                    <form method="POST" enctype="multipart/form-data" class="avatar-form">
+                        <input type="file" name="avatar" accept="image/*" required>
+                        <button type="submit" class="btn-upload">Обновить аватар</button>
+                    </form>
+                </div>
+
+                <div class="user-info">
+                    <h2>{{ current_user.name }}</h2>
+
+                    {% if current_user.about %}
+                        <p class="user-about">{{ current_user.about }}</p>
+                    {% endif %}
+
+                    <div class="stats-grid">
+
+                        <div class="stat-item">
+                            <span class="stat-label">Email</span>
+                            <span class="stat-value">{{ current_user.email }}</span>
                         </div>
-                    </div>
 
-                    <div class="theme-info">
-                        <h3>{{ theme_info.name }}</h3>
-                        <p class="theme-description">{{ theme_info.description }}</p>
+                        <div class="stat-item">
+                            <span class="stat-label">Баланс</span>
+                            <span class="stat-value coins">{{ user_balance }} 🪙</span>
+                        </div>
 
-                        {% if theme_key in owned_themes %}
-                            {% if theme_key == active_theme %}
-                                <span class="theme-status active">Активна</span>
+                        <div class="stat-item">
+                            <span class="stat-label">Любимый клуб</span>
+                            <span class="stat-value club">{{ current_user.club }}</span>
+                        </div>
+
+                        <div class="stat-item">
+                            <span class="stat-label">Текущая тема</span>
+                            <span class="stat-value theme">{{ current_user.theme|capitalize }}</span>
+                        </div>
+
+                        <div class="stat-item">
+                            <span class="stat-label">Всего ставок</span>
+                            <span class="stat-value">{{ total_bets }}</span>
+                        </div>
+
+                        <div class="stat-item">
+                            <span class="stat-label">Выиграно ставок</span>
+                            <span class="stat-value">{{ bets_won }}</span>
+                        </div>
+
+                        <div class="stat-item">
+                            <span class="stat-label">Последний тест</span>
+                            {% if last_test %}
+                            <span class="stat-value">{{ last_test.score }} / {{ last_test.total }}</span>
                             {% else %}
-                                <form method="POST" class="theme-form">
-                                    <input type="hidden" name="theme" value="{{ theme_key }}">
-                                    <button type="submit" class="btn-activate">Активировать</button>
-                                </form>
+                            <span class="stat-value">- / -</span>
                             {% endif %}
-                        {% else %}
-                            <div class="theme-price">
-                                Цена: {{ theme_info.price }} монет
-                                {% if balance >= theme_info.price %}
-                                    <form method="POST" class="theme-form">
-                                        <input type="hidden" name="theme" value="{{ theme_key }}">
-                                        <button type="submit" class="btn-buy">Купить</button>
-                                    </form>
-                                {% else %}
-                                    <span class="not-enough">Недостаточно средств</span>
-                                {% endif %}
-                            </div>
-                        {% endif %}
+                        </div>
+
                     </div>
                 </div>
-                {% endfor %}
             </div>
-        </div>
+
+            <div class="edit-profile">
+                <h3>✏️ Редактировать информацию</h3>
+                <form method="POST">
+                    <input type="hidden" name="form_type" value="profile_info">
+                    <div class="form-group" style="flex-basis: 30%;">
+                        <label for="name">Имя:</label>
+                        <input type="text" id="name" name="name" value="{{ current_user.name }}" required>
+                    </div>
+                    <div class="form-group" style="flex-basis: 65%;">
+                        <label for="about">О себе (до 250 символов):</label>
+                        <textarea id="about" name="about" maxlength="250" rows="1">{{ current_user.about or '' }}</textarea>
+                    </div>
+                    <button type="submit" class="btn-save">Сохранить</button>
+                </form>
+            </div>
+
+            <div class="theme-selection">
+                <h3>🎨 Магазин тем</h3>
+                <form method="POST">
+                    <input type="hidden" name="form_type" value="theme">
+
+                    <div class="theme-options">
+
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="default" {% if current_user.theme == 'default' %}checked{% endif %}>
+                            <div class="theme-preview preview-default"></div>
+                            <span class="theme-label">По умолчанию (Синий)</span>
+                            <span class="theme-cost free">Бесплатно</span>
+                        </label>
+
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="indigo" {% if current_user.theme == 'indigo' %}checked{% endif %}>
+                            <div class="theme-preview preview-indigo"></div>
+                            <span class="theme-label">Индиго</span>
+                            <span class="theme-cost">100 🪙</span>
+                        </label>
+
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="sunset" {% if current_user.theme == 'sunset' %}checked{% endif %}>
+                            <div class="theme-preview preview-sunset"></div>
+                            <span class="theme-label">Закат</span>
+                            <span class="theme-cost">100 🪙</span>
+                        </label>
+
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="forest" {% if current_user.theme == 'forest' %}checked{% endif %}>
+                            <div class="theme-preview preview-forest"></div>
+                            <span class="theme-label">Лес</span>
+                            <span class="theme-cost">100 🪙</span>
+                        </label>
+
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="crimson" {% if current_user.theme == 'crimson' %}checked{% endif %}>
+                            <div class="theme-preview preview-crimson"></div>
+                            <span class="theme-label">Багровый</span>
+                            <span class="theme-cost">100 🪙</span>
+                        </label>
+
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="dark" {% if current_user.theme == 'dark' %}checked{% endif %}>
+                            <div class="theme-preview preview-dark"></div>
+                            <span class="theme-label">Тёмная</span>
+                            <span class="theme-cost">100 🪙</span>
+                        </label>
+
+                        <label class="theme-option">
+                            <input type="radio" name="theme" value="gold" {% if current_user.theme == 'gold' %}checked{% endif %}>
+                            <div class="theme-preview preview-gold"></div>
+                            <span class="theme-label">Золотая</span>
+                            {% if current_user.theme == 'gold' %}
+                                <span class="theme-cost purchased">Активно</span>
+                            {% else %}
+                                <span class="theme-cost">150 🪙</span>
+                            {% endif %}
+                        </label>
+
+                        {% set user_club = clubs|selectattr('name', 'equalto', current_user.club)|first %}
+
+                        <label class="theme-option" {% if not user_club %}title="Сначала выберите любимый клуб в настройках регистрации или профиля (пока недоступно)"{% endif %}>
+                            <input type="radio" name="theme" value="club"
+                                   {% if current_user.theme =='club' %}checked{% endif %}
+                                   {% if not user_club %}disabled{% endif %}>
+
+                            <div class="theme-preview preview-club"
+                                 style="--club-color-1: {{ user_club.color1 if user_club else '#ccc' }}; --club-color-2: {{ user_club.color2 if user_club else '#aaa' }};">
+                            </div>
+
+                            <span class="theme-label">
+                                Клубная
+                                {% if not user_club %}(<small>Нужен клуб</small>){% endif %}
+                            </span>
+                            <span class="theme-cost premium">150 🪙</span>
+                        </label>
+
+                    </div>
+
+                    <button type="submit" class="btn-save">Купить / Применить</button>
+                </form>
+            </div>
+
+            </div>
     </div>
 </body>
 </html>

@@ -1,348 +1,627 @@
 * {
-            box-sizing: border-box;
-        }
+    box-sizing: border-box;
+}
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-        }
+/* ===============================================
+            ОПРЕДЕЛЕНИЕ ТЕМ
+===============================================
+*/
 
-        .menu {
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 18px;
-            padding: 10px;
-            position: relative;
-        }
+/* 1. Тема по умолчанию (Синяя) */
+body.theme-default {
+    --grad-start: #00529B;
+    --grad-end: #00529B;
+    --shadow-color: rgba(0, 82, 155, 0.4);
+    --border-color: #00529B;
+    --text-color: #333;
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --heading-color: #2c3e50;
+    --link-color-dark: #FFFFFF;
+}
 
-        .menu a {
-            display: inline-block;
-            margin: 5px;
-            padding: 8px 12px;
-            text-decoration: none;
-            font-weight: bold;
-            font-size: clamp(16px, 4vw, 23px);
-            border-radius: 5px;
-        }
+/* 2. Тема "Индиго" */
+body.theme-indigo {
+    --grad-start: #667eea;
+    --grad-end: #764ba2;
+    --shadow-color: rgba(102, 126, 234, 0.4);
+    --border-color: #667eea;
+    --text-color: #333;
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --heading-color: #2c3e50;
+    --link-color-dark: #764ba2;
+}
 
-        .logout-btn {
-            background-color: #dc3545;
-            color: white;
-            border-radius: 5px;
-            position: absolute;
-            left: 10px;
-            top: 10px;
-        }
+/* 3. Тема "Закат" */
+body.theme-sunset {
+    --grad-start: #ff7e5f;
+    --grad-end: #feb47b;
+    --shadow-color: rgba(255, 126, 95, 0.4);
+    --border-color: #ff7e5f;
+    --text-color: #333;
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --heading-color: #2c3e50;
+    --link-color-dark: #b22222;
+}
 
-        .logout-btn:hover {
-            background-color: #c82333;
-        }
+/* 4. Тема "Лес" */
+body.theme-forest {
+    --grad-start: #4CAF50;
+    --grad-end: #2E8B57;
+    --shadow-color: rgba(76, 175, 80, 0.4);
+    --border-color: #4CAF50;
+    --text-color: #333;
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --heading-color: #2c3e50;
+    --link-color-dark: #006400;
+}
 
-        table {
-            width: 95%;
-            max-width: 1200px;
-            border-collapse: collapse;
-            margin: 20px auto;
-            font-size: clamp(16px, 3vw, 20px);
-        }
+/* 5. Тема "Багровый" */
+body.theme-crimson {
+    --grad-start: #DC143C;
+    --grad-end: #8B0000;
+    --shadow-color: rgba(220, 20, 60, 0.4);
+    --border-color: #DC143C;
+    --text-color: #333;
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --heading-color: #2c3e50;
+    --link-color-dark: #8B0000;
+}
 
-        th, td {
-            border: 2px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
+/* 6. Тема "Клубная" */
+body.theme-club {
+    --grad-start: var(--club-color-1, #667eea);
+    --grad-end: var(--club-color-2, #764ba2);
+    --shadow-color: rgba(102, 126, 234, 0.4);
+    --border-color: var(--club-color-1, #667eea);
+    --text-color: #333;
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --heading-color: #2c3e50;
+    --link-color-dark: var(--club-color-2, #764ba2);
+}
 
-        th {
-            background-color: #4682B4;
-            color: white;
-            font-size: clamp(18px, 4vw, 22px);
-        }
+/* 7. Тёмная тема */
+body.theme-dark {
+    --grad-start: #232526;
+    --grad-end: #414345;
+    --shadow-color: rgba(255, 255, 255, 0.2);
+    --border-color: #555;
+    --text-color: #e0e0e0;
+    --card-bg: rgba(45, 45, 45, 0.95);
+    --heading-color: #ffffff;
+    --link-color-dark: #bbbbbb;
+}
 
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
+/* 8. Золотая тема - НОВАЯ */
+body.theme-gold {
+    --grad-start: #FFD700; /* Gold */
+    --grad-end: #B8860B;   /* DarkGoldenRod */
+    --shadow-color: rgba(255, 215, 0, 0.4);
+    --border-color: #FFD700;
+    --text-color: #333;
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --heading-color: #2c3e50;
+    --link-color-dark: #B8860B;
+}
 
-        h1, h2 {
-            text-align: center;
-            font-size: clamp(24px, 6vw, 40px);
-            margin-top: 5px;
-            padding: 0 10px;
-        }
+/* ===============================================
+            АНИМАЦИЯ ФОНА
+===============================================
+*/
 
-        h3 {
-            text-align: center;
-            font-size: clamp(20px, 5vw, 32px);
-            padding-bottom: 5px;
-            margin: 10px 0 5px 0;
-        }
+@keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
 
-        h4 {
-            text-align: center;
-            font-size: clamp(18px, 4vw, 25px);
-            padding-bottom: 5px;
-            margin: 10px 0 5px 0;
-        }
+/* ===============================================
+            ОСНОВНЫЕ СТИЛИ
+===============================================
+*/
 
-        p {
-            font-size: clamp(16px, 4vw, 20px);
-            text-align: left;
-            padding: 0 10px;
-        }
+body {
+    margin: 0;
+    padding: 60px 20px 20px 20px;
+    font-family: 'Arial', sans-serif;
+    background: #f4f6f8;
+    min-height: 100vh;
+    color: #333;
+    transition: background 0.5s ease;
+}
 
-        .club-info {
-            background: linear-gradient(var(--color1), var(--color2));
-            color: white;
-            border-radius: 5px;
-            padding: 15px 10px;
-            margin: 20px 10px;
-            max-width: 1400px;
-            margin-left: auto;
-            margin-right: auto;
-        }
+/* ИЗМЕНЕНИЕ: Градиент и анимация для авторизованных */
+body.themed-body {
+    background: linear-gradient(135deg, var(--grad-start) 0%, var(--grad-end) 100%);
+    color: var(--text-color);
+    background-size: 400% 400%;
+    animation: gradientFlow 15s ease infinite;
+}
 
-        .club-logo-container {
-            text-align: center;
-            margin: 15px 0;
-        }
+/* Стили для кнопки "Выйти" */
+.logout-link-fixed {
+    position: fixed;
+    top: 15px;
+    left: 20px;
+    z-index: 1000;
+    padding: 10px 20px;
+    background: linear-gradient(45deg, #dc3545, #c82333);
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    transition: all 0.3s ease;
+}
+.logout-link-fixed:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
+}
 
-        .club-logo {
-            max-width: 100% !important;
-            height: auto !important;
-            max-height: 500px !important; /* ВОЗВРАЩАЕМ БОЛЬШОЙ РАЗМЕР */
-            object-fit: contain !important;
-        }
 
-        .emblem {
-            max-width: 100%;
-            height: auto;
-            margin: 0 auto;
-            display: block;
-            padding: 0 10px;
-        }
+/* Главный контейнер (для аутентифицированных) */
+.home-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
 
-        .profile-header {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            justify-content: flex-end;
-        }
+/* ===============================================
+        ШАПКА, ПРОФИЛЬ, КАРТОЧКИ
+===============================================
+*/
 
-        .profile-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            object-fit: cover;
-            margin-right: 10px;
-        }
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
 
-        .profile-link {
-            display: inline-block;
-            padding: 5px 10px;
-            background-color: #4682B4;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            margin-top: 5px;
-        }
+.page-header h1 {
+    color: var(--heading-color);
+    margin: 0;
+    font-size: 2.2em;
+}
 
-        .profile-link:hover {
-            background-color: #3a6d99;
-        }
+/* Карточка-обертка для контента */
+.content-card {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.content-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
 
-        .user-club-row td {
-            background: linear-gradient(to bottom, var(--club-color1), var(--club-color2)) !important;
-            color: var(--text-color);
-            font-weight: bold;
-        }
+.content-card h2, .content-card h3 {
+    color: var(--heading-color);
+    margin-top: 0;
+}
 
-        .team-name {
-            font-size: clamp(16px, 3vw, 20px);
-        }
+/* Ссылка-кнопка .profile-header-link */
+.profile-header-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    background: linear-gradient(45deg, var(--grad-start), var(--grad-end));
+    color: white;
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+.profile-header-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px var(--shadow-color);
+}
+.profile-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+}
 
-        .team-city {
-            font-size: clamp(12px, 2.5vw, 14px);
-            opacity: 0.8;
-        }
 
-        .club-header {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            margin-bottom: 10px;
-        }
+/* ===============================================
+            МЕНЮ НАВИГАЦИИ
+===============================================
+*/
 
-        .club-name {
-            font-size: clamp(20px, 5vw, 32px);
-            margin: 0;
-        }
+.menu {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+}
 
-        .club-city {
-            font-size: clamp(16px, 4vw, 25px);
-            margin: 0;
-        }
+.menu a, .menu button {
+    display: inline-block;
+    padding: 10px 20px;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 16px;
+    border-radius: 25px;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+}
 
-        .kit-container {
-            position: relative;
-            text-align: center;
-            margin: 30px 0 !important; /* БОЛЬШЕ ОТСТУПОВ */
-        }
+/* Обычные ссылки (Тесты, Пользователи) */
+.menu a {
+    background: var(--card-bg);
+    color: var(--text-color);
+    border: 2px solid var(--border-color);
+}
+.menu a:hover {
+    background: var(--border-color);
+    color: var(--link-color-dark);
+    transform: translateY(-2px);
+}
+/* Специфичные стили для светлой темы */
+body:not(.theme-dark) .menu a {
+     background: #f0f0f0;
+     color: #333;
+     border: 2px solid transparent;
+}
+body:not(.theme-dark) .menu a:hover {
+    background: #e0e0e0;
+}
 
-        .kit-labels {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 10px;
-            font-size: 18px !important; /* БОЛЬШЕ ТЕКСТ */
-            font-weight: bold;
-        }
 
-        .kit-label {
-            flex: 1;
-            font-size: clamp(16px, 3vw, 20px) !important; /* БОЛЬШЕ ТЕКСТ */
-            font-weight: bold;
-            text-align: center;
-        }
+/* Кнопка "Обновить таблицу" (зеленая) */
+.menu .btn-update {
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+}
+.menu .btn-update:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
+}
 
-        .kit-label.left {
-            text-align: left;
-            padding-left: 3%;
-        }
 
-        .kit-label.center {
-            text-align: center;
-        }
+/* ===============================================
+            ТУРНИРНАЯ ТАБЛИЦА
+===============================================
+*/
 
-        .kit-label.right {
-            text-align: right;
-            padding-right: 4%;
-        }
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 20px 0 0 0;
+    font-size: clamp(14px, 2vw, 16px);
+    color: var(--text-color);
+}
 
-        @media (min-width: 768px) {
-            .menu a {
-                margin-right: 15px;
-                padding: 5px 10px;
-            }
+th, td {
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    text-align: center;
+}
 
-            .logout-btn {
-                left: 20px;
-                top: 15px;
-            }
+th {
+    background-color: rgba(128, 128, 128, 0.1);
+    color: var(--heading-color);
+    font-size: clamp(16px, 2.5vw, 18px);
+}
 
-            .profile-header {
-                top: 20px;
-                right: 20px;
-            }
+tr:nth-child(even) {
+    background-color: rgba(128, 128, 128, 0.05);
+}
+tr:hover {
+    background-color: rgba(128, 128, 128, 0.15);
+}
 
-            .club-header {
-                flex-direction: row;
-                justify-content: center;
-                gap: 15px;
-            }
+/* Специфично для светлой темы */
+body:not(.theme-dark) th {
+    background-color: #f4f6f8;
+    color: #333;
+}
+body:not(.theme-dark) tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+body:not(.theme-dark) tr:hover {
+    background-color: #f1f1f1;
+}
 
-            .club-logo {
-                max-height: 600px !important; /* ЕЩЕ БОЛЬШЕ НА БОЛЬШИХ ЭКРАНАХ */
-            }
 
-            table {
-                width: 80%;
-            }
+.user-club-row td {
+    background: linear-gradient(to bottom, var(--club-color1), var(--club-color2)) !important;
+    color: var(--text-color);
+    font-weight: bold;
+}
+.user-club-row:hover td {
+    background: linear-gradient(to bottom, var(--club-color1), var(--club-color2)) !important;
+    filter: brightness(1.1);
+}
 
-            .club-info {
-                padding: 15px 20px;
-                margin: 20px auto 40px;
-            }
-        }
+.team-name {
+    font-size: clamp(16px, 3vw, 18px);
+    font-weight: bold;
+}
 
-        @media (min-width: 1200px) {
-            .club-logo {
-                max-height: 700px;
-            }
-        }
-        .tour-matches {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
+.team-city {
+    font-size: clamp(12px, 2.5vw, 14px);
+    opacity: 0.8;
+}
 
-        .tour-header {
-            text-align: center;
-            margin-bottom: 20px;
-        }
 
-        .tour-title {
-            font-size: 24px;
-            color: #333;
-            margin-bottom: 5px;
-        }
+/* ===============================================
+            МАТЧИ ТУРА И ФОРМА СТАВОК
+===============================================
+*/
+.matches-container {
+    padding: 0;
+    box-shadow: none;
+    background: none;
+}
 
-        .matches-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 15px;
-        }
+.tour-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
 
-        .match-card {
-            background-color: white;
-            border-radius: 8px;
-            padding: 15px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
+.tour-title {
+    font-size: 24px;
+    color: var(--heading-color);
+    margin-bottom: 5px;
+}
 
-        .match-teams {
-            font-size: 18px;
-            font-weight: bold;
-            text-align: center;
-            margin-bottom: 5px;
-        }
+.matches-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+}
 
-        .match-score {
-            font-size: 22px;
-            font-weight: bold;
-            text-align: center;
-            margin: 10px 0;
-            color: #333;
-        }
+.match-card {
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid var(--border-color);
+}
+/* Специфично для светлой темы */
+body:not(.theme-dark) .match-card {
+    background-color: #f8f9fa;
+    border: 1px solid #eee;
+}
 
-        .match-details {
-            display: flex;
-            justify-content: space-between;
-            color: #666;
-            font-size: 14px;
-        }
 
-        .match-date {
-            text-align: center;
-            color: #666;
-            margin-top: 5px;
-        }
+.match-teams {
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 5px;
+    color: var(--heading-color);
+}
 
-        @media (max-width: 768px) {
-            .matches-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-        .public-welcome {
-        text-align: center;
-        margin: 20px auto;
-        max-width: 800px;
-        padding: 20px;
-        }
+.match-score {
+    font-size: 22px;
+    font-weight: bold;
+    text-align: center;
+    margin: 10px 0;
+    color: var(--text-color);
+}
 
-        .public-welcome p {
-        text-align: center;
-        margin: 15px auto;
-        font-size: clamp(16px, 4vw, 20px);
-        }
+.match-details {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-color);
+    opacity: 0.8;
+    font-size: 14px;
+}
 
-        .club-links {
+.match-date {
+    text-align: center;
+    color: var(--text-color);
+    opacity: 0.8;
+    margin-top: 5px;
+}
+
+@media (max-width: 768px) {
+    .matches-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.match-status-live {
+    text-align: center;
+    color: #ff6b00;
+    font-weight: bold;
+    margin-top: 10px;
+    padding: 10px;
+    background: #fff3e0;
+    border-radius: 5px;
+}
+
+/* Стили для формы ставок */
+.bet-form {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+}
+.bet-form h4 {
+    text-align: center;
+    margin: 0 0 10px 0;
+    color: var(--heading-color);
+}
+.bet-form form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.bet-form select,
+.bet-form input {
+    width: 100%;
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    background: #fff; /* Оставляем белым для читаемости */
+    color: #333;
+}
+.bet-form input::placeholder {
+    color: #999;
+}
+
+/* Кнопка "Поставить" (зеленая) */
+.bet-form .btn-bet {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(45deg, #28a745, #20c997);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+.bet-form .btn-bet:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
+}
+
+/* ===============================================
+            ИНФОРМАЦИЯ О КЛУБАХ
+===============================================
+*/
+
+h1, h2, h3, h4 {
+    text-align: center;
+    padding: 0 10px;
+}
+
+/* Заголовки h2, h3, h4 ВНУТРИ .club-info должны быть белыми */
+.club-info h2, .club-info h3, .club-info h4 {
+    color: white;
+}
+
+/* Заголовки h2, h3, h4 ВНЕ .club-info */
+.themed-body h2, .themed-body h3, .themed-body h4 {
+    color: var(--heading-color);
+}
+/* Специфично для светлой темы (в т.ч. welcome-page) */
+body:not(.themed-body) h1,
+body:not(.themed-body) h2,
+body:not(.themed-body) h3,
+body:not(.themed-body) h4 {
+    color: #333;
+}
+
+
+p {
+    font-size: clamp(16px, 4vw, 18px);
+    text-align: left;
+    padding: 0 10px;
+}
+
+.club-info p {
+    color: white;
+}
+
+
+.club-info {
+    background: linear-gradient(var(--color1), var(--color2));
+    color: white;
+    border-radius: 15px;
+    padding: 25px;
+    margin: 0;
+    max-width: 1400px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.club-info:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+}
+
+.club-logo-container {
+    text-align: center;
+    margin: 15px 0;
+}
+
+.club-logo {
+    max-width: 100%;
+    height: auto;
+    max-height: 200px;
+    object-fit: contain;
+}
+
+.emblem {
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    display: block;
+    padding: 0 10px;
+}
+
+.club-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.club-name {
+    font-size: clamp(20px, 5vw, 32px);
+    margin: 0;
+}
+
+.club-city {
+    font-size: clamp(16px, 4vw, 25px);
+    margin: 0;
+}
+
+.kit-container {
+    position: relative;
+    text-align: center;
+    margin: 20px 0;
+}
+
+.kit-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+}
+
+.kit-label {
+    flex: 1;
+    font-size: clamp(14px, 3vw, 18px);
+    font-weight: bold;
+    text-align: center;
+}
+
+.kit-label.left {
+    text-align: left;
+    padding-left: 3%;
+}
+
+.kit-label.center {
+    text-align: center;
+}
+
+.kit-label.right {
+    text-align: right;
+    padding-right: 4%;
+}
+
+.club-links {
     display: flex;
     justify-content: center;
     gap: 15px;
@@ -367,211 +646,6 @@
     color: white;
 }
 
-@media (max-width: 480px) {
-    .club-links {
-        flex-direction: column;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .club-link {
-        width: 80%;
-        text-align: center;
-    }
-}
-.welcome-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 20px;
-    color: #333;
-}
-
-.welcome-header {
-    text-align: center;
-    margin-bottom: 40px;
-    padding: 20px;
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.welcome-header h1 {
-    font-size: clamp(24px, 5vw, 36px);
-    margin-bottom: 20px;
-    color: white;
-}
-
-.rpl-logo-group {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-.rpl-logo-main {
-    max-width: 200px;
-    height: auto;
-    z-index: 2;
-}
-
-.rpl-logo-side {
-    max-width: 80px;
-    height: auto;
-    opacity: 0.8;
-    transition: all 0.3s ease;
-}
-
-.rpl-logo-side:hover {
-    opacity: 1;
-    transform: scale(1.05);
-}
-
-
-@media (max-width: 768px) {
-    .rpl-logo-group {
-        flex-direction: column;
-    }
-
-    .rpl-logo-side {
-        max-width: 60px;
-    }
-
-    .rpl-logo-main {
-        max-width: 150px;
-    }
-}
-
-.welcome-content {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-    gap: 30px;
-    margin-bottom: 40px;
-}
-
-.welcome-card {
-    background: white;
-    padding: 25px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    transition: transform 0.3s ease;
-}
-
-.welcome-card:hover {
-    transform: translateY(-5px);
-}
-
-.welcome-card h2 {
-    font-size: clamp(18px, 4vw, 24px);
-    color: #1e3c72;
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.features-list {
-    list-style-type: none;
-    padding: 0;
-}
-
-.features-list li {
-    padding: 10px 0;
-    border-bottom: 1px solid #eee;
-    font-size: clamp(14px, 3vw, 16px);
-    position: relative;
-    padding-left: 30px;
-}
-
-.features-list li:before {
-    content: "✓";
-    color: #4CAF50;
-    font-weight: bold;
-    position: absolute;
-    left: 0;
-}
-
-.action-buttons {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-    margin-top: 30px;
-}
-
-.btn-register, .btn-login {
-    display: inline-block;
-    padding: 12px 24px;
-    text-align: center;
-    text-decoration: none;
-    border-radius: 30px;
-    font-weight: bold;
-    font-size: 16px;
-    transition: all 0.3s;
-}
-
-.btn-register {
-    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-    color: white;
-}
-
-.btn-login {
-    background: white;
-    color: #1e3c72;
-    border: 2px solid #1e3c72;
-}
-
-.btn-register:hover {
-    background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-}
-
-.btn-login:hover {
-    background: #f8f9fa;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.small-text {
-    font-size: 14px;
-    color: #666;
-    text-align: center;
-    margin-top: 10px;
-}
-
-.table-preview {
-    border-radius: 8px;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.table-row {
-    display: grid;
-    grid-template-columns: 50px 1fr 50px;
-    padding: 12px 15px;
-    align-items: center;
-}
-
-.table-row.header {
-    background: #1e3c72;
-    color: white;
-    font-weight: bold;
-}
-
-.table-row:nth-child(even) {
-    background: #f8f9fa;
-}
-
-.table-row:last-child {
-    border-bottom: none;
-}
-
-.more-teams {
-    grid-column: 1 / -1;
-    text-align: center;
-    font-style: italic;
-    color: #666;
-    padding: 10px;
-}
 .stadium-map-container {
     margin: 20px 0;
     padding: 15px;
@@ -595,8 +669,257 @@
     background: white;
 }
 
-/* Адаптивность для мобильных устройств */
+
+/* ===============================================
+            БЛОК ПРИВЕТСТВИЯ (НЕ АВТОРИЗОВАН)
+===============================================
+*/
+
+.welcome-page .welcome-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    /* padding: 20px; Удалено, т.к. body уже имеет padding */
+    color: #333;
+}
+
+.welcome-page .welcome-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 20px;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.welcome-page .welcome-header h1 {
+    font-size: clamp(24px, 5vw, 36px);
+    margin-bottom: 20px;
+    color: white;
+}
+
+.welcome-page .rpl-logo-group {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.welcome-page .rpl-logo-main {
+    max-width: 200px;
+    height: auto;
+    z-index: 2;
+}
+
+.welcome-page .rpl-logo-side {
+    max-width: 80px;
+    height: auto;
+    opacity: 0.8;
+    transition: all 0.3s ease;
+}
+
+.welcome-page .rpl-logo-side:hover {
+    opacity: 1;
+    transform: scale(1.05);
+}
+
+
 @media (max-width: 768px) {
+    .welcome-page .rpl-logo-group {
+        flex-direction: column;
+    }
+
+    .welcome-page .rpl-logo-side {
+        max-width: 60px;
+    }
+
+    .welcome-page .rpl-logo-main {
+        max-width: 150px;
+    }
+}
+
+.welcome-page .welcome-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.welcome-page .welcome-card {
+    background: white;
+    padding: 25px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    transition: transform 0.3s ease;
+}
+
+.welcome-page .welcome-card:hover {
+    transform: translateY(-5px);
+}
+
+.welcome-page .welcome-card h2 {
+    font-size: clamp(18px, 4vw, 24px);
+    color: #1e3c72;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.welcome-page .features-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.welcome-page .features-list li {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    font-size: clamp(14px, 3vw, 16px);
+    position: relative;
+    padding-left: 30px;
+}
+
+.welcome-page .features-list li:before {
+    content: "✓";
+    color: #4CAF50;
+    font-weight: bold;
+    position: absolute;
+    left: 0;
+}
+
+.welcome-page .action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-top: 30px;
+}
+
+.welcome-page .btn-register, .welcome-page .btn-login {
+    display: inline-block;
+    padding: 12px 24px;
+    text-align: center;
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 16px;
+    transition: all 0.3s;
+}
+
+.welcome-page .btn-register {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    color: white;
+}
+
+.welcome-page .btn-login {
+    background: white;
+    color: #1e3c72;
+    border: 2px solid #1e3c72;
+}
+
+.welcome-page .btn-register:hover {
+    background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.welcome-page .btn-login:hover {
+    background: #f8f9fa;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.welcome-page .small-text {
+    font-size: 14px;
+    color: #666;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.welcome-page .table-preview {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.welcome-page .table-row {
+    display: grid;
+    grid-template-columns: 50px 1fr 50px;
+    padding: 12px 15px;
+    align-items: center;
+}
+
+.welcome-page .table-row.header {
+    background: #1e3c72;
+    color: white;
+    font-weight: bold;
+}
+
+.welcome-page .table-row:nth-child(even) {
+    background: #f8f9fa;
+}
+
+.welcome-page .table-row:last-child {
+    border-bottom: none;
+}
+
+.welcome-page .more-teams {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-style: italic;
+    color: #666;
+    padding: 10px;
+}
+
+/* ===============================================
+    СТИЛИ СТАВОК (СТРАНИЦА MY_BETS, использует home.css)
+===============================================
+*/
+/* Стили .bets-container, .balance-info, .bets-list - УДАЛЕНЫ, */
+/* так как страница my_bets.html больше не используется. */
+/* Стили для таблицы ставок остались, т.к. они могут использоваться в админке. */
+
+
+/* ===============================================
+            АДАПТИВНОСТЬ (ОБЩАЯ)
+===============================================
+*/
+@media (min-width: 768px) {
+    .club-header {
+        flex-direction: row;
+        justify-content: center;
+        gap: 15px;
+    }
+
+    .club-logo {
+        max-height: 250px;
+    }
+
+    .club-info {
+        padding: 15px 20px;
+        margin: 0;
+    }
+}
+
+@media (min-width: 1200px) {
+    .club-logo {
+        max-height: 300px;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        padding: 50px 10px 10px 10px;
+    }
+    .logout-link-fixed {
+        top: 10px;
+        left: 10px;
+        padding: 8px 15px;
+        font-size: 14px;
+    }
+    .page-header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
     .stadium-map {
         height: 250px;
     }
@@ -606,51 +929,3 @@
 .leaflet-control-scale {
     display: none !important;
 }
-/* Стили для формы ставок */
-.bet-form {
-    margin-top: 10px;
-    padding: 10px;
-    background: #f8f9fa;
-    border-radius: 5px;
-    border: 1px solid #dee2e6;
-}
-
-.bet-form select,
-.bet-form input {
-    margin-bottom: 5px;
-}
-
-/* Стили для страницы ставок */
-.bets-container {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.balance-info {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 20px;
-    border-radius: 10px;
-    margin-bottom: 20px;
-    text-align: center;
-}
-
-.bets-list table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-}
-
-.bets-list th,
-.bets-list td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-}
-
-.bets-list th {
-    background-color: #f8f9fa;
-    font-weight: bold;
-}
-

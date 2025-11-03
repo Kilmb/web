@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <title>Профиль пользователя</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/themes.css') }}">
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; }
         .menu { margin-bottom: 20px; }
@@ -57,12 +56,6 @@
             border-radius: 4px;
             cursor: pointer;
         }
-        strong{
-            --text-color: #000;
-        }
-        p{
-            --text-color: #000;
-        }
         .balance-btn:hover { background-color: #218838; }
         .debug-info {
             background-color: #f8f9fa;
@@ -73,7 +66,7 @@
         }
     </style>
 </head>
-<body class="theme-{{ current_theme }}">
+<body>
     <div class="menu">
         <a href="{{ url_for('home') }}">На главную</a>
         <a href="{{ url_for('show_users') }}">Список пользователей</a>
@@ -81,10 +74,6 @@
     </div>
 
     <h1>Профиль пользователя</h1>
-
-    <!-- Отладочная информация -->
-    <div class="debug-info">
-    </div>
 
     <div class="profile-container">
         <div class="avatar-container">
@@ -101,7 +90,6 @@
 
             <div class="balance-section">
                 <p><strong>Баланс:</strong>
-                     </style>
                     <span class="current-balance">{{ user_balance }}</span> монет
                 </p>
 
