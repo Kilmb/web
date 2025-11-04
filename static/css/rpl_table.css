@@ -1,43 +1,138 @@
 body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            text-align: center;
-        }
-        th {
-            background-color: #4682B4;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        .move-btn {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            margin: 0 2px;
-        }
-        .move-btn:hover {
-            background-color: #45a049;
-        }
-        input {
-            width: 50px;
-            text-align: center;
-        }
-        .team-name {
-            width: 150px;
-        }
-        h1 {
-           text-align: center;
-        }
+    background: transparent;
+    font-family: Arial, sans-serif;
+    color: var(--text-color);
+    padding-top: 60px; /* Отступ для кнопки "Выйти" */
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px 20px 20px;
+}
+
+/* Стили для кнопки "Выйти" */
+.logout-link-fixed {
+    position: fixed;
+    top: 15px;
+    left: 20px;
+    z-index: 1000;
+    padding: 10px 20px;
+    background: linear-gradient(45deg, #dc3545, #c82333);
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    transition: all 0.3s ease;
+}
+.logout-link-fixed:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
+}
+
+h1 {
+    color: var(--heading-color);
+    text-align: center;
+}
+
+.menu {
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    background: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.menu a, .menu button {
+    margin-right: 15px;
+    text-decoration: none;
+    color: var(--link-color);
+    font-weight: 500;
+    font-size: 1.1em;
+    padding: 8px 15px;
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    background: transparent;
+    cursor: pointer;
+    font-family: Arial, sans-serif; /* Добавлено для консистентности шрифта */
+}
+.menu a:hover, .menu button:hover {
+    background: var(--border-color);
+    color: var(--link-color-dark, #fff);
+}
+
+.table-container {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    color: var(--text-color);
+}
+th, td {
+    border: 1px solid var(--border-color);
+    padding: 8px;
+    text-align: center;
+    vertical-align: middle;
+}
+th {
+    background: rgba(128, 128, 128, 0.1);
+    color: var(--heading-color);
+}
+
+tr:nth-child(even) {
+    background: rgba(128, 128, 128, 0.05);
+}
+tr:hover {
+    background: rgba(128, 128, 128, 0.15);
+}
+
+/* Специфично для светлой темы */
+body:not(.theme-dark) th {
+    background-color: #f2f2f2;
+}
+body:not(.theme-dark) tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+body:not(.theme-dark) tr:hover {
+    background-color: #f1f1f1;
+}
+
+input {
+    width: 60px;
+    text-align: center;
+    padding: 5px;
+    border: 1px solid var(--border-color);
+    background: #fff;
+    color: #333;
+    border-radius: 4px;
+}
+.team-name {
+    width: 150px;
+}
+
+/* ===============================================
+   ДОБАВЛЕННЫЙ СТИЛЬ ДЛЯ КНОПКИ СОХРАНЕНИЯ
+=============================================== */
+.btn-save {
+    padding: 12px 25px;
+    background: linear-gradient(45deg, var(--grad-start), var(--grad-end));
+    color: white;
+    border: none;
+    border-radius: 25px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.btn-save:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px var(--shadow-color);
+}

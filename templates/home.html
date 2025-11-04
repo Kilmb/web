@@ -4,95 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Главная</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        /*
-        Внутренние стили из вашего оригинального home.html
-        (tour-navigation, stadium-map, etc.)
-        Они остаются здесь, так как являются специфичными для этой страницы.
-        */
 
-        /* Стили для навигации по турам */
-        .tour-navigation {
-            display: flex;
-            justify-content: center;
-            gap: 10px;
-            margin-bottom: 20px;
-        }
-
-        .tour-btn {
-            padding: 10px 15px;
-            border: 2px solid #007bff;
-            background: white;
-            color: #007bff;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-
-        .tour-btn:hover:not(.disabled) {
-            background: #007bff;
-            color: white;
-        }
-
-        .tour-btn.active {
-            background: #007bff;
-            color: white;
-        }
-
-        .tour-btn.disabled {
-            border-color: #ccc;
-            color: #ccc;
-            cursor: not-allowed;
-        }
-
-        /* Стили для контента туров */
-        .tour-content {
-            display: none;
-        }
-
-        .tour-content.active {
-            display: block;
-        }
-
-        /* Стили для карт стадионов */
-        .stadium-map-container {
-            margin: 20px 0;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .club-info .stadium-map-container h4 {
-            /* Этот стиль уже есть в home.css, но мы его дублируем для .club-info */
-            margin-bottom: 10px;
-            font-size: 18px;
-            color: white; /* Убедимся, что он белый на фоне карточки клуба */
-        }
-
-        .stadium-map {
-            height: 300px;
-            width: 100%;
-            border-radius: 8px;
-            z-index: 1;
-        }
-
-        /* Адаптивность для карт */
-        @media (max-width: 768px) {
-            .stadium-map {
-                height: 250px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .stadium-map {
-                height: 200px;
-            }
-        }
-    </style>
-</head>
+    </head>
 <body class="theme-{{ current_user.theme or 'default' }} {% if current_user.is_authenticated %}themed-body{% else %}welcome-page{% endif %}"
     {% if current_user.is_authenticated and current_user.theme =='club' and current_user.club %}
         {% set user_club = clubs|selectattr('name','equalto', current_user.club)|first %}
@@ -172,6 +88,16 @@
 
     <div class="home-container">
 
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}" style="margin-bottom: 20px;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
         <div class="page-header">
             <h1>Добро пожаловать, {{ current_user.name }}!</h1>
             <a href="{{ url_for('profile') }}" class="profile-header-link">
@@ -185,22 +111,22 @@
         </div>
 
         <div class="menu">
-            <form action="{{ url_for('update_table_from_api') }}" method="POST" style="display: inline;">
+            <form action="{{ url_for('update_data_from_api') }}" method="POST" style="display: inline;">
                 <button type="submit" class="btn-update">
-                    Обновить таблицу
+                    🔄 Обновить данные
                 </button>
             </form>
             {% if current_user.is_admin %}
-            <a href="{{ url_for('show_users') }}">Список пользователей</a>
-            <a href="{{ url_for('edit_rpl_table') }}">Редактировать таблицу</a>
-            <a href="{{ url_for('club_tests') }}">Редактировать тесты</a>
+            <a href="{{ url_for('show_users') }}">👥 Список пользователей</a>
+            <a href="{{ url_for('edit_rpl_table') }}">📊 Редактировать таблицу</a>
+            <a href="{{ url_for('club_tests') }}">✏️ Редактировать тесты</a>
             {% else %}
-            <a href="{{ url_for('show_users') }}">Список пользователей</a>
-            <a href="{{ url_for('easy_quiz') }}">Лёгкий тест</a>
-            <a href="{{ url_for('medium_quiz') }}">Средний тест</a>
-            <a href="{{ url_for('hard_quiz') }}">Сложный тест</a>
+            <a href="{{ url_for('show_users') }}">👥 Список пользователей</a>
+            <a href="{{ url_for('easy_quiz') }}">✅ Лёгкий тест</a>
+            <a href="{{ url_for('medium_quiz') }}">🤔 Средний тест</a>
+            <a href="{{ url_for('hard_quiz') }}">🔥 Сложный тест</a>
             {% endif %}
-            </div>
+        </div>
 
         <div class="content-card">
             <div class="matches-container">
@@ -226,8 +152,8 @@
 
                 <div class="tour-content" id="prev-tour">
                     {% if prev_tour_matches %}
-                        <h3>Матчи {{ current_tour - 1 }} тура</h3>
-                        <div class="matches-grid">
+                        <h3 style="text-align: left;">Матчи {{ current_tour - 1 }} тура</h3>
+                        <div class="matches-grid center-small-grid">
                             {% for match in prev_tour_matches %}
                             <div class="match-card">
                                 <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
@@ -253,8 +179,8 @@
 
                 <div class="tour-content active" id="current-tour">
                     {% if current_tour_matches %}
-                        <h3>Матчи {{ current_tour }} тура</h3>
-                        <div class="matches-grid">
+                        <h3 style="text-align: left;">🔥 Матчи {{ current_tour }} тура</h3>
+                        <div class="matches-grid center-small-grid">
                             {% for match in current_tour_matches %}
                             <div class="match-card">
                                 <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
@@ -300,8 +226,8 @@
 
                 <div class="tour-content" id="next-tour">
                     {% if next_tour_matches %}
-                        <h3>Матчи {{ current_tour + 1 }} тура</h3>
-                        <div class="matches-grid">
+                        <h3 style="text-align: left;">Матчи {{ current_tour + 1 }} тура</h3>
+                        <div class="matches-grid center-small-grid">
                             {% for match in next_tour_matches %}
                             <div class="match-card">
                                 <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
@@ -345,12 +271,8 @@
                 <tr {% if current_user.is_authenticated and team.team== current_user.club %}
                     class="user-club-row"
                     style="--club-color1: {{ clubs|selectattr('name', 'equalto', team.team)|map(attribute='color1')|first }};
-                                       --club-color2: {{ clubs|selectattr('name', 'equalto', team.team)|map(attribute='color2')|first }};
-                                       --text-color: {% if
-                                       '#87CEFA' in clubs|selectattr('name', 'equalto', team.team)|map(attribute='color1')|first or
-                                       '#E0FFFF' in clubs|selectattr('name', 'equalto', team.team)|map(attribute='color1')|first or
-                                       '#FFFFFF' in clubs|selectattr('name', 'equalto', team.team)|map(attribute='color2')|first
-                                       %}black{% else %}white{% endif %};"
+                           --club-color2: {{ clubs|selectattr('name', 'equalto', team.team)|map(attribute='color2')|first }};
+                           --text-color: white;"
                     {% endif %}>
                     <td>{{ team.position }}</td>
                     <td>
@@ -376,7 +298,7 @@
             {% if current_user.club %}
                 {% for club in sorted_clubs %}
                     {% if club.name == current_user.club %}
-                        <div class="club-info" style="--color1: {{ club.color1 }}; --color2: {{ club.color2 }};">
+                        <div class="club-info favorite-club" style="--color1: {{ club.color1 }}; --color2: {{ club.color2 }};">
                             <div class="club-header">
                                 <h3 class="club-name">{{ club.name }}</h3>
                                 <h4 class="club-city">(г. {{ club.city }})</h4>
@@ -391,19 +313,19 @@
                                 <img src="{{ url_for('static', filename='img/' + club.logo) }}" class="club-logo">
                             </div>
 
-                            <p><strong>Стадион:</strong> {{ club.stadium }} ({{club.year}}г.). &ensp;
-                               <strong>Вместимость:</strong> {{ club.places }} мест.</p>
                             <p><strong>Дата основания:</strong> {{ club.founded }}. &ensp;
                                <strong>Первое название:</strong> {{ club.first_name }}.</p>
                             <p><strong>Лучший бомбардир в истории:</strong> {{ club.best_bombardier }}. &ensp;
                                <strong>Количество голов:</strong> {{ club.goals }}.</p>
                             <p><strong>Лучший ассистент в истории:</strong> {{ club.best_assistant }}. &ensp;
                                <strong>Количество ассистов:</strong> {{ club.assists }}.</p>
+                            <p><strong>Стадион:</strong> {{ club.stadium }} ({{club.year}}г.). &ensp;
+                               <strong>Вместимость:</strong> {{ club.places }} мест.</p>
 
                             <div class="stadium-map-container">
                                 <h4>Местоположение стадиона</h4>
 
-                                <div id="map-{{ club.name|replace(' ', '-') }}" class="stadium-map"
+                                <div id="map-fav-{{ club.name|replace(' ', '-') }}" class="stadium-map"
                                      data-lat="{{ club.latitude }}"
                                      data-lng="{{ club.longitude }}"
                                      data-stadium="{{ club.stadium }}"
@@ -437,14 +359,14 @@
                             <img src="{{ url_for('static', filename='img/' + club.logo) }}" class="club-logo">
                         </div>
 
-                        <p><strong>Стадион:</strong> {{ club.stadium }} ({{club.year}}г.). &ensp;
-                            <strong>Вместимость:</strong> {{ club.places }} мест.</p>
                         <p><strong>Дата основания:</strong> {{ club.founded }}. &ensp;
                             <strong>Первое название:</strong> {{ club.first_name }}.</p>
                         <p><strong>Лучший бомбардир в истории:</strong> {{ club.best_bombardier }}. &ensp;
                             <strong>Количество голов:</strong> {{ club.goals }}.</p>
                         <p><strong>Лучший ассистент в истории:</strong> {{ club.best_assistant }}. &ensp;
                             <strong>Количество ассистов:</strong> {{ club.assists }}.</p>
+                        <p><strong>Стадион:</strong> {{ club.stadium }} ({{club.year}}г.). &ensp;
+                            <strong>Вместимость:</strong> {{ club.places }} мест.</p>
 
                         <div class="stadium-map-container">
                             <h4>Местоположение стадиона</h4>
@@ -465,7 +387,8 @@
             {% endfor %}
         </div>
 
-    </div> {% endif %}
+    </div>
+    {% endif %}
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>

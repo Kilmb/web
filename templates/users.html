@@ -3,71 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <title>Пользователи</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .menu { margin-bottom: 20px; }
-        .menu a { margin-right: 10px; text-decoration: none; color: #007bff; }
-        .menu a:hover { text-decoration: underline; }
-        .profile-link { color: #007bff; text-decoration: none; }
-        .profile-link:hover { text-decoration: underline; }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
 </head>
-<body>
-    <div class="menu">
-        <a href="{{ url_for('home') }}">На главную</a>
-        <a href="{{ url_for('logout') }}">Выйти</a>
-    </div>
-
-    <h1>Список пользователей</h1>
-
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-                <div style="color: red; margin: 10px 0;">{{ message }}</div>
-            {% endfor %}
+<body class="theme-{{ current_user.theme or 'default' }} themed-body"
+    {% if current_user.theme =='club' and current_user.club %}
+        {% set user_club = clubs|selectattr('name','equalto', current_user.club)|first %}
+        {% if user_club %}
+            style="--club-color-1: {{ user_club.color1 }}; --club-color-2: {{ user_club.color2 }};"
         {% endif %}
-    {% endwith %}
-
-    {% if users %}
-    <table>
-        <tr>
-            <th>ID</th>
-            <th>Имя</th>
-            <th>Email</th>
-            <th>Клуб</th>
-            <th>Баланс</th>
-            <th>Действия</th>
-        </tr>
-        {% for user in users %}
-        <tr>
-            <td>{{ user.id }}</td>
-            <td>{{ user.name }}</td>
-            <td>{{ user.email }}</td>
-            <td>{{ user.club }}</td>
-            <td>{{ user_balances.get(user.id, 100) }} монет</td>
-            <td>
-                <a href="{{ url_for('view_user', user_id=user.id) }}" class="profile-link">Профиль</a>
-                {% if current_user.is_admin and user.id != current_user.id %}
-                <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" style="display: inline;">
-                    <button type="submit" onclick="return confirm('Удалить пользователя {{ user.name }}?')"
-                            style="background: #dc3545; color: white; border: none; padding: 2px 8px; border-radius: 3px; margin-left: 5px; cursor: pointer;">
-                        Удалить
-                    </button>
-                </form>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
-    {% else %}
-    <p>Пользователи не найдены</p>
     {% endif %}
+>
+    <a href="{{ url_for('logout') }}" class="logout-link-fixed">Выйти</a>
 
-    <div style="margin-top: 20px;">
-        <p><strong>Всего пользователей:</strong> {{ users|length }}</p>
+    <div class="admin-container">
+
+        <div class="profile-header">
+            <h1>Список пользователей</h1>
+            <a href="{{ url_for('home') }}" class="back-btn">На главную</a>
+        </div>
+
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="flash-message error">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% if users %}
+        <div class="table-container">
+            <table>
+                <tr>
+                    <th>№</th>
+                    <th>Аватар</th>
+                    <th>Имя</th>
+                    <th>Email</th>
+                    <th>Клуб</th>
+                    <th>Баланс</th>
+                    <th>Действия</th>
+                </tr>
+                {% for user in users %}
+                <tr class="{% if user.is_admin %}admin-row{% endif %} {% if user.id == current_user.id %}current-user-row{% endif %}">
+                    <td>{{ loop.index }}</td>
+                    <td>
+                        {% if user.avatar %}
+                            <img src="{{ url_for('uploaded_file', filename=user.avatar) }}" class="avatar-thumbnail">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="avatar-thumbnail">
+                        {% endif %}
+                    </td>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.club }}</td>
+                    <td>{{ user_balances.get(user.id, 100) }} 🪙</td>
+                    <td>
+                        <a href="{{ url_for('view_user', user_id=user.id) }}" class="profile-link">Профиль</a>
+                        {% if current_user.is_admin and user.id != current_user.id %}
+                        <form action="{{ url_for('delete_user', user_id=user.id) }}" method="POST" style="display: inline;">
+                            <button type="submit" onclick="return confirm('Удалить пользователя {{ user.name }}?')"
+                                    class="delete-btn">
+                                Удалить
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        {% else %}
+        <p>Пользователи не найдены</p>
+        {% endif %}
+
+        <div class="summary">
+            <p><strong>Всего пользователей:</strong> {{ users|length }}</p>
+        </div>
     </div>
 </body>
 </html>

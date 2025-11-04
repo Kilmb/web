@@ -3,9 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <title>Результаты теста</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/quiz.css') }}">
 </head>
-<body>
+<body class="theme-{{ current_user.theme or 'default' }} themed-body"
+    {% if current_user.theme =='club' and current_user.club %}
+        {% set user_club = clubs|selectattr('name','equalto', current_user.club)|first %}
+        {% if user_club %}
+            style="--club-color-1: {{ user_club.color1 }}; --club-color-2: {{ user_club.color2 }};"
+        {% endif %}
+    {% endif %}
+>
+<a href="{{ url_for('logout') }}" class="logout-link-fixed">Выйти</a>
+
 <div class="results-container">
     <h1>
         {% if test_type == 'easy' %}
@@ -15,6 +25,7 @@
         {% elif test_type == 'hard' %}
         Результаты сложного теста
         {% else %}
+        Результаты
         {% endif %}
     </h1>
 
@@ -38,7 +49,6 @@
         </p>
     </div>
 
-    <!-- Все вопросы -->
     <div id="all" class="tab-content active">
         {% for result in results %}
         <div class="result-item
@@ -64,7 +74,7 @@
             </div>
 
             <div class="user-answer">
-                Ваш ответ: <span class="{% if result.is_correct %}correct-answer{% else %}wrong-answer{% endif %}">
+                Ваш ответ: <span class="{% if result.is_correct %}correct-answer-text{% else %}wrong-answer-text{% endif %}">
                         {{ result.user_answer }}
                     </span>
             </div>

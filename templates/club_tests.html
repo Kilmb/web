@@ -2,95 +2,92 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Тесты про клубы РПЛ</title>
+    <title>Редактирование тестов</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/club_tests.css') }}">
 </head>
-<body>
+<body class="theme-{{ current_user.theme or 'default' }} themed-body"
+    {% if current_user.theme =='club' and current_user.club %}
+        {% set user_club = clubs|selectattr('name','equalto', current_user.club)|first %}
+        {% if user_club %}
+            style="--club-color-1: {{ user_club.color1 }}; --club-color-2: {{ user_club.color2 }};"
+        {% endif %}
+    {% endif %}
+>
+    <a href="{{ url_for('logout') }}" class="logout-link-fixed">Выйти</a>
+
     <div class="admin-container">
         <a href="{{ url_for('home') }}" class="btn-back">← На главную</a>
-        <h1>Управление тестами про клубы</h1>
+        <h1>Редактирование тестов</h1>
 
-        <button id="show-form-btn" class="btn-add">Добавить новый вопрос</button>
-
-        <form method="POST" action="{{ url_for('add_test') }}" class="test-form" id="test-form" style="display: none;">
+        <form method="POST" action="{{ url_for('add_test') }}" class="test-form">
+            <h2>Добавить новый вопрос</h2>
             <div class="form-group">
                 <label>Вопрос:</label>
-                <input type="text" name="question" required>
+                <input type="text" name="question" placeholder="Например: В каком году основан Спартак?" required>
             </div>
 
             <div class="form-group">
-                <label>Сложность (1-3):</label>
+                <label>Сложность (1 - легко, 2 - средне, 3 - сложно):</label>
                 <input type="number" name="difficulty" min="1" max="3" value="1" required>
             </div>
 
             <div class="form-group">
                 <label>Правильный ответ:</label>
-                <input type="text" name="correct_answer" required>
+                <input type="text" name="correct_answer" placeholder="Например: 1922" required>
             </div>
 
             <div class="form-group">
-                <label>Вариант 1:</label>
-                <input type="text" name="option1" required>
+                <label>Вариант 1 (можно правильный):</label>
+                <input type="text" name="option1" placeholder="Например: 1922" required>
             </div>
 
             <div class="form-group">
                 <label>Вариант 2:</label>
-                <input type="text" name="option2" required>
+                <input type="text" name="option2" placeholder="Например: 1911" required>
             </div>
 
             <div class="form-group">
                 <label>Вариант 3:</label>
-                <input type="text" name="option3" required>
+                <input type="text" name="option3" placeholder="Например: 1935" required>
             </div>
 
             <div class="form-group">
                 <label>Вариант 4:</label>
-                <input type="text" name="option4" required>
+                <input type="text" name="option4" placeholder="Например: 1905" required>
             </div>
 
             <button type="submit" class="btn-add">Добавить вопрос</button>
-            <button type="button" id="hide-form-btn" class="btn-cancel">Отмена</button>
         </form>
 
+        <h2>Существующие вопросы ({{ tests|length }})</h2>
         <div class="tests-list">
             {% for test in tests %}
             <div class="test-card" data-difficulty="{{ test.difficulty }}">
                 <div class="test-header">
                     <h3>{{ test.question }}</h3>
                 </div>
-                <p><strong>Ответ:</strong> {{ test.correct_answer }}</p>
-                <p><strong>Варианты:</strong></p>
+                <p><strong>Сложность:</strong> {{ test.difficulty }}/3</p>
                 <ul>
-                    <li>{{ test.option1 }}</li>
-                    <li>{{ test.option2 }}</li>
-                    <li>{{ test.option3 }}</li>
-                    <li>{{ test.option4 }}</li>
+                    {% for option in [test.option1, test.option2, test.option3, test.option4] %}
+                        {% if option == test.correct_answer %}
+                            <li style="color: #28a745; font-weight: bold;">{{ option }} (Верно)</li>
+                        {% else %}
+                            <li>{{ option }}</li>
+                        {% endif %}
+                    {% endfor %}
                 </ul>
-
                 <div class="test-actions">
-                    <form method="GET" action="{{ url_for('edit_test', test_id=test.id) }}">
-                        <button type="submit" class="btn-edit">Редактировать</button>
-                    </form>
-                    <form method="POST" action="{{ url_for('delete_test', test_id=test.id) }}"
-                          onsubmit="return confirm('Удалить этот вопрос?')">
-                        <button type="submit" class="btn-delete">Удалить</button>
+                    <a href="{{ url_for('edit_test', test_id=test.id) }}" class="btn-edit">Редактировать</a>
+
+                    <form action="{{ url_for('delete_test', test_id=test.id) }}" method="POST" style="display: inline;">
+                        <button type="submit" class="btn-delete" onclick="return confirm('Удалить этот вопрос?')">Удалить</button>
                     </form>
                 </div>
             </div>
             {% endfor %}
         </div>
+
     </div>
-
-    <script>
-        document.getElementById('show-form-btn').addEventListener('click', function() {
-            document.getElementById('test-form').style.display = 'block';
-            this.style.display = 'none';
-        });
-
-        document.getElementById('hide-form-btn').addEventListener('click', function() {
-            document.getElementById('test-form').style.display = 'none';
-            document.getElementById('show-form-btn').style.display = 'block';
-        });
-    </script>
 </body>
 </html>

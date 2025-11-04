@@ -1,165 +1,9 @@
-* {
-    box-sizing: border-box;
-}
-
 /* ===============================================
-            ОПРЕДЕЛЕНИЕ ТЕМ
+        ОБЩИЕ КОМПОНЕНТЫ (Карточки, Заголовки)
 ===============================================
 */
 
-/* 1. Тема по умолчанию (Синяя) */
-body.theme-default {
-    --grad-start: #00529B;
-    --grad-end: #00529B;
-    --shadow-color: rgba(0, 82, 155, 0.4);
-    --border-color: #00529B;
-    --text-color: #333;
-    --card-bg: rgba(255, 255, 255, 0.95);
-    --heading-color: #2c3e50;
-    --link-color-dark: #FFFFFF;
-}
-
-/* 2. Тема "Индиго" */
-body.theme-indigo {
-    --grad-start: #667eea;
-    --grad-end: #764ba2;
-    --shadow-color: rgba(102, 126, 234, 0.4);
-    --border-color: #667eea;
-    --text-color: #333;
-    --card-bg: rgba(255, 255, 255, 0.95);
-    --heading-color: #2c3e50;
-    --link-color-dark: #764ba2;
-}
-
-/* 3. Тема "Закат" */
-body.theme-sunset {
-    --grad-start: #ff7e5f;
-    --grad-end: #feb47b;
-    --shadow-color: rgba(255, 126, 95, 0.4);
-    --border-color: #ff7e5f;
-    --text-color: #333;
-    --card-bg: rgba(255, 255, 255, 0.95);
-    --heading-color: #2c3e50;
-    --link-color-dark: #b22222;
-}
-
-/* 4. Тема "Лес" */
-body.theme-forest {
-    --grad-start: #4CAF50;
-    --grad-end: #2E8B57;
-    --shadow-color: rgba(76, 175, 80, 0.4);
-    --border-color: #4CAF50;
-    --text-color: #333;
-    --card-bg: rgba(255, 255, 255, 0.95);
-    --heading-color: #2c3e50;
-    --link-color-dark: #006400;
-}
-
-/* 5. Тема "Багровый" */
-body.theme-crimson {
-    --grad-start: #DC143C;
-    --grad-end: #8B0000;
-    --shadow-color: rgba(220, 20, 60, 0.4);
-    --border-color: #DC143C;
-    --text-color: #333;
-    --card-bg: rgba(255, 255, 255, 0.95);
-    --heading-color: #2c3e50;
-    --link-color-dark: #8B0000;
-}
-
-/* 6. Тема "Клубная" */
-body.theme-club {
-    --grad-start: var(--club-color-1, #667eea);
-    --grad-end: var(--club-color-2, #764ba2);
-    --shadow-color: rgba(102, 126, 234, 0.4);
-    --border-color: var(--club-color-1, #667eea);
-    --text-color: #333;
-    --card-bg: rgba(255, 255, 255, 0.95);
-    --heading-color: #2c3e50;
-    --link-color-dark: var(--club-color-2, #764ba2);
-}
-
-/* 7. Тёмная тема */
-body.theme-dark {
-    --grad-start: #232526;
-    --grad-end: #414345;
-    --shadow-color: rgba(255, 255, 255, 0.2);
-    --border-color: #555;
-    --text-color: #e0e0e0;
-    --card-bg: rgba(45, 45, 45, 0.95);
-    --heading-color: #ffffff;
-    --link-color-dark: #bbbbbb;
-}
-
-/* 8. Золотая тема - НОВАЯ */
-body.theme-gold {
-    --grad-start: #FFD700; /* Gold */
-    --grad-end: #B8860B;   /* DarkGoldenRod */
-    --shadow-color: rgba(255, 215, 0, 0.4);
-    --border-color: #FFD700;
-    --text-color: #333;
-    --card-bg: rgba(255, 255, 255, 0.95);
-    --heading-color: #2c3e50;
-    --link-color-dark: #B8860B;
-}
-
-/* ===============================================
-            АНИМАЦИЯ ФОНА
-===============================================
-*/
-
-@keyframes gradientFlow {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-/* ===============================================
-            ОСНОВНЫЕ СТИЛИ
-===============================================
-*/
-
-body {
-    margin: 0;
-    padding: 60px 20px 20px 20px;
-    font-family: 'Arial', sans-serif;
-    background: #f4f6f8;
-    min-height: 100vh;
-    color: #333;
-    transition: background 0.5s ease;
-}
-
-/* ИЗМЕНЕНИЕ: Градиент и анимация для авторизованных */
-body.themed-body {
-    background: linear-gradient(135deg, var(--grad-start) 0%, var(--grad-end) 100%);
-    color: var(--text-color);
-    background-size: 400% 400%;
-    animation: gradientFlow 15s ease infinite;
-}
-
-/* Стили для кнопки "Выйти" */
-.logout-link-fixed {
-    position: fixed;
-    top: 15px;
-    left: 20px;
-    z-index: 1000;
-    padding: 10px 20px;
-    background: linear-gradient(45deg, #dc3545, #c82333);
-    color: white;
-    text-decoration: none;
-    border-radius: 25px;
-    font-weight: bold;
-    font-size: 16px;
-    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
-    transition: all 0.3s ease;
-}
-.logout-link-fixed:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
-}
-
-
-/* Главный контейнер (для аутентифицированных) */
+/* Общий контейнер для home */
 .home-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -168,8 +12,38 @@ body.themed-body {
     gap: 25px;
 }
 
+/* Карточка-обертка для контента */
+.content-card,
+.profile-header {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.content-card {
+     transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.content-card:hover, .club-info:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
+}
+
+.content-card h2 {
+    color: var(--heading-color);
+    margin-top: 0;
+    text-align: center;
+}
+
+.content-card h3 {
+    color: var(--heading-color);
+    margin-top: 0;
+    /* text-align: left; (Теперь управляется в HTML) */
+}
+
+
 /* ===============================================
-        ШАПКА, ПРОФИЛЬ, КАРТОЧКИ
+        СТИЛИ HOME (home.html)
 ===============================================
 */
 
@@ -177,38 +51,18 @@ body.themed-body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
+    margin-bottom: 0;
+
     background: var(--card-bg);
     padding: 25px;
     border-radius: 15px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
-
 .page-header h1 {
-    color: var(--heading-color);
     margin: 0;
     font-size: 2.2em;
 }
 
-/* Карточка-обертка для контента */
-.content-card {
-    background: var(--card-bg);
-    padding: 25px;
-    border-radius: 15px;
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.content-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
-}
-
-.content-card h2, .content-card h3 {
-    color: var(--heading-color);
-    margin-top: 0;
-}
-
-/* Ссылка-кнопка .profile-header-link */
 .profile-header-link {
     display: flex;
     align-items: center;
@@ -233,12 +87,6 @@ body.themed-body {
     border: 2px solid white;
 }
 
-
-/* ===============================================
-            МЕНЮ НАВИГАЦИИ
-===============================================
-*/
-
 .menu {
     display: flex;
     flex-wrap: wrap;
@@ -246,7 +94,6 @@ body.themed-body {
     align-items: center;
     gap: 15px;
 }
-
 .menu a, .menu button {
     display: inline-block;
     padding: 10px 20px;
@@ -258,8 +105,6 @@ body.themed-body {
     border: none;
     cursor: pointer;
 }
-
-/* Обычные ссылки (Тесты, Пользователи) */
 .menu a {
     background: var(--card-bg);
     color: var(--text-color);
@@ -267,10 +112,9 @@ body.themed-body {
 }
 .menu a:hover {
     background: var(--border-color);
-    color: var(--link-color-dark);
+    color: var(--link-color-dark, #fff);
     transform: translateY(-2px);
 }
-/* Специфичные стили для светлой темы */
 body:not(.theme-dark) .menu a {
      background: #f0f0f0;
      color: #333;
@@ -279,9 +123,6 @@ body:not(.theme-dark) .menu a {
 body:not(.theme-dark) .menu a:hover {
     background: #e0e0e0;
 }
-
-
-/* Кнопка "Обновить таблицу" (зеленая) */
 .menu .btn-update {
     background: linear-gradient(45deg, #28a745, #20c997);
     color: white;
@@ -291,30 +132,26 @@ body:not(.theme-dark) .menu a:hover {
     box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
 }
 
-
-/* ===============================================
-            ТУРНИРНАЯ ТАБЛИЦА
-===============================================
-*/
-
+/* Таблица */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 20px 0 0 0;
-    font-size: clamp(14px, 2vw, 16px);
+    margin-top: 20px;
     color: var(--text-color);
 }
-
 th, td {
-    border: 1px solid var(--border-color);
     padding: 12px;
     text-align: center;
 }
 
 th {
-    background-color: rgba(128, 128, 128, 0.1);
-    color: var(--heading-color);
+    background-color: #4682B4; /* SteelBlue */
+    color: white;
     font-size: clamp(16px, 2.5vw, 18px);
+    border: 1px solid #3a719c;
+}
+td {
+     border: 1px solid var(--border-color);
 }
 
 tr:nth-child(even) {
@@ -324,10 +161,10 @@ tr:hover {
     background-color: rgba(128, 128, 128, 0.15);
 }
 
-/* Специфично для светлой темы */
 body:not(.theme-dark) th {
-    background-color: #f4f6f8;
-    color: #333;
+    background-color: #4682B4;
+    color: white;
+    border: 1px solid #3a719c;
 }
 body:not(.theme-dark) tr:nth-child(even) {
     background-color: #f9f9f9;
@@ -336,54 +173,92 @@ body:not(.theme-dark) tr:hover {
     background-color: #f1f1f1;
 }
 
-
 .user-club-row td {
     background: linear-gradient(to bottom, var(--club-color1), var(--club-color2)) !important;
-    color: var(--text-color);
+    color: white;
     font-weight: bold;
 }
 .user-club-row:hover td {
     background: linear-gradient(to bottom, var(--club-color1), var(--club-color2)) !important;
     filter: brightness(1.1);
 }
-
 .team-name {
     font-size: clamp(16px, 3vw, 18px);
     font-weight: bold;
 }
-
 .team-city {
     font-size: clamp(12px, 2.5vw, 14px);
     opacity: 0.8;
 }
 
-
 /* ===============================================
-            МАТЧИ ТУРА И ФОРМА СТАВОК
+            СТИЛИ МАТЧЕЙ (Перенесено из HTML)
 ===============================================
 */
+
 .matches-container {
     padding: 0;
     box-shadow: none;
     background: none;
 }
 
-.tour-header {
-    text-align: center;
+/* Стили для навигации по турам */
+.tour-navigation {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
     margin-bottom: 20px;
 }
-
-.tour-title {
-    font-size: 24px;
-    color: var(--heading-color);
-    margin-bottom: 5px;
+.tour-btn {
+    padding: 10px 15px;
+    border: 2px solid #007bff;
+    background: white;
+    color: #007bff;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+}
+.tour-btn:hover:not(.disabled) {
+    background: #007bff;
+    color: white;
+}
+.tour-btn.active {
+    background: #007bff;
+    color: white;
+}
+.tour-btn.disabled {
+    border-color: #ccc;
+    color: #ccc;
+    cursor: not-allowed;
 }
 
+/* Стили для контента туров */
+.tour-content {
+    display: none;
+}
+.tour-content.active {
+    display: block;
+}
+
+
+/* ИСПРАВЛЕНИЕ 1: Сетка матчей (по умолчанию) */
 .matches-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    /* Эта сетка (для 8 матчей) будет растягиваться */
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 15px;
 }
+
+/* ИСПРАВЛЕНИЕ 1: НОВЫЙ КЛАСС для центрирования 1-2 матчей */
+.matches-grid.center-small-grid {
+    /* Эта сетка будет использовать flex для центрирования */
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+}
+
 
 .match-card {
     background-color: var(--card-bg);
@@ -391,14 +266,13 @@ body:not(.theme-dark) tr:hover {
     padding: 15px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     border: 1px solid var(--border-color);
+    /* Задаем жесткую ширину, чтобы flex-центр работал */
+    width: 300px;
 }
-/* Специфично для светлой темы */
 body:not(.theme-dark) .match-card {
     background-color: #f8f9fa;
     border: 1px solid #eee;
 }
-
-
 .match-teams {
     font-size: 18px;
     font-weight: bold;
@@ -406,7 +280,6 @@ body:not(.theme-dark) .match-card {
     margin-bottom: 5px;
     color: var(--heading-color);
 }
-
 .match-score {
     font-size: 22px;
     font-weight: bold;
@@ -414,28 +287,12 @@ body:not(.theme-dark) .match-card {
     margin: 10px 0;
     color: var(--text-color);
 }
-
-.match-details {
-    display: flex;
-    justify-content: space-between;
-    color: var(--text-color);
-    opacity: 0.8;
-    font-size: 14px;
-}
-
 .match-date {
     text-align: center;
     color: var(--text-color);
     opacity: 0.8;
     margin-top: 5px;
 }
-
-@media (max-width: 768px) {
-    .matches-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
 .match-status-live {
     text-align: center;
     color: #ff6b00;
@@ -446,7 +303,7 @@ body:not(.theme-dark) .match-card {
     border-radius: 5px;
 }
 
-/* Стили для формы ставок */
+/* Форма ставок */
 .bet-form {
     margin-top: 15px;
     padding-top: 15px;
@@ -462,7 +319,6 @@ body:not(.theme-dark) .match-card {
     flex-direction: column;
     gap: 10px;
 }
-
 .bet-form select,
 .bet-form input {
     width: 100%;
@@ -470,14 +326,13 @@ body:not(.theme-dark) .match-card {
     font-size: 16px;
     border: 1px solid #ccc;
     border-radius: 6px;
-    background: #fff; /* Оставляем белым для читаемости */
+    background: #fff;
     color: #333;
+    box-sizing: border-box;
 }
 .bet-form input::placeholder {
     color: #999;
 }
-
-/* Кнопка "Поставить" (зеленая) */
 .bet-form .btn-bet {
     width: 100%;
     padding: 12px;
@@ -499,77 +354,36 @@ body:not(.theme-dark) .match-card {
             ИНФОРМАЦИЯ О КЛУБАХ
 ===============================================
 */
-
-h1, h2, h3, h4 {
-    text-align: center;
-    padding: 0 10px;
-}
-
-/* Заголовки h2, h3, h4 ВНУТРИ .club-info должны быть белыми */
-.club-info h2, .club-info h3, .club-info h4 {
-    color: white;
-}
-
-/* Заголовки h2, h3, h4 ВНЕ .club-info */
-.themed-body h2, .themed-body h3, .themed-body h4 {
-    color: var(--heading-color);
-}
-/* Специфично для светлой темы (в т.ч. welcome-page) */
-body:not(.themed-body) h1,
-body:not(.themed-body) h2,
-body:not(.themed-body) h3,
-body:not(.themed-body) h4 {
-    color: #333;
-}
-
-
-p {
-    font-size: clamp(16px, 4vw, 18px);
-    text-align: left;
-    padding: 0 10px;
-}
-
-.club-info p {
-    color: white;
-}
-
-
 .club-info {
     background: linear-gradient(var(--color1), var(--color2));
     color: white;
     border-radius: 15px;
     padding: 25px;
-    margin: 0;
+    /* margin: 0; <-- УДАЛЕНО: Эта строка сбрасывала отступ */
     max-width: 1400px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+
+    /* ИСПРАВЛЕНИЕ: Отступ для всех карточек */
+    margin-bottom: 30px;
+}
+/* ИСПРАВЛЕНИЕ: Увеличенный отступ для любимой */
+.club-info.favorite-club {
+    margin-bottom: 60px;
 }
 
-.club-info:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
-}
 
-.club-logo-container {
-    text-align: center;
-    margin: 15px 0;
+.club-info p {
+    color: white;
 }
-
+.club-info h2, .club-info h3, .club-info h4 {
+    color: white !important;
+}
 .club-logo {
     max-width: 100%;
     height: auto;
     max-height: 200px;
     object-fit: contain;
 }
-
-.emblem {
-    max-width: 100%;
-    height: auto;
-    margin: 0 auto;
-    display: block;
-    padding: 0 10px;
-}
-
 .club-header {
     display: flex;
     flex-direction: column;
@@ -577,50 +391,33 @@ p {
     gap: 5px;
     margin-bottom: 10px;
 }
-
 .club-name {
     font-size: clamp(20px, 5vw, 32px);
     margin: 0;
 }
-
 .club-city {
     font-size: clamp(16px, 4vw, 25px);
     margin: 0;
 }
-
 .kit-container {
     position: relative;
     text-align: center;
     margin: 20px 0;
 }
-
 .kit-labels {
     display: flex;
     justify-content: space-between;
     margin-bottom: 5px;
 }
-
 .kit-label {
     flex: 1;
     font-size: clamp(14px, 3vw, 18px);
     font-weight: bold;
     text-align: center;
 }
-
-.kit-label.left {
-    text-align: left;
-    padding-left: 3%;
-}
-
-.kit-label.center {
-    text-align: center;
-}
-
-.kit-label.right {
-    text-align: right;
-    padding-right: 4%;
-}
-
+.kit-label.left { text-align: left; padding-left: 3%; }
+.kit-label.center { text-align: center; }
+.kit-label.right { text-align: right; padding-right: 4%; }
 .club-links {
     display: flex;
     justify-content: center;
@@ -628,7 +425,6 @@ p {
     margin-top: 15px;
     flex-wrap: wrap;
 }
-
 .club-link {
     display: inline-block;
     padding: 8px 15px;
@@ -640,48 +436,49 @@ p {
     transition: background-color 0.3s;
     border: 1px solid rgba(255, 255, 255, 0.3);
 }
-
 .club-link:hover {
     background-color: rgba(255, 255, 255, 0.3);
     color: white;
 }
 
+/* Стили для карт (перенесено из HTML) */
 .stadium-map-container {
     margin: 20px 0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     padding: 15px;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
-
 .stadium-map-container h4 {
     margin-bottom: 10px;
-    color: white;
     font-size: 1.2em;
     text-align: center;
 }
-
+.club-info .stadium-map-container h4 {
+    font-size: 18px;
+    color: white !important;
+}
 .stadium-map {
     height: 300px;
     width: 100%;
-    border-radius: 6px;
+    border-radius: 8px;
+    z-index: 1;
     border: 2px solid rgba(255, 255, 255, 0.3);
     background: white;
 }
 
-
 /* ===============================================
-            БЛОК ПРИВЕТСТВИЯ (НЕ АВТОРИЗОВАН)
+            БЛОК ПРИВЕТСТВИЯ (welcome-page)
 ===============================================
 */
 
 .welcome-page .welcome-container {
     max-width: 1200px;
     margin: 0 auto;
-    /* padding: 20px; Удалено, т.к. body уже имеет padding */
     color: #333;
 }
-
 .welcome-page .welcome-header {
     text-align: center;
     margin-bottom: 40px;
@@ -691,13 +488,11 @@ p {
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
-
 .welcome-page .welcome-header h1 {
     font-size: clamp(24px, 5vw, 36px);
     margin-bottom: 20px;
     color: white;
 }
-
 .welcome-page .rpl-logo-group {
     display: flex;
     justify-content: center;
@@ -705,39 +500,9 @@ p {
     gap: 10px;
     margin-top: 20px;
 }
-
-.welcome-page .rpl-logo-main {
-    max-width: 200px;
-    height: auto;
-    z-index: 2;
-}
-
-.welcome-page .rpl-logo-side {
-    max-width: 80px;
-    height: auto;
-    opacity: 0.8;
-    transition: all 0.3s ease;
-}
-
-.welcome-page .rpl-logo-side:hover {
-    opacity: 1;
-    transform: scale(1.05);
-}
-
-
-@media (max-width: 768px) {
-    .welcome-page .rpl-logo-group {
-        flex-direction: column;
-    }
-
-    .welcome-page .rpl-logo-side {
-        max-width: 60px;
-    }
-
-    .welcome-page .rpl-logo-main {
-        max-width: 150px;
-    }
-}
+.welcome-page .rpl-logo-main { max-width: 200px; height: auto; z-index: 2; }
+.welcome-page .rpl-logo-side { max-width: 80px; height: auto; opacity: 0.8; transition: all 0.3s ease; }
+.welcome-page .rpl-logo-side:hover { opacity: 1; transform: scale(1.05); }
 
 .welcome-page .welcome-content {
     display: grid;
@@ -745,7 +510,6 @@ p {
     gap: 30px;
     margin-bottom: 40px;
 }
-
 .welcome-page .welcome-card {
     background: white;
     padding: 25px;
@@ -753,23 +517,14 @@ p {
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     transition: transform 0.3s ease;
 }
-
-.welcome-page .welcome-card:hover {
-    transform: translateY(-5px);
-}
-
+.welcome-page .welcome-card:hover { transform: translateY(-5px); }
 .welcome-page .welcome-card h2 {
     font-size: clamp(18px, 4vw, 24px);
     color: #1e3c72;
     margin-bottom: 20px;
     text-align: center;
 }
-
-.welcome-page .features-list {
-    list-style-type: none;
-    padding: 0;
-}
-
+.welcome-page .features-list { list-style-type: none; padding: 0; }
 .welcome-page .features-list li {
     padding: 10px 0;
     border-bottom: 1px solid #eee;
@@ -777,7 +532,6 @@ p {
     position: relative;
     padding-left: 30px;
 }
-
 .welcome-page .features-list li:before {
     content: "✓";
     color: #4CAF50;
@@ -785,14 +539,12 @@ p {
     position: absolute;
     left: 0;
 }
-
 .welcome-page .action-buttons {
     display: flex;
     flex-direction: column;
     gap: 15px;
     margin-top: 30px;
 }
-
 .welcome-page .btn-register, .welcome-page .btn-login {
     display: inline-block;
     padding: 12px 24px;
@@ -803,64 +555,49 @@ p {
     font-size: 16px;
     transition: all 0.3s;
 }
-
 .welcome-page .btn-register {
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     color: white;
 }
-
 .welcome-page .btn-login {
     background: white;
     color: #1e3c72;
     border: 2px solid #1e3c72;
 }
-
 .welcome-page .btn-register:hover {
     background: linear-gradient(135deg, #2a5298 0%, #1e3c72 100%);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.2);
 }
-
 .welcome-page .btn-login:hover {
     background: #f8f9fa;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
-
 .welcome-page .small-text {
     font-size: 14px;
     color: #666;
     text-align: center;
     margin-top: 10px;
 }
-
 .welcome-page .table-preview {
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-
 .welcome-page .table-row {
     display: grid;
     grid-template-columns: 50px 1fr 50px;
     padding: 12px 15px;
     align-items: center;
 }
-
 .welcome-page .table-row.header {
     background: #1e3c72;
     color: white;
     font-weight: bold;
 }
-
-.welcome-page .table-row:nth-child(even) {
-    background: #f8f9fa;
-}
-
-.welcome-page .table-row:last-child {
-    border-bottom: none;
-}
-
+.welcome-page .table-row:nth-child(even) { background: #f8f9fa; }
+.welcome-page .table-row:last-child { border-bottom: none; }
 .welcome-page .more-teams {
     grid-column: 1 / -1;
     text-align: center;
@@ -869,42 +606,11 @@ p {
     padding: 10px;
 }
 
-/* ===============================================
-    СТИЛИ СТАВОК (СТРАНИЦА MY_BETS, использует home.css)
-===============================================
-*/
-/* Стили .bets-container, .balance-info, .bets-list - УДАЛЕНЫ, */
-/* так как страница my_bets.html больше не используется. */
-/* Стили для таблицы ставок остались, т.к. они могут использоваться в админке. */
-
 
 /* ===============================================
             АДАПТИВНОСТЬ (ОБЩАЯ)
 ===============================================
 */
-@media (min-width: 768px) {
-    .club-header {
-        flex-direction: row;
-        justify-content: center;
-        gap: 15px;
-    }
-
-    .club-logo {
-        max-height: 250px;
-    }
-
-    .club-info {
-        padding: 15px 20px;
-        margin: 0;
-    }
-}
-
-@media (min-width: 1200px) {
-    .club-logo {
-        max-height: 300px;
-    }
-}
-
 @media (max-width: 768px) {
     body {
         padding: 50px 10px 10px 10px;
@@ -923,9 +629,40 @@ p {
     .stadium-map {
         height: 250px;
     }
+
+    .welcome-page .rpl-logo-group {
+        flex-direction: column;
+    }
+    .welcome-page .rpl-logo-side {
+        max-width: 60px;
+    }
+    .welcome-page .rpl-logo-main {
+        max-width: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stadium-map {
+        height: 200px;
+    }
+}
+
+@media (min-width: 768px) {
+    .club-header {
+        flex-direction: row;
+        justify-content: center;
+        gap: 15px;
+    }
+    .club-logo { max-height: 250px; }
+    /* ИСПРАВЛЕНИЕ: Убран 'margin: 0', который все сбрасывал */
+    .club-info { padding: 15px 20px; }
+}
+@media (min-width: 1200px) {
+    .club-logo { max-height: 300px; }
 }
 
 .leaflet-control-attribution,
 .leaflet-control-scale {
     display: none !important;
 }
+

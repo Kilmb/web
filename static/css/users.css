@@ -1,149 +1,188 @@
+/* ===============================================
+    ОСНОВНЫЕ СТИЛИ (для users.html и user_profile.html)
+===============================================
+*/
 body {
-            font-family: Arial, sans-serif;
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 12px;
-            text-align: left;
-        }
-        th {
-            background-color: #2c3e50;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        .delete-btn {
-            background-color: #f44336;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .delete-btn:hover {
-            background-color: #d32f2f;
-        }
-        .avatar-thumbnail {
+    background: transparent;
+    font-family: Arial, sans-serif;
+    color: var(--text-color);
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1, h3 {
+    color: var(--heading-color);
+}
+
+/* Стили для кнопки "Выйти" */
+.logout-link-fixed {
+    position: fixed;
+    top: 15px;
+    left: 20px;
+    z-index: 1000;
+    padding: 10px 20px;
+    background: linear-gradient(45deg, #dc3545, #c82333);
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
+    transition: all 0.3s ease;
+}
+.logout-link-fixed:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
+}
+
+.admin-container {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* ===============================================
+    НОВЫЙ ХЕДЕР (из profile.css)
+===============================================
+*/
+.profile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.profile-header h1 {
+    color: var(--heading-color);
+    margin: 0;
+    font-size: 2.2em;
+}
+
+/* Кнопка .back-btn (в цвет темы) */
+.back-btn {
+    padding: 12px 25px;
+    background: linear-gradient(45deg, var(--grad-start), var(--grad-end));
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    white-space: nowrap; /* Добавлено, чтобы кнопки не переносились */
+}
+
+.back-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px var(--shadow-color);
+}
+
+.flash-message.error {
+    color: #dc3545;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    padding: 10px;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+/* ===============================================
+    СПИСОК ПОЛЬЗОВАТЕЛЕЙ (users.html)
+===============================================
+*/
+
+.table-container {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    color: var(--text-color);
+}
+
+th, td {
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    text-align: left;
+    vertical-align: middle;
+}
+
+th {
+    background: rgba(128, 128, 128, 0.1);
+    color: var(--heading-color);
+}
+
+tr:nth-child(even) {
+    background: rgba(128, 128, 128, 0.05);
+}
+tr:hover {
+    background: rgba(128, 128, 128, 0.15);
+}
+
+/* Специфично для светлой темы */
+body:not(.theme-dark) th {
+    background-color: #f2f2f2;
+}
+body:not(.theme-dark) tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+body:not(.theme-dark) tr:hover {
+    background-color: #f1f1f1;
+}
+
+.avatar-thumbnail {
     width: 50px;
     height: 50px;
     border-radius: 50%;
     object-fit: cover;
-}
-.profile-container {
-    display: flex;
-    gap: 30px;
-    margin-top: 20px;
-    align-items: center;
+    border: 2px solid var(--border-color);
 }
 
-.avatar-container {
-    flex: 0 0 auto;
-}
-
-.profile-avatar-large {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    object-fit: cover;
-    border: 3px solid #2c3e50;
-}
-
-.user-info {
-    flex: 1;
-}
-
-.user-info p {
-    font-size: 18px;
-    margin: 10px 0;
-}
-
-@media (max-width: 600px) {
-    .profile-container {
-        flex-direction: column;
-        text-align: center;
-    }
-
-    .profile-avatar-large {
-        width: 120px;
-        height: 120px;
-    }
-}
-.menu {
-    margin-bottom: 20px;
-    padding: 10px;
-    background-color: #f8f9fa;
-    border-radius: 5px;
-}
-
-.menu a {
-    margin-right: 15px;
+.profile-link {
+    color: var(--link-color);
     text-decoration: none;
-    color: #007bff;
-    font-weight: 500;
+    font-weight: bold;
 }
-
-.menu a:hover {
+.profile-link:hover {
     text-decoration: underline;
 }
 
-.balance-section {
-    margin: 20px 0;
-    padding: 15px;
-    background-color: #f8f9fa;
-    border-radius: 5px;
-    border-left: 4px solid #28a745;
-}
-
-.balance-form {
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    margin-top: 10px;
-}
-
-.balance-input {
-    width: 120px;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 14px;
-}
-
-.balance-btn {
-    padding: 8px 15px;
-    background-color: #28a745;
+.delete-btn {
+    background-color: #f44336;
     color: white;
     border: none;
+    padding: 6px 12px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    margin-left: 5px;
+}
+.delete-btn:hover {
+    background-color: #d32f2f;
 }
 
-.balance-btn:hover {
-    background-color: #218838;
+.summary {
+    margin-top: 20px;
+    font-size: 1.1em;
 }
 
-.current-balance {
-    font-size: 18px;
-    font-weight: bold;
-    color: #2c5aa0;
-}
+/* ===============================================
+    ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ (user_profile.html)
+===============================================
+*/
 
-.admin-actions {
-    margin: 20px 0;
-    padding: 15px;
-    background-color: #fff3cd;
-    border: 1px solid #ffeaa7;
-    border-radius: 5px;
+.card-style {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .profile-container {
@@ -162,7 +201,7 @@ body {
     height: 150px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid #007bff;
+    border: 5px solid var(--border-color);
 }
 
 .user-info {
@@ -171,12 +210,135 @@ body {
 
 .user-info p {
     margin: 10px 0;
-    font-size: 16px;
+    font-size: 1.1em;
+}
+
+.balance-section {
+    margin: 20px 0;
+    padding: 15px;
+    background: rgba(128, 128, 128, 0.1);
+    border-radius: 5px;
+    border-left: 4px solid var(--border-color);
+}
+body:not(.theme-dark) .balance-section {
+     background-color: #f8f9fa;
+}
+
+
+.current-balance {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: #E6C200; /* Золотой */
+}
+
+.admin-actions {
+    margin: 20px 0 0 0;
+    padding: 15px;
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 1px solid #FFC107;
+    border-radius: 5px;
+}
+.admin-actions h3 {
+    margin-top: 0;
+}
+
+.balance-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+.balance-input, .balance-select {
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    background: #fff;
+    color: #333;
+}
+.balance-input {
+    width: 120px;
+}
+
+.balance-btn {
+    padding: 8px 15px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.balance-btn:hover {
+    background-color: #218838;
 }
 
 .about-section {
     margin-top: 15px;
-    padding: 10px;
-    background-color: #f8f9fa;
+    padding: 15px;
+    background: rgba(128, 128, 128, 0.1);
     border-radius: 5px;
+    font-style: italic;
+}
+body:not(.theme-dark) .about-section {
+    background-color: #f8f9fa;
+}
+.about-section h3 {
+    margin-top: 0;
+    font-style: normal;
+}
+
+
+@media (max-width: 600px) {
+    .profile-container {
+        flex-direction: column;
+        text-align: center;
+    }
+    .profile-avatar-large {
+        width: 120px;
+        height: 120px;
+    }
+    /* Адаптация хедера */
+    .profile-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    .profile-header h1 {
+        font-size: 1.8em;
+    }
+}
+
+/* ===============================================
+   ✅ НОВЫЕ СТИЛИ ДЛЯ ВЫДЕЛЕНИЯ АДМИНА
+=============================================== */
+
+/* Стиль для выделения АДМИНА */
+.admin-row {
+    /* !important нужен, чтобы перебить стиль tr:nth-child(even) */
+    background: rgba(230, 194, 0, 0.1) !important;
+    font-weight: bold;
+    border-left: 4px solid #E6C200; /* Золотая левая граница */
+}
+
+/* Коррекция для темной темы */
+body.theme-dark .admin-row {
+    background: rgba(230, 194, 0, 0.2) !important;
+    border-left-color: #FFD700;
+}
+
+/* Стиль для выделения ТЕКУЩЕГО пользователя (вас) */
+.current-user-row {
+    /* Правая граница в цвет темы */
+    border-right: 4px solid var(--grad-end, #007bff);
+}
+
+/* При наведении на строку админа, делаем фон чуть ярче */
+.admin-row:hover {
+    background: rgba(230, 194, 0, 0.15) !important;
+}
+
+body.theme-dark .admin-row:hover {
+    background: rgba(230, 194, 0, 0.3) !important;
 }

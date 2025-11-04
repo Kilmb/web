@@ -3,121 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <title>Профиль пользователя</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        .menu { margin-bottom: 20px; }
-        .menu a { margin-right: 15px; text-decoration: none; color: #007bff; }
-        .profile-container { display: flex; gap: 30px; margin: 20px 0; }
-        .avatar-container { flex-shrink: 0; }
-        .profile-avatar-large {
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid #007bff;
-        }
-        .user-info { flex-grow: 1; }
-        .balance-section {
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #f8f9fa;
-            border-radius: 5px;
-        }
-        .current-balance {
-            font-size: 18px;
-            font-weight: bold;
-            color: #2c5aa0;
-        }
-        .admin-actions {
-            margin: 20px 0;
-            padding: 15px;
-            background-color: #fff3cd;
-            border: 1px solid #ffeaa7;
-            border-radius: 5px;
-        }
-        .balance-form {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            margin-top: 10px;
-            flex-wrap: wrap;
-        }
-        .balance-input {
-            width: 120px;
-            padding: 8px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-        }
-        .balance-btn {
-            padding: 8px 15px;
-            background-color: #28a745;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .balance-btn:hover { background-color: #218838; }
-        .debug-info {
-            background-color: #f8f9fa;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/users.css') }}">
 </head>
-<body>
-    <div class="menu">
-        <a href="{{ url_for('home') }}">На главную</a>
-        <a href="{{ url_for('show_users') }}">Список пользователей</a>
-        <a href="{{ url_for('logout') }}">Выйти</a>
-    </div>
+<body class="theme-{{ current_user.theme or 'default' }} themed-body"
+    {% if current_user.theme =='club' and current_user.club %}
+        {% set user_club = clubs|selectattr('name','equalto', current_user.club)|first %}
+        {% if user_club %}
+            style="--club-color-1: {{ user_club.color1 }}; --club-color-2: {{ user_club.color2 }};"
+        {% endif %}
+    {% endif %}
+>
+    <a href="{{ url_for('logout') }}" class="logout-link-fixed">Выйти</a>
 
-    <h1>Профиль пользователя</h1>
+    <div class="admin-container">
 
-    <div class="profile-container">
-        <div class="avatar-container">
-            {% if user.avatar %}
-                <img src="{{ url_for('uploaded_file', filename=user.avatar) }}" class="profile-avatar-large">
-            {% else %}
-                <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="profile-avatar-large">
-            {% endif %}
+        <!-- СТАРОЕ МЕНЮ ЗАМЕНЕНО НА НОВЫЙ ХЕДЕР -->
+        <div class="profile-header">
+            <h1>Профиль пользователя</h1>
+            <div> <!-- Обертка для кнопок -->
+                <a href="{{ url_for('show_users') }}" class="back-btn" style="background: linear-gradient(45deg, #6c757d, #5a6268); margin-right: 10px;">К списку</a>
+                <a href="{{ url_for('home') }}" class="back-btn">На главную</a>
+            </div>
         </div>
-        <div class="user-info">
-            <p><strong>Имя:</strong> {{ user.name }}</p>
-            <p><strong>Email:</strong> {{ user.email }}</p>
-            <p><strong>Клуб:</strong> {{ user.club }}</p>
 
-            <div class="balance-section">
-                <p><strong>Баланс:</strong>
-                    <span class="current-balance">{{ user_balance }}</span> монет
-                </p>
+        <!-- Блок для Flash-сообщений -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}" style="margin-bottom: 20px;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
+        <div class="profile-container card-style">
+            <div class="avatar-container">
+                {% if user.avatar %}
+                    <img src="{{ url_for('uploaded_file', filename=user.avatar) }}" class="profile-avatar-large">
+                {% else %}
+                    <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="profile-avatar-large">
+                {% endif %}
+            </div>
+            <div class="user-info">
+                <p><strong>Имя:</strong> {{ user.name }}</p>
+
+                <!-- Почта видна только админам -->
                 {% if current_user.is_admin %}
-                <div class="admin-actions">
-                    <h3>Административные действия</h3>
-                    <form action="{{ url_for('admin_update_balance_simple', user_id=user.id) }}" method="POST">
-                        <div class="balance-form">
-                            <input type="number" name="amount" min="1" max="100000"
-                                   placeholder="Сумма" class="balance-input" required>
-                            <select name="action" style="padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
-                                <option value="add">Добавить к балансу</option>
-                                <option value="set">Установить баланс</option>
-                            </select>
-                            <button type="submit" class="balance-btn">Применить</button>
-                        </div>
-                    </form>
+                <p><strong>Email:</strong> {{ user.email }}</p>
+                {% endif %}
+
+                <p><strong>Клуб:</strong> {{ user.club }}</p>
+
+                <!-- Тема видна всем -->
+                <p><strong>Тема:</strong> {{ user.theme|capitalize }}</p>
+
+                <div class="balance-section">
+                    <p><strong>Баланс:</strong>
+                        <span class="current-balance">{{ user_balance }} </span>
+                    </p>
+
+                    {% if current_user.is_admin %}
+                    <div class="admin-actions">
+                        <h3>Административные действия</h3>
+                        <form action="{{ url_for('admin_update_balance_simple', user_id=user.id) }}" method="POST">
+                            <div class="balance-form">
+                                <input type="number" name="amount" min="1" max="100000"
+                                       placeholder="Сумма" class="balance-input" required>
+                                <select name="action" class="balance-select">
+                                    <option value="add">Добавить к балансу</option>
+                                    <option value="set">Установить баланс</option>
+                                </select>
+                                <button type="submit" class="balance-btn">Применить</button>
+                            </div>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if user.about %}
+                <div class="about-section">
+                    <h3>О себе:</h3>
+                    <p>{{ user.about }}</p>
                 </div>
                 {% endif %}
             </div>
-
-            {% if user.about %}
-            <div class="about-section">
-                <h3>О себе:</h3>
-                <p>{{ user.about }}</p>
-            </div>
-            {% endif %}
         </div>
     </div>
 </body>
 </html>
+

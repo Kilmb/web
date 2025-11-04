@@ -3,50 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <title>Редактирование таблицы РПЛ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/rpl_table.css') }}">
 </head>
-<body>
-    <a href="{{ url_for('home') }}">На главную</a>
+<body class="theme-{{ current_user.theme or 'default' }} themed-body"
+    {% if current_user.theme =='club' and current_user.club %}
+        {% set user_club = clubs|selectattr('name','equalto', current_user.club)|first %}
+        {% if user_club %}
+            style="--club-color-1: {{ user_club.color1 }}; --club-color-2: {{ user_club.color2 }};"
+        {% endif %}
+    {% endif %}
+>
+    <a href="{{ url_for('logout') }}" class="logout-link-fixed">Выйти</a>
+
     <h1>Редактирование таблицы РПЛ</h1>
 
-    <!-- Кнопка для обновления из API -->
-    <div style="margin-bottom: 20px;">
+    <div class="menu">
+        <a href="{{ url_for('home') }}">На главную</a>
+
         <form action="{{ url_for('restore_table') }}" method="POST" style="display: inline; margin-left: 10px;">
-    <button type="submit" style="background: #ffc107; color: black; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer;">
-        Восстановить таблицу
-    </button>
-</form>
-        <span style="margin-left: 10px; color: #666;">Автоматически обновит таблицу актуальными данными</span>
+            <button type="submit">Восстановить таблицу</button>
+        </form>
     </div>
 
-    <form method="POST">
-        <table>
-            <tr>
-                <th>№</th>
-                <th>Команда</th>
-                <th>И</th>
-                <th>В</th>
-                <th>Н</th>
-                <th>П</th>
-                <th>ЗМ</th>
-                <th>ПМ</th>
-                <th>О</th>
-            </tr>
-            {% for team in table %}
-            <tr>
-                <td>{{ team.position }}</td>
-                <td><input type="text" name="team[]" value="{{ team.team }}" class="team-name" required></td>
-                <td><input type="number" name="matches[]" value="{{ team.matches }}" min="0"></td>
-                <td><input type="number" name="wins[]" value="{{ team.wins }}" min="0"></td>
-                <td><input type="number" name="draws[]" value="{{ team.draws }}" min="0"></td>
-                <td><input type="number" name="losses[]" value="{{ team.losses }}" min="0"></td>
-                <td><input type="number" name="goals_for[]" value="{{ team.goals_for }}" min="0"></td>
-                <td><input type="number" name="goals_against[]" value="{{ team.goals_against }}" min="0"></td>
-                <td><strong>{{ team.points }}</strong></td>
-            </tr>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash-message {{ category }}" style="margin-bottom: 20px;">
+                    {{ message }}
+                </div>
             {% endfor %}
-        </table>
-        <button type="submit" style="margin-top: 20px;">Сохранить изменения</button>
-    </form>
+        {% endif %}
+    {% endwith %}
+
+    <div class="table-container">
+        <form method="POST">
+            <table>
+                <tr>
+                    <th>№</th>
+                    <th>Команда</th>
+                    <th>И</th>
+                    <th>В</th>
+                    <th>Н</th>
+                    <th>П</th>
+                    <th>ЗМ</th>
+                    <th>ПМ</th>
+                    <th>О</th>
+                </tr>
+                {% for team in table %}
+                <tr>
+                    <td>{{ team.position }}</td>
+                    <td><input type="text" name="team[]" value="{{ team.team }}" class="team-name" required></td>
+                    <td><input type="number" name="matches[]" value="{{ team.matches }}" min="0"></td>
+                    <td><input type="number" name="wins[]" value="{{ team.wins }}" min="0"></td>
+                    <td><input type="number" name="draws[]" value="{{ team.draws }}" min="0"></td>
+                    <td><input type="number" name="losses[]" value="{{ team.losses }}" min="0"></td>
+                    <td><input type="number" name="goals_for[]" value="{{ team.goals_for }}" min="0"></td>
+                    <td><input type="number" name="goals_against[]" value="{{ team.goals_against }}" min="0"></td>
+                    <td><strong>{{ team.points }}</strong></td>
+                </tr>
+                {% endfor %}
+            </table>
+            <button type="submit" class="btn-save" style="margin-top: 20px;">Сохранить изменения</button>
+        </form>
+    </div>
 </body>
 </html>

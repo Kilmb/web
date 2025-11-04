@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Профиль пользователя</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
 </head>
 <body class="theme-{{ current_user.theme or 'default' }} themed-body"
@@ -23,6 +24,16 @@
             <h1>Профиль</h1>
             <a href="{{ url_for('home') }}" class="back-btn">На главную</a>
         </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-message {{ category }}" style="margin-bottom: 20px;">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
 
         <div class="profile-content">
 
@@ -116,21 +127,18 @@
 
                     <div class="theme-options">
 
-                        <!-- Бесплатная тема по умолчанию -->
                         <label class="theme-option owned">
-                            <input type="radio" name="theme" value="default" {% if current_user.theme == 'default' %}checked{% endif %}>
+                            <input type="radio" name="theme" value="default" {% if current_user.theme =='default' %}checked{% endif %}>
                             <div class="theme-preview preview-default"></div>
                             <span class="theme-label">По умолчанию (Синий)</span>
                             <span class="theme-cost free">Бесплатно</span>
-                            <span class="theme-status owned-badge">Владеете</span>
                         </label>
 
                         {% set user_club = clubs|selectattr('name', 'equalto', current_user.club)|first %}
 
-                        <!-- Индиго -->
                         <label class="theme-option {% if 'indigo' in purchased_themes %}owned{% else %}not-owned{% endif %}">
                             <input type="radio" name="theme" value="indigo"
-                                   {% if current_user.theme == 'indigo' %}checked{% endif %}>
+                                   {% if current_user.theme =='indigo' %}checked{% endif %}>
                             <div class="theme-preview preview-indigo"></div>
                             <span class="theme-label">Индиго</span>
                             {% if 'indigo' in purchased_themes %}
@@ -139,17 +147,14 @@
                                 {% else %}
                                     <span class="theme-cost purchased">Куплено</span>
                                 {% endif %}
-                                <span class="theme-status owned-badge">Владеете</span>
                             {% else %}
                                 <span class="theme-cost">100 🪙</span>
-                                <span class="theme-status not-owned-badge">Не куплено</span>
-                            {% endif %}
+                                {% endif %}
                         </label>
 
-                        <!-- Закат -->
                         <label class="theme-option {% if 'sunset' in purchased_themes %}owned{% else %}not-owned{% endif %}">
                             <input type="radio" name="theme" value="sunset"
-                                   {% if current_user.theme == 'sunset' %}checked{% endif %}>
+                                   {% if current_user.theme =='sunset' %}checked{% endif %}>
                             <div class="theme-preview preview-sunset"></div>
                             <span class="theme-label">Закат</span>
                             {% if 'sunset' in purchased_themes %}
@@ -158,17 +163,14 @@
                                 {% else %}
                                     <span class="theme-cost purchased">Куплено</span>
                                 {% endif %}
-                                <span class="theme-status owned-badge">Владеете</span>
                             {% else %}
                                 <span class="theme-cost">100 🪙</span>
-                                <span class="theme-status not-owned-badge">Не куплено</span>
-                            {% endif %}
+                                {% endif %}
                         </label>
 
-                        <!-- Лес -->
                         <label class="theme-option {% if 'forest' in purchased_themes %}owned{% else %}not-owned{% endif %}">
                             <input type="radio" name="theme" value="forest"
-                                   {% if current_user.theme == 'forest' %}checked{% endif %}>
+                                   {% if current_user.theme =='forest' %}checked{% endif %}>
                             <div class="theme-preview preview-forest"></div>
                             <span class="theme-label">Лес</span>
                             {% if 'forest' in purchased_themes %}
@@ -177,17 +179,14 @@
                                 {% else %}
                                     <span class="theme-cost purchased">Куплено</span>
                                 {% endif %}
-                                <span class="theme-status owned-badge">Владеете</span>
                             {% else %}
                                 <span class="theme-cost">100 🪙</span>
-                                <span class="theme-status not-owned-badge">Не куплено</span>
-                            {% endif %}
+                                {% endif %}
                         </label>
 
-                        <!-- Багровый -->
                         <label class="theme-option {% if 'crimson' in purchased_themes %}owned{% else %}not-owned{% endif %}">
                             <input type="radio" name="theme" value="crimson"
-                                   {% if current_user.theme == 'crimson' %}checked{% endif %}>
+                                   {% if current_user.theme =='crimson' %}checked{% endif %}>
                             <div class="theme-preview preview-crimson"></div>
                             <span class="theme-label">Багровый</span>
                             {% if 'crimson' in purchased_themes %}
@@ -196,17 +195,14 @@
                                 {% else %}
                                     <span class="theme-cost purchased">Куплено</span>
                                 {% endif %}
-                                <span class="theme-status owned-badge">Владеете</span>
                             {% else %}
                                 <span class="theme-cost">100 🪙</span>
-                                <span class="theme-status not-owned-badge">Не куплено</span>
-                            {% endif %}
+                                {% endif %}
                         </label>
 
-                        <!-- Тёмная -->
                         <label class="theme-option {% if 'dark' in purchased_themes %}owned{% else %}not-owned{% endif %}">
                             <input type="radio" name="theme" value="dark"
-                                   {% if current_user.theme == 'dark' %}checked{% endif %}>
+                                   {% if current_user.theme =='dark' %}checked{% endif %}>
                             <div class="theme-preview preview-dark"></div>
                             <span class="theme-label">Тёмная</span>
                             {% if 'dark' in purchased_themes %}
@@ -215,17 +211,14 @@
                                 {% else %}
                                     <span class="theme-cost purchased">Куплено</span>
                                 {% endif %}
-                                <span class="theme-status owned-badge">Владеете</span>
                             {% else %}
                                 <span class="theme-cost">100 🪙</span>
-                                <span class="theme-status not-owned-badge">Не куплено</span>
-                            {% endif %}
+                                {% endif %}
                         </label>
 
-                        <!-- Золотая -->
                         <label class="theme-option {% if 'gold' in purchased_themes %}owned{% else %}not-owned{% endif %}">
                             <input type="radio" name="theme" value="gold"
-                                   {% if current_user.theme == 'gold' %}checked{% endif %}>
+                                   {% if current_user.theme =='gold' %}checked{% endif %}>
                             <div class="theme-preview preview-gold"></div>
                             <span class="theme-label">Золотая</span>
                             {% if 'gold' in purchased_themes %}
@@ -234,14 +227,11 @@
                                 {% else %}
                                     <span class="theme-cost purchased">Куплено</span>
                                 {% endif %}
-                                <span class="theme-status owned-badge">Владеете</span>
                             {% else %}
                                 <span class="theme-cost">150 🪙</span>
-                                <span class="theme-status not-owned-badge">Не куплено</span>
-                            {% endif %}
+                                {% endif %}
                         </label>
 
-                        <!-- Клубная -->
                         <label class="theme-option {% if 'club' in purchased_themes %}owned{% else %}not-owned{% endif %}"
                                {% if not user_club %}title="Сначала выберите любимый клуб в настройках регистрации или профиля"{% endif %}>
                             <input type="radio" name="theme" value="club"
@@ -260,19 +250,72 @@
                                 {% else %}
                                     <span class="theme-cost purchased">Куплено</span>
                                 {% endif %}
-                                <span class="theme-status owned-badge">Владеете</span>
                             {% else %}
                                 <span class="theme-cost premium">150 🪙</span>
                                 {% if user_club %}
-                                    <span class="theme-status not-owned-badge">Не куплено</span>
-                                {% endif %}
+                                    {% endif %}
                             {% endif %}
                         </label>
 
                     </div>
 
+
                     <button type="submit" class="btn-save">Купить / Применить</button>
                 </form>
+            </div>
+
+            <div class="bets-history">
+                <h3>История последних 10 ставок</h3>
+
+                <div class="bets-list-profile">
+                    {% if bets_history %}
+                        {% for bet in bets_history %}
+                            {% set status = 'pending' %}
+                            {% set status_text = 'В ожидании' %}
+                            {% if bet.is_settled %}
+                                {% if bet.won %}
+                                    {% set status = 'win' %}
+                                    {% set status_text = 'Выигрыш' %}
+                                {% else %}
+                                    {% set status = 'lose' %}
+                                    {% set status_text = 'Проигрыш' %}
+                                {% endif %}
+                            {% endif %}
+
+                            <div class="bet-item-profile {{ status }}">
+                                <div class="bet-item-header">
+                                    <span class="bet-match">{{ bet.match.home_team }} vs {{ bet.match.away_team }}</span>
+                                    <span class="bet-date">{{ bet.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                                </div>
+                                <div class="bet-item-body">
+                                    <div>
+                                        <span class="bet-label">Ваша ставка</span>
+                                        <span class="bet-value">
+                                            {% if bet.bet_type == 'home_win' %} Победа {{ bet.match.home_team }}
+                                            {% elif bet.bet_type == 'away_win' %} Победа {{ bet.match.away_team }}
+                                            {% else %} Ничья
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span class="bet-label">Сумма</span>
+                                        <span class="bet-value">{{ bet.amount }} 🪙</span>
+                                    </div>
+                                    <div class="bet-status {{ status }}">
+                                        {{ status_text }}
+                                        {% if bet.is_settled and bet.won %}
+                                            (+{{ bet.amount * 2 }} 🪙)
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="no-bets">
+                            <p>Вы еще не делали ставок.</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
 
         </div>

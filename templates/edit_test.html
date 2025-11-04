@@ -3,9 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <title>Редактирование вопроса</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/club_tests.css') }}">
 </head>
-<body>
+<body class="theme-{{ current_user.theme or 'default' }} themed-body"
+    {% if current_user.theme =='club' and current_user.club %}
+        {% set user_club = clubs|selectattr('name','equalto', current_user.club)|first %}
+        {% if user_club %}
+            style="--club-color-1: {{ user_club.color1 }}; --club-color-2: {{ user_club.color2 }};"
+        {% endif %}
+    {% endif %}
+>
+    <a href="{{ url_for('logout') }}" class="logout-link-fixed">Выйти</a>
+
     <div class="admin-container">
         <a href="{{ url_for('club_tests') }}" class="btn-back">← Назад к тестам</a>
         <h1>Редактирование вопроса</h1>
