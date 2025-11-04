@@ -72,9 +72,26 @@ class User(db.Model, UserMixin):
     avatar = db.Column(db.String(200))
     about = db.Column(db.String(250))
     theme = db.Column(db.String(50), default='default')
+    purchased_themes = db.Column(db.Text, default='default')  # JSON-строка с купленными темами
 
     def __repr__(self):
         return f"User('{self.name}', '{self.email}')"
+
+    def get_purchased_themes(self):
+        """Возвращает список купленных тем"""
+        if not self.purchased_themes:
+            return ['default']
+        try:
+            return json.loads(self.purchased_themes)
+        except:
+            return ['default']
+
+    def add_purchased_theme(self, theme_name):
+        """Добавляет тему в список купленных"""
+        purchased = self.get_purchased_themes()
+        if theme_name not in purchased:
+            purchased.append(theme_name)
+            self.purchased_themes = json.dumps(purchased)
 
 
 class RPLTable(db.Model):
@@ -893,7 +910,6 @@ def profile():
         elif form_type == 'theme':
             new_theme = request.form.get('theme')
 
-            # --- ИЗМЕНЕНИЕ: Добавлена 'dark' ---
             THEME_COSTS = {
                 'default': 0,
                 'indigo': 100,
@@ -920,13 +936,20 @@ def profile():
                 user_balance = UserBalance(user_id=current_user.id, balance=100)
                 db.session.add(user_balance)
 
-            if current_user.theme == new_theme:
-                flash('Эта тема у вас уже есть.', 'info')
+            purchased_themes = current_user.get_purchased_themes()
+
+            # Если тема уже куплена, просто применяем её
+            if new_theme in purchased_themes:
+                current_user.theme = new_theme
+                db.session.commit()
+                flash(f'Тема успешно применена!', 'success')
+            # Если тема не куплена, пробуем купить
             elif user_balance.balance >= theme_cost:
                 user_balance.balance -= theme_cost
                 current_user.theme = new_theme
+                current_user.add_purchased_theme(new_theme)
                 db.session.commit()
-                flash(f'Тема успешно куплена!', 'success')
+                flash(f'Тема успешно куплена и применена!', 'success')
             else:
                 flash('Недостаточно монет для покупки темы!', 'danger')
 
@@ -941,13 +964,17 @@ def profile():
     last_test = TestResult.query.filter_by(user_id=current_user.id).order_by(TestResult.date.desc()).first()
     bets_history = Bet.query.filter_by(user_id=current_user.id).order_by(Bet.created_at.desc()).limit(10).all()
 
+    # Получаем список купленных тем
+    purchased_themes = current_user.get_purchased_themes()
+
     return render_template('profile.html',
                            user_balance=user_balance,
                            total_bets=total_bets,
                            bets_won=bets_won,
                            last_test=last_test,
                            bets_history=bets_history,
-                           clubs=CLUBS_DATA)
+                           clubs=CLUBS_DATA,
+                           purchased_themes=purchased_themes)  # Передаем в шаблон
 
 
 # Просмотр пользователей
@@ -1219,6 +1246,29 @@ def admin_update_balance_simple(user_id):
         flash(f'Ошибка при обновлении баланса: {e}', 'danger')
 
     return redirect(url_for('view_user', user_id=user_id))
+
+@app.route('/nuclear_db')
+def nuclear_db():
+    """Полное пересоздание базы"""
+    db.drop_all()
+    db.create_all()
+
+    # Создаем админа
+    admin = User(
+        name='Admin',
+        email=ADMIN_EMAIL,
+        club='Краснодар',
+        password=pw_secure.encrypt_password('admin123'),
+        is_admin=True
+    )
+    db.session.add(admin)
+    db.session.commit()
+
+    # Баланс и темы
+    UserBalance(user_id=1, balance=1000)
+    db.session.commit()
+
+    return "✅ База полностью пересоздана!"
 
 
 @app.route('/debug/users')
