@@ -563,6 +563,14 @@ def hard_quiz():
 def check_quiz(test_type):
     score = 0
     results = []
+
+    difficulty_multiplier_map = {
+        'easy': 1,
+        'medium': 2,
+        'hard': 3
+    }
+    difficulty_multiplier = difficulty_multiplier_map.get(test_type, 1)
+
     difficulty_filter = {
         'easy': (1, 1),
         'medium': (2, 2),
@@ -571,10 +579,15 @@ def check_quiz(test_type):
 
     for question_id, user_answer in request.form.items():
         if question_id.startswith('q_'):
-            test = db.session.get(ClubTest, question_id[2:])
+            test_id = question_id[2:]
+
+            test = db.session.get(ClubTest, int(test_id))
+
             if test and difficulty_filter[0] <= test.difficulty <= difficulty_filter[1]:
                 is_correct = (user_answer == test.correct_answer)
-                score += 1 if is_correct else 0
+                if is_correct:
+                    score += 1
+
                 results.append({
                     'question': test.question,
                     'user_answer': user_answer,
@@ -583,19 +596,35 @@ def check_quiz(test_type):
                     'difficulty': test.difficulty
                 })
 
+    total_questions = len(results)
+
     result = TestResult(
         user_id=current_user.id,
         test_type=test_type,
         score=score,
-        total=len(results),
+        total=total_questions,
         date=datetime.now()
     )
     db.session.add(result)
     db.session.commit()
 
+    reward = score * difficulty_multiplier
+
+    if reward > 0:
+        user_balance = UserBalance.query.filter_by(user_id=current_user.id).first()
+
+        if not user_balance:
+            user_balance = UserBalance(user_id=current_user.id, balance=100)
+            db.session.add(user_balance)
+
+        user_balance.balance += reward
+        db.session.commit()
+
+        flash(f'Тест пройден! Вы получили {reward} монет.', 'success')
+
     return render_template('quiz_results.html',
                            score=score,
-                           total=len(results),
+                           total=total_questions,
                            results=results,
                            test_type=test_type,
                            clubs=CLUBS_DATA)
