@@ -746,3 +746,79 @@ body:not(.theme-dark) .no-bets {
         height: 120px;
     }
 }
+/* Стили для статусов тем */
+.theme-option.owned {
+    border-color: #4CAF50 !important;
+    background-color: rgba(76, 175, 80, 0.05);
+}
+
+.theme-option.not-owned {
+    border-color: #ff4444 !important;
+    background-color: rgba(255, 68, 68, 0.05);
+    opacity: 0.8;
+}
+
+.owned-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #4CAF50;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.not-owned-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #ff4444;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.theme-status {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.theme-cost.purchased {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.theme-cost.free {
+    color: #666;
+}
+
+.theme-cost.premium {
+    color: #FFD700;
+    font-weight: bold;
+}
+
+/* Подсветка активной темы */
+.theme-option input[type="radio"]:checked + .theme-preview {
+    border: 3px solid #2196F3;
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+}
+
+/* Стили для непокупных тем */
+.theme-option.not-owned .theme-preview {
+    opacity: 0.6;
+    filter: grayscale(30%);
+}
+
+.theme-option.not-owned {
+    cursor: not-allowed;
+}
+
+.theme-option.not-owned input[type="radio"] {
+    cursor: not-allowed;
+}
