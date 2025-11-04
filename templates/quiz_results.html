@@ -17,6 +17,13 @@
 <a href="{{ url_for('logout') }}" class="logout-link-fixed">Выйти</a>
 
 <div class="results-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="flash-message {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
     <h1>
         {% if test_type == 'easy' %}
         Результаты лёгкого теста
