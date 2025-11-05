@@ -944,8 +944,8 @@ def profile():
                 'sunset': 100,
                 'forest': 100,
                 'crimson': 100,
-                'dark': 100,
-                'gold': 150,
+                'dark': 0,
+                'gold': 100,
                 'club': 150
             }
 
@@ -1233,7 +1233,6 @@ def init_user_balances():
             db.session.add(user_balance)
 
         db.session.commit()
-        print(f"Инициализировано балансов: {len(users_without_balance)}")
     except Exception as e:
         print(f"Ошибка при инициализации балансов: {e}")
         db.session.rollback()
