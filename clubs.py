@@ -126,7 +126,7 @@ CLUBS_DATA = [
      'latitude': 54.698290, 'longitude': 20.533873},
 
     {'name': 'Сочи', 'city': 'Сочи', 'stadium': 'Фишт', 'places': '45 959', 'year': '2013',
-     'founded': '04.07.2018', 'first_name': 'Сочи', 'logo': 'Химки.png', 'color1': '#FF0000', 'color2': '#000000',
+     'founded': '04.07.2018', 'first_name': 'Сочи', 'logo': 'Сочи.png', 'color1': '#E0FFFF', 'color2': '#0000FF',
      'best_bombardier': 'Кристиан Нобоа', 'goals': '40', 'best_assistant': 'Никита Бурмистров', 'assists': '28',
      'official_site': 'https://pfcsochi.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Сочи_(футбольный_клуб)',
      'transfermarkt': 'https://www.transfermarkt.world/fk-sochi/startseite/verein/41231',
