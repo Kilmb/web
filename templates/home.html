@@ -13,7 +13,7 @@
     {% if current_user.is_authenticated and current_user.theme =='club' and current_user.club %}
         {% set user_club = clubs|selectattr('name','equalto', current_user.club)|first %}
         {% if user_club %}
-            style="--club-color-1: {{ user_club.color1 }}; --club-color-2: {{ user_club.color2 }};"
+            style="--club-color-1: {{ user_club.color1 }}; --club-color-2: {{ user_club.color2 }}; --club-shadow-color: {{ user_club.color1 }}80;"
         {% endif %}
     {% endif %}
 >
