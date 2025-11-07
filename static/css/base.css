@@ -70,15 +70,15 @@ body.theme-crimson {
 
 /* 6. Тема "Клубная" */
 body.theme-club {
-    --grad-start: var(--club-color-1, #667eea);
-    --grad-end: var(--club-color-2, #764ba2);
-    --shadow-color: rgba(102, 126, 234, 0.4);
-    --border-color: var(--club-color-1, #667eea);
-    --link-color: var(--club-color-1, #667eea);
+    --grad-start: var(--club-color-1, transparent);
+    --grad-end: var(--club-color-2, transparent);
+    --shadow-color: var(--club-shadow-color, transparent);
+    --border-color: var(--club-color-1, #ccc);
+    --link-color: var(--club-color-1, #666);
     --text-color: #333;
     --card-bg: rgba(255, 255, 255, 0.95);
     --heading-color: #2c3e50;
-    --link-color-dark: var(--club-color-2, #764ba2);
+    --link-color-dark: var(--club-color-2, #333);
 }
 
 /* 7. Тёмная тема */
