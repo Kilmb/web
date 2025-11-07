@@ -257,6 +257,7 @@ body:not(.theme-dark) .stat-item {
     border: 2px solid var(--border-color);
     transition: all 0.3s ease;
     background: rgba(128, 128, 128, 0.05);
+    position: relative;
 }
 /* Специфично для светлой темы */
 body:not(.theme-dark) .theme-option {
@@ -335,7 +336,7 @@ body:not(.theme-dark) .theme-option:hover {
 .preview-forest { background: linear-gradient(45deg, #4CAF50, #2E8B57); }
 .preview-crimson { background: linear-gradient(45deg, #DC143C, #8B0000); }
 .preview-dark { background: linear-gradient(45deg, #232526, #414345); }
-.preview-gold { background: linear-gradient(45deg, #FFD700, #B8860B); } /* НОВЫЙ */
+.preview-gold { background: linear-gradient(45deg, #FFD700, #B8860B); }
 .preview-club { background: linear-gradient(45deg, var(--club-color-1, #ccc), var(--club-color-2, #aaa)); }
 
 
@@ -494,6 +495,249 @@ body:not(.theme-dark) .no-bets {
 }
 
 /* ===============================================
+            ПРЕДПРОСМОТР ТЕМ (ВКЛЮЧАЯ НЕДОСТУПНЫЕ)
+===============================================
+*/
+
+/* Общие стили для всех тем в предпросмотре */
+.theme-option {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Индикатор предпросмотра для ВСЕХ тем */
+.theme-option::before {
+    content: '👀 Наведите для предпросмотра';
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: var(--card-bg);
+    color: var(--text-color);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    white-space: nowrap;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.theme-option:hover::before {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Стили при наведении для ВСЕХ тем */
+.theme-option:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+    z-index: 5;
+}
+
+.theme-option:hover .theme-preview {
+    transform: scale(1.15);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+}
+
+/* Усиленная подсветка для купленных тем при наведении */
+.theme-option.owned:hover {
+    border-color: #4CAF50 !important;
+    background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
+}
+
+/* Стили для непокупных тем при наведении */
+.theme-option.not-owned:hover {
+    border-color: #ff6b6b !important;
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 107, 0.05));
+}
+
+/* Индикатор статуса для непокупных тем */
+.theme-option.not-owned::after {
+    content: '🔒 Требует покупки';
+    position: absolute;
+    bottom: -25px;
+    left: 50%;
+    transform: translateX(-50%) translateY(10px);
+    background: #ff4444;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    white-space: nowrap;
+    opacity: 0;
+    transition: all 0.3s ease;
+    z-index: 100;
+    pointer-events: none;
+}
+
+.theme-option.not-owned:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Стили для превью тем */
+.theme-preview {
+    width: 45px;
+    height: 30px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+/* Эффект блокировки для непокупных тем */
+.theme-option.not-owned .theme-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 100%);
+    border-radius: 4px;
+    z-index: 1;
+}
+
+.theme-option.not-owned .theme-preview::after {
+    content: '🔒';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 1.2rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    z-index: 2;
+}
+
+/* Улучшенные стили для выбранной темы */
+.theme-option input[type="radio"]:checked + .theme-preview {
+    border: 3px solid #2196F3;
+    box-shadow: 0 0 15px rgba(33, 150, 243, 0.6);
+    transform: scale(1.1);
+}
+
+/* Стили для текстовых меток */
+.theme-label {
+    position: relative;
+    font-size: 1.1em;
+    flex-grow: 1;
+    color: var(--text-color);
+    transition: color 0.3s ease;
+}
+
+.theme-option:hover .theme-label {
+    font-weight: bold;
+    color: var(--link-color);
+}
+
+/* Стили для стоимости */
+.theme-cost {
+    transition: all 0.3s ease;
+}
+
+.theme-option:hover .theme-cost.premium {
+    color: #FFD700;
+    transform: scale(1.1);
+    font-weight: bold;
+}
+
+.theme-option:hover .theme-cost.free {
+    color: #28a745;
+    font-weight: bold;
+}
+
+.theme-option:hover .theme-cost.purchased {
+    color: #4CAF50;
+    transform: scale(1.1);
+}
+
+/* Стили для статусов тем */
+.theme-option.owned {
+    border-color: #4CAF50 !important;
+    background-color: rgba(76, 175, 80, 0.05);
+}
+
+.theme-option.not-owned {
+    border-color: #ff4444 !important;
+    background-color: rgba(255, 68, 68, 0.05);
+    opacity: 0.8;
+}
+
+.owned-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: #4CAF50;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.theme-status {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.theme-cost.purchased {
+    color: #4CAF50;
+    font-weight: bold;
+}
+
+.theme-cost.free {
+    color: #666;
+}
+
+.theme-cost.premium {
+    color: #FFD700;
+    font-weight: bold;
+}
+
+/* Подсветка активной темы */
+.theme-option input[type="radio"]:checked + .theme-preview {
+    border: 3px solid #2196F3;
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
+}
+
+/* Стили для непокупных тем */
+.theme-option.not-owned .theme-preview {
+    opacity: 0.6;
+    filter: grayscale(30%);
+}
+
+.theme-option.not-owned input[type="radio"] {
+    cursor: not-allowed;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .theme-option::before {
+        top: -35px;
+        font-size: 0.7rem;
+        padding: 4px 8px;
+    }
+
+    .theme-option.not-owned::after {
+        bottom: -30px;
+        font-size: 0.65rem;
+    }
+
+    .theme-preview {
+        width: 35px;
+        height: 25px;
+    }
+}
+
+/* ===============================================
             АДАПТИВНОСТЬ
 ===============================================
 */
@@ -579,68 +823,4 @@ body:not(.theme-dark) .no-bets {
         width: 120px;
         height: 120px;
     }
-}
-/* Стили для статусов тем */
-.theme-option.owned {
-    border-color: #4CAF50 !important;
-    background-color: rgba(76, 175, 80, 0.05);
-}
-
-.theme-option.not-owned {
-    border-color: #ff4444 !important;
-    background-color: rgba(255, 68, 68, 0.05);
-    opacity: 0.8;
-}
-
-.owned-badge {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    background: #4CAF50;
-    color: white;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: bold;
-}
-
-.theme-status {
-    display: block;
-    margin-top: 5px;
-    font-size: 0.8rem;
-    font-weight: bold;
-}
-
-.theme-cost.purchased {
-    color: #4CAF50;
-    font-weight: bold;
-}
-
-.theme-cost.free {
-    color: #666;
-}
-
-.theme-cost.premium {
-    color: #FFD700;
-    font-weight: bold;
-}
-
-/* Подсветка активной темы */
-.theme-option input[type="radio"]:checked + .theme-preview {
-    border: 3px solid #2196F3;
-    box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
-}
-
-/* Стили для непокупных тем */
-.theme-option.not-owned .theme-preview {
-    opacity: 0.6;
-    filter: grayscale(30%);
-}
-
-.theme-option.not-owned {
-    cursor: not-allowed;
-}
-
-.theme-option.not-owned input[type="radio"] {
-    cursor: not-allowed;
 }
