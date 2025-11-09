@@ -18,16 +18,13 @@
 
     <div class="admin-container">
 
-        <!-- СТАРОЕ МЕНЮ ЗАМЕНЕНО НА НОВЫЙ ХЕДЕР -->
         <div class="profile-header">
             <h1>Профиль пользователя</h1>
-            <div> <!-- Обертка для кнопок -->
-                <a href="{{ url_for('show_users') }}" class="back-btn" style="background: linear-gradient(45deg, #6c757d, #5a6268); margin-right: 10px;">К списку</a>
+            <div> <a href="{{ url_for('show_users') }}" class="back-btn" style="background: linear-gradient(45deg, #6c757d, #5a6268); margin-right: 10px;">К списку</a>
                 <a href="{{ url_for('home') }}" class="back-btn">На главную</a>
             </div>
         </div>
 
-        <!-- Блок для Flash-сообщений -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -38,7 +35,30 @@
             {% endif %}
         {% endwith %}
 
-        <div class="profile-container card-style">
+        {% set theme_color = 'var(--text-color)' %} {% if user.theme == 'default' %}
+            {% if current_user.theme == 'dark' %}
+                {% set theme_color = '#89CFF0' %} {% else %}
+                {% set theme_color = '#00529B' %} {% endif %}
+        {% elif user.theme == 'indigo' %}
+            {% set theme_color = '#667eea' %}
+        {% elif user.theme == 'sunset' %}
+            {% set theme_color = '#ff7e5f' %}
+        {% elif user.theme == 'forest' %}
+            {% set theme_color = '#4CAF50' %}
+        {% elif user.theme == 'crimson' %}
+            {% set theme_color = '#DC143C' %}
+        {% elif user.theme == 'dark' %}
+            {% set theme_color = '#89CFF0' %} {% elif user.theme == 'gold' %}
+            {% set theme_color = '#B8860B' %}
+        {% elif user.theme == 'club' %}
+            {% set user_club_for_theme = clubs|selectattr('name','equalto', user.club)|first %}
+            {% if user_club_for_theme %}
+                {% set theme_color = user_club_for_theme.color1 %}
+            {% else %}
+                {% set theme_color = '#667eea' %} {% endif %}
+        {% endif %}
+
+        <div class="profile-container card-style" id="user-profile-card" style="--user-theme-border-color: {{ theme_color }};">
             <div class="avatar-container">
                 {% if user.avatar %}
                     <img src="{{ url_for('uploaded_file', filename=user.avatar) }}" class="profile-avatar-large">
@@ -49,16 +69,18 @@
             <div class="user-info">
                 <p><strong>Имя:</strong> {{ user.name }}</p>
 
-                <!-- Почта видна только админам -->
                 {% if current_user.is_admin %}
                 <p><strong>Email:</strong> {{ user.email }}</p>
                 {% endif %}
 
                 <p><strong>Клуб:</strong> {{ user.club }}</p>
 
-                <!-- Тема видна всем -->
-                <p><strong>Тема:</strong> {{ user.theme|capitalize }}</p>
-
+                <p>
+                    <strong>Тема:</strong>
+                    <span style="color: {{ theme_color }}; font-weight: bold;">
+                        {{ user.theme|capitalize }}
+                    </span>
+                </p>
                 <div class="balance-section">
                     <p><strong>Баланс:</strong>
                         <span class="current-balance">{{ user_balance }} </span>
@@ -69,7 +91,7 @@
                         <h3>Административные действия</h3>
                         <form action="{{ url_for('admin_update_balance_simple', user_id=user.id) }}" method="POST">
                             <div class="balance-form">
-                                <input type="number" name="amount" min="1" max="100000"
+                                <input type="number" name="amount" min="0" max="100000"
                                        placeholder="Сумма" class="balance-input" required>
                                 <select name="action" class="balance-select">
                                     <option value="add">Добавить к балансу</option>
@@ -93,4 +115,3 @@
     </div>
 </body>
 </html>
-

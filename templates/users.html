@@ -32,8 +32,13 @@
             {% endif %}
         {% endwith %}
 
-        {% if users %}
         <div class="table-container">
+
+            <div class="summary">
+                <p><strong>Всего пользователей:</strong> {{ users|length }}</p>
+            </div>
+
+            {% if users %}
             <table>
                 <tr>
                     <th>№</th>
@@ -72,14 +77,10 @@
                 </tr>
                 {% endfor %}
             </table>
-        </div>
-        {% else %}
-        <p>Пользователи не найдены</p>
-        {% endif %}
+            {% else %}
+            <p class="no-users-message">Пользователи не найдены</p>
+            {% endif %}
 
-        <div class="summary">
-            <p><strong>Всего пользователей:</strong> {{ users|length }}</p>
-        </div>
-    </div>
+        </div> </div>
 </body>
 </html>

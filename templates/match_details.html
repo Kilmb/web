@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ match.home_team }} vs {{ match.away_team }} - Детали матча</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
+    <style>
+        .home-container {
+            max-width: 1000px;
+        }
+        .match-header-card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+        .match-header-card h1 {
+            font-size: 2.5em;
+            margin: 0;
+            color: var(--heading-color);
+        }
+        .match-header-card h2 {
+            font-size: 3em;
+            margin: 10px 0;
+            color: var(--text-color);
+        }
+        .match-status {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #007bff; /* Синий по умолчанию */
+        }
+        .match-status.live { color: #ff6b00; } /* Оранжевый */
+        .match-status.finished { color: #28a745; } /* Зеленый */
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-top: 25px;
+        }
+        .content-card h3 {
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            text-align: center;
+        }
+
+        /* Статистика */
+        .stats-table {
+            width: 100%;
+            margin-top: 15px;
+        }
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 2fr 1fr;
+            text-align: center;
+            padding: 8px 0;
+            font-size: 1.1em;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .stats-row:last-child { border-bottom: none; }
+        .stats-label { font-weight: bold; }
+        .stats-home { font-weight: bold; }
+        .stats-away { font-weight: bold; }
+
+        /* Составы */
+        .lineups-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .lineup-list {
+            list-style: none;
+            padding: 0;
+        }
+        .lineup-list li {
+            padding: 5px 0;
+            border-bottom: 1px dashed var(--border-color);
+        }
+        .lineup-list li:last-child { border-bottom: none; }
+
+        /* События */
+        .events-list {
+            list-style: none;
+            padding: 0;
+        }
+        .event-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 5px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .event-time {
+            font-weight: bold;
+            min-width: 50px;
+        }
+        .event-icon {
+            font-size: 1.2em;
+            margin: 0 10px;
+        }
+        .event-team-home { justify-content: flex-start; }
+        .event-team-away { justify-content: flex-end; flex-direction: row-reverse; }
+
+        .btn-back {
+            display: inline-block;
+            padding: 10px 20px;
+            background: var(--grad-start, #6c757d);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+        }
+        .btn-back:hover {
+            background: var(--grad-end, #5a6268);
+            transform: translateY(-2px);
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .details-grid { grid-template-columns: 1fr; }
+            .lineups-container { grid-template-columns: 1fr; }
+            .match-header-card h1 { font-size: 1.8em; }
+            .match-header-card h2 { font-size: 2.2em; }
+        }
+    </style>
+</head>
+<body class="theme-{{ current_user.theme or 'default' }} {% if current_user.is_authenticated %}themed-body{% endif %}"
+    {% if current_user.is_authenticated and current_user.theme =='club' and current_user.club %}
+        {% set user_club = clubs|selectattr('name','equalto', current_user.club)|first %}
+        {% if user_club %}
+            style="--club-color-1: {{ user_club.color1 }}; --club-color-2: {{ user_club.color2 }}; --club-shadow-color: {{ user_club.color1 }}80;"
+        {% endif %}
+    {% endif %}
+>
+
+<a href="{{ url_for('logout') }}" class="logout-link-fixed">Выйти</a>
+
+<div class="home-container">
+
+    <div class="match-header-card">
+        <a href="{{ url_for('home') }}" class="btn-back" style="float: left;">← Назад</a>
+        <a href="{{ url_for('profile') }}" class="profile-header-link" style="float: right;">
+            {% if current_user.avatar %}
+            <img src="{{ url_for('uploaded_file', filename=current_user.avatar) }}" class="profile-avatar">
+            {% else %}
+            <img src="{{ url_for('static', filename='img/default_avatar.png') }}" class="profile-avatar">
+            {% endif %}
+            <span>Профиль</span>
+        </a>
+        <div style="clear: both; padding-top: 20px;"></div>
+
+        <h1>{{ api_data.game.homeTeam.name }} vs {{ api_data.game.awayTeam.name }}</h1>
+
+        {% if api_data.game.status in [3, 4, 5, 6, 7, 11] %}
+            <h2>{{ api_data.game.homeResult }} : {{ api_data.game.awayResult }}</h2>
+            <div class="match-status live">LIVE</div>
+        {% elif api_data.game.status in [8, 9, 10] %}
+            <h2>{{ api_data.game.homeResult }} : {{ api_data.game.awayResult }}</h2>
+            <div class="match-status finished">Матч окончен</div>
+        {% else %}
+            <h2>vs</h2>
+            <div class="match-status">
+                {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="details-grid">
+        <div class="content-card">
+            <h3>📊 Статистика</h3>
+            {% if api_data.statistics %}
+                <div class="stats-table">
+                    {% set stats = api_data.statistics %}
+                    <div class="stats-row">
+                        <div class="stats-home">{{ stats.BallPossessionHome or 0 }}%</div>
+                        <div class="stats-label">Владение мячом</div>
+                        <div class="stats-away">{{ stats.BallPossessionAway or 0 }}%</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stats-home">{{ stats.TotalShotsHome or 0 }}</div>
+                        <div class="stats-label">Удары</div>
+                        <div class="stats-away">{{ stats.TotalShotsAway or 0 }}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stats-home">{{ stats.ShotsOnGoalHome or 0 }}</div>
+                        <div class="stats-label">Удары в створ</div>
+                        <div class="stats-away">{{ stats.ShotsOnGoalAway or 0 }}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stats-home">{{ stats.CornerKicksHome or 0 }}</div>
+                        <div class="stats-label">Угловые</div>
+                        <div class="stats-away">{{ stats.CornerKicksAway or 0 }}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stats-home">{{ stats.OffsidesHome or 0 }}</div>
+                        <div class="stats-label">Офсайды</div>
+                        <div class="stats-away">{{ stats.OffsidesAway or 0 }}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stats-home">{{ stats.FoulsHome or 0 }}</div>
+                        <div class="stats-label">Фолы</div>
+                        <div class="stats-away">{{ stats.FoulsAway or 0 }}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stats-home">{{ stats.YellowCardsHome or 0 }}</div>
+                        <div class="stats-label">Желтые карточки</div>
+                        <div class="stats-away">{{ stats.YellowCardsAway or 0 }}</div>
+                    </div>
+                    <div class="stats-row">
+                        <div class="stats-home">{{ stats.RedCardsHome or 0 }}</div>
+                        <div class="stats-label">Красные карточки</div>
+                        <div class="stats-away">{{ stats.RedCardsAway or 0 }}</div>
+                    </div>
+                </div>
+            {% else %}
+                <p style="text-align: center; color: #666;">Статистика для этого матча недоступна.</p>
+            {% endif %}
+        </div>
+
+        <div class="content-card">
+            <h3>👕 Составы</h3>
+            {% if api_data.lineups %}
+                <div class="lineups-container">
+                    <div>
+                        <h4>{{ api_data.game.homeTeam.name }}</h4>
+                        <ul class="lineup-list">
+                            {% for player in api_data.lineups.home %}
+                                <li>{{ player.number }}. {{ player.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div>
+                        <h4>{{ api_data.game.awayTeam.name }}</h4>
+                        <ul class="lineup-list">
+                            {% for player in api_data.lineups.away %}
+                                <li>{{ player.number }}. {{ player.name }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% else %}
+                <p style="text-align: center; color: #666;">Составы пока не объявлены.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="content-card">
+        <h3>⚡ События матча</h3>
+        {% if api_data.events %}
+            <ul class="events-list">
+                {% for event in api_data.events %}
+                    {% set is_home_event = event.teamId == api_data.game.homeTeam.id %}
+                    <li class="event-item {{ 'event-team-home' if is_home_event else 'event-team-away' }}">
+                        <div class="event-time">{{ event.elapsed }}'</div>
+
+                        {% if event.type == 1 %} <div class="event-icon">⚽</div>
+                            <div class="event-player">
+                                <strong>Гол! {{ event.player.name }}</strong>
+                                {% if event.assistPlayer %}
+                                    <span style="color: #555;">(Пас: {{ event.assistPlayer.name }})</span>
+                                {% endif %}
+                            </div>
+                        {% elif event.type == 2 %} <div class="event-icon">🟨</div> <div class="event-player">{{ event.player.name }} (Карточка)</div>
+                        {% elif event.type == 3 %} <div class="event-icon">🔄</div>
+                            <div class="event-player">
+                                {{ event.player.name }} (вышел)
+                                <br>
+                                <span style="color: #555;">{{ event.assistPlayer.name }} (ушел)</span>
+                            </div>
+                        {% else %}
+                             <div class="event-icon">ℹ️</div>
+                             <div class="event-player">{{ event.player.name }} (Событие)</div>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p style="text-align: center; color: #666;">Событий в матче пока не было.</p>
+        {% endif %}
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -37,7 +37,8 @@
                     <li>Информация о всех клубах РПЛ</li>
                     <li>Результаты матчей текущего тура</li>
                     <li>Тесты на знание клубов и истории РПЛ</li>
-                    <li>Персонализированный профиль с вашим любимым клубом</li>
+                    <li>Ставки на матчи</li>
+                    <li>Покупка тем</li>
                 </ul>
             </div>
 
@@ -65,12 +66,12 @@
                     </div>
                     <div class="table-row">
                         <div>2</div>
-                        <div>Зенит</div>
+                        <div>Краснодар</div>
                         <div>45</div>
                     </div>
                     <div class="table-row">
                         <div>3</div>
-                        <div>ЦСКА</div>
+                        <div>Локомотив</div>
                         <div>42</div>
                     </div>
                     <div class="table-row more-teams">
@@ -169,7 +170,9 @@
                                 <div class="match-date" style="text-align: center; color: #666;">
                                     {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
                                 </div>
-                            </div>
+
+                                <a href="{{ url_for('match_details', match_id_db=match.id) }}" class="btn-details">Подробнее</a>
+                                </div>
                             {% endfor %}
                         </div>
                     {% else %}
@@ -197,6 +200,7 @@
                                     {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
                                 </div>
 
+                                <a href="{{ url_for('match_details', match_id_db=match.id) }}" class="btn-details">Статистика и составы</a>
                                 {% if current_user.is_authenticated and not match.is_played and not match.is_started %}
                                 <div class="bet-form">
                                     <h4>Сделать ставку</h4>
@@ -243,7 +247,9 @@
                                 <div class="match-date" style="text-align: center; color: #666;">
                                     {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
                                 </div>
-                            </div>
+
+                                <a href="{{ url_for('match_details', match_id_db=match.id) }}" class="btn-details">Подробнее</a>
+                                </div>
                             {% endfor %}
                         </div>
                     {% else %}
@@ -467,4 +473,3 @@
     </script>
 </body>
 </html>
-
