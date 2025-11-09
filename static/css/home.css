@@ -666,3 +666,50 @@ body:not(.theme-dark) .match-card {
     display: none !important;
 }
 
+
+/* ===============================================
+        === НОВЫЕ СТИЛИ (Добавлено) ===
+===============================================
+*/
+
+/* Эффект наведения на карточку матча */
+.match-card {
+    /* Добавляем transition к существующему классу */
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.match-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+
+/* Стили для новой кнопки "Подробнее" */
+.btn-details {
+    display: block;
+    text-align: center;
+    margin: 12px 0 5px 0; /* Отступы */
+    padding: 10px;
+    background: var(--grad-start, #007bff);
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    /* z-index, чтобы кнопка была "поверх" */
+    position: relative;
+    z-index: 2;
+}
+
+.btn-details:hover {
+    background: var(--grad-end, #0056b3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px var(--shadow-color, rgba(0,0,0,0.2));
+}
+
+/* Исправляем отступ, если есть форма ставки */
+.bet-form {
+    margin-top: 5px; /* Уменьшаем отступ, т.к. кнопка дала свой */
+}

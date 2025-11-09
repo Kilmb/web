@@ -257,7 +257,6 @@ body:not(.theme-dark) .stat-item {
     border: 2px solid var(--border-color);
     transition: all 0.3s ease;
     background: rgba(128, 128, 128, 0.05);
-    position: relative;
 }
 /* Специфично для светлой темы */
 body:not(.theme-dark) .theme-option {
@@ -336,7 +335,7 @@ body:not(.theme-dark) .theme-option:hover {
 .preview-forest { background: linear-gradient(45deg, #4CAF50, #2E8B57); }
 .preview-crimson { background: linear-gradient(45deg, #DC143C, #8B0000); }
 .preview-dark { background: linear-gradient(45deg, #232526, #414345); }
-.preview-gold { background: linear-gradient(45deg, #FFD700, #B8860B); }
+.preview-gold { background: linear-gradient(45deg, #FFD700, #B8860B); } /* НОВЫЙ */
 .preview-club { background: linear-gradient(45deg, var(--club-color-1, #ccc), var(--club-color-2, #aaa)); }
 
 
@@ -494,6 +493,10 @@ body:not(.theme-dark) .no-bets {
     border: 2px dashed #dee2e6;
 }
 
+/* ===============================================
+            АДАПТИВНОСТЬ
+===============================================
+*/
 /* ===============================================
             ПРЕДПРОСМОТР ТЕМ (ВКЛЮЧАЯ НЕДОСТУПНЫЕ)
 ===============================================
@@ -823,4 +826,4 @@ body:not(.theme-dark) .no-bets {
         width: 120px;
         height: 120px;
     }
-}
+}}

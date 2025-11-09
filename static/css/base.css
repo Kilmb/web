@@ -136,11 +136,21 @@ body {
 
 /* Градиент и анимация для авторизованных */
 body.themed-body {
-    background: linear-gradient(135deg, var(--grad-start) 0%, var(--grad-end) 100%);
+    background: linear-gradient(90deg, var(--grad-start) 0%, var(--grad-end) 100%);
     color: var(--text-color);
     background-size: 400% 400%;
     animation: gradientFlow 15s ease infinite;
 }
+
+/* ==== НОВОЕ ПРАВИЛО ==== */
+/* Отключение анимации градиента для тёмной темы */
+body.themed-body.theme-dark {
+    /* Средний статический оттенок между #232526 и #414345 */
+    background: #323435;
+    animation: none; /* Отменяем анимацию */
+}
+/* ==== КОНЕЦ НОВОГО ПРАВИЛА ==== */
+
 
 /* Стили для кнопки "Выйти" */
 .logout-link-fixed {
