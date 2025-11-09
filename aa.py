@@ -122,6 +122,9 @@ class Match(db.Model):
     is_started = db.Column(db.Boolean, default=False)
     tour_number = db.Column(db.Integer, nullable=False)
 
+    # === ИЗМЕНЕНИЕ 1: Добавлено поле для ID матча из API ===
+    sstats_id = db.Column(db.Integer, nullable=True, index=True)
+
     def __repr__(self):
         return f"Match('{self.home_team} vs {self.away_team}', {self.match_date})"
 
@@ -842,6 +845,9 @@ def update_matches_for_tour(tour_number):
                 is_played = status in [8, 9, 10]
                 is_started = status in [3, 4, 5, 6, 7, 11]
 
+                # === ИЗМЕНЕНИЕ 2: Получаем ID матча из API ===
+                sstats_id = match_data.get('id')
+
                 existing_match = db.session.query(Match).filter(
                     Match.home_team == home_team,
                     Match.away_team == away_team,
@@ -857,6 +863,10 @@ def update_matches_for_tour(tour_number):
                     existing_match.is_played = is_played
                     existing_match.is_started = is_started
                     existing_match.match_date = match_date_msk
+
+                    # === ИЗМЕНЕНИЕ 2: Сохраняем ID матча ===
+                    existing_match.sstats_id = sstats_id
+
                     matches_updated += 1
 
                     if is_played and not was_played_before:
@@ -873,7 +883,10 @@ def update_matches_for_tour(tour_number):
                         away_score=away_score if is_played or is_started else None,
                         is_played=is_played,
                         is_started=is_started,
-                        tour_number=tour_number
+                        tour_number=tour_number,
+
+                        # === ИЗМЕНЕНИЕ 2: Сохраняем ID матча ===
+                        sstats_id=sstats_id
                     )
                     db.session.add(new_match)
                     matches_added += 1
@@ -1236,6 +1249,86 @@ def init_user_balances():
     except Exception as e:
         print(f"Ошибка при инициализации балансов: {e}")
         db.session.rollback()
+
+
+# === ИЗМЕНЕНИЕ 3: Добавлен новый маршрут для страницы матча ===
+@app.route('/match/<int:match_id_db>')
+@login_required
+def match_details(match_id_db):
+    match = db.session.get(Match, match_id_db)
+
+    if not match:
+        flash('Матч не найден', 'danger')
+        return redirect(url_for('home'))
+
+    if not match.sstats_id:
+        flash('Детальная информация для этого матча пока недоступна', 'warning')
+        return redirect(url_for('home'))
+
+    api_data = {}
+    try:
+        # === ВЫЗОВ 1: Получаем основную информацию (события, составы) ===
+        url = f"https://api.sstats.net/games/{match.sstats_id}"
+        headers = {'apikey': '8ftkpzresyxo7dqz'}
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
+
+        data = response.json()
+        if data.get('status') == 'OK':
+            api_data = data.get('data', {})
+        else:
+            flash('Не удалось загрузить данные матча из API', 'danger')
+            return redirect(url_for('home'))
+
+    except requests.exceptions.RequestException as e:
+        print(f"Ошибка API (GET) при запросе матча {match.sstats_id}: {e}")
+        flash(f'Ошибка при загрузке данных матча: {e}', 'danger')
+        return redirect(url_for('home'))
+
+    # === ВЫЗОВ 2: Отдельно запрашиваем СТАТИСТИКУ ===
+    # (Мы делаем это, потому что /games/:id не отдает статистику,
+    # а /query-games не отдает события/составы)
+    try:
+        stats_url = "https://api.sstats.net/games/query-games"
+        stats_headers = {'apikey': '8ftkpzresyxo7dqz', 'Content-Type': 'application/json'}
+
+        # Поля статистики, которые мы используем в шаблоне
+        stats_fields = [
+            "Id", "BallPossessionHome", "BallPossessionAway", "TotalShotsHome", "TotalShotsAway",
+            "ShotsOnGoalHome", "ShotsOnGoalAway", "CornerKicksHome", "CornerKicksAway",
+            "OffsidesHome", "OffsidesAway", "FoulsHome", "FoulsAway",
+            "YellowCardsHome", "YellowCardsAway", "RedCardsHome", "RedCardsAway"
+        ]
+
+        stats_payload = {
+            "Condition": f"Id = {match.sstats_id}",
+            "Format": "json",
+            "Fields": stats_fields
+        }
+
+        stats_response = requests.post(stats_url, headers=stats_headers, json=stats_payload, timeout=10)
+        stats_response.raise_for_status()
+
+        stats_json = stats_response.json()
+
+        if stats_json.get('status') == 'OK':
+            stats_data_list = stats_json.get('data', [])
+            if stats_data_list:
+                # Внедряем объект статистики в наши основные данные
+                # api_data['statistics'] по умолчанию 'null', мы заменяем его объектом
+                api_data['statistics'] = stats_data_list[0]
+
+    except requests.exceptions.RequestException as e:
+        # Не страшно, если статистика не загрузилась, страница все равно откроется
+        print(f"Ошибка API (POST) при запросе статистики для {match.sstats_id}: {e}")
+        # api_data['statistics'] останется null, и шаблон покажет "Статистика недоступна"
+
+    return render_template(
+        'match_details.html',
+        match=match,
+        api_data=api_data,
+        clubs=CLUBS_DATA  # Для работы тем
+    )
 
 
 @app.route('/logout')
