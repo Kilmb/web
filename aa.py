@@ -1,4 +1,6 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory
+import random
+
+from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -108,6 +110,16 @@ class RPLTable(db.Model):
     def __repr__(self):
         return f"RPLTable('{self.team}', {self.points})"
 
+
+class WheelSpin(db.Model):
+    __tablename__ = 'wheel_spins'
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), unique=True)
+    last_spin = db.Column(db.DateTime)
+    spins_count = db.Column(db.Integer, default=0)
+
+    user = db.relationship('User')
 
 class Match(db.Model):
     __tablename__ = 'matches'
@@ -905,6 +917,156 @@ def update_matches_for_tour(tour_number):
         db.session.rollback()
         return False, f"ошибка API"
 
+
+@app.route('/wheel')
+@login_required
+def wheel_page():
+    return render_template('wheel.html', clubs=CLUBS_DATA)
+
+
+@app.route('/api/wheel/spin', methods=['POST'])
+@login_required
+def wheel_spin():
+    try:
+        print(f"DEBUG: Wheel spin request from user {current_user.id}")
+
+        # Проверяем, когда было последнее вращение
+        wheel_spin_record = WheelSpin.query.filter_by(user_id=current_user.id).first()
+        print(f"DEBUG: Wheel spin record: {wheel_spin_record}")
+
+        if wheel_spin_record and wheel_spin_record.last_spin:
+            time_since_last_spin = datetime.now() - wheel_spin_record.last_spin
+            print(f"DEBUG: Time since last spin: {time_since_last_spin.total_seconds()} seconds")
+
+            if time_since_last_spin.total_seconds() < 24 * 60 * 60:  # 24 часа
+                hours_left = 24 - (time_since_last_spin.total_seconds() // 3600)
+                return jsonify({
+                    'success': False,
+                    'message': f'Вы можете крутить колесо только раз в 24 часа. Попробуйте через {int(hours_left)} часов.'
+                })
+
+        # Определяем призы и их вероятности
+        prizes = [
+            {'type': 'add', 'amount': 50, 'probability': 20},  # 20%
+            {'type': 'add', 'amount': 100, 'probability': 15},  # 15%
+            {'type': 'add', 'amount': 250, 'probability': 8},  # 8%
+            {'type': 'subtract', 'amount': 50, 'probability': 15},  # 15%
+            {'type': 'subtract', 'amount': 100, 'probability': 10},  # 10%
+            {'type': 'subtract', 'amount': 250, 'probability': 5},  # 5%
+            {'type': 'multiply', 'multiplier': 2, 'probability': 10},  # 10%
+            {'type': 'multiply', 'multiplier': 3, 'probability': 5},  # 5%
+            {'type': 'divide', 'divider': 2, 'probability': 8},  # 8%
+            {'type': 'jackpot', 'amount': 10000, 'probability': 4}  # 4%
+        ]
+
+        # Выбираем приз на основе вероятностей
+        total_probability = sum(prize['probability'] for prize in prizes)
+        random_value = random.uniform(0, total_probability)
+
+        current_probability = 0
+        selected_prize = None
+
+        for prize in prizes:
+            current_probability += prize['probability']
+            if random_value <= current_probability:
+                selected_prize = prize
+                break
+
+        # Получаем баланс пользователя
+        user_balance = UserBalance.query.filter_by(user_id=current_user.id).first()
+        print(f"DEBUG: User balance: {user_balance}")
+
+        if not user_balance:
+            user_balance = UserBalance(user_id=current_user.id, balance=100)
+            db.session.add(user_balance)
+            print("DEBUG: Created new user balance")
+
+        old_balance = user_balance.balance
+        new_balance = old_balance
+
+        # Применяем приз
+        if selected_prize['type'] == 'add':
+            new_balance = old_balance + selected_prize['amount']
+            message = f"+{selected_prize['amount']} монет!"
+
+        elif selected_prize['type'] == 'subtract':
+            new_balance = max(0, old_balance - selected_prize['amount'])
+            message = f"-{selected_prize['amount']} монет"
+
+        elif selected_prize['type'] == 'multiply':
+            new_balance = old_balance * selected_prize['multiplier']
+            message = f"x{selected_prize['multiplier']} к балансу!"
+
+        elif selected_prize['type'] == 'divide':
+            new_balance = max(0, old_balance // selected_prize['divider'])
+            message = f"÷{selected_prize['divider']} к балансу"
+
+        elif selected_prize['type'] == 'jackpot':
+            new_balance = old_balance + selected_prize['amount']
+            message = f"ДЖЕКПОТ! +{selected_prize['amount']} монет! 🎉"
+
+        user_balance.balance = new_balance
+
+        # Обновляем запись о вращении
+        if not wheel_spin_record:
+            wheel_spin_record = WheelSpin(user_id=current_user.id)
+            db.session.add(wheel_spin_record)
+            print("DEBUG: Created new wheel spin record")
+
+        wheel_spin_record.last_spin = datetime.now()
+        wheel_spin_record.spins_count = (wheel_spin_record.spins_count or 0) + 1
+
+        db.session.commit()
+        print("DEBUG: Database committed successfully")
+
+        return jsonify({
+            'success': True,
+            'prize': selected_prize,
+            'message': message,
+            'old_balance': old_balance,
+            'new_balance': new_balance,
+            'next_spin_time': wheel_spin_record.last_spin.timestamp() + 24 * 60 * 60
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"ERROR in wheel_spin: {e}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({
+            'success': False,
+            'message': f'Произошла ошибка: {str(e)}'
+        })
+
+@app.route('/api/wheel/status')
+@login_required
+def wheel_status():
+    try:
+        wheel_spin_record = WheelSpin.query.filter_by(user_id=current_user.id).first()
+        print(f"DEBUG: Wheel status for user {current_user.id}: {wheel_spin_record}")
+
+        if wheel_spin_record and wheel_spin_record.last_spin:
+            time_since_last_spin = datetime.now() - wheel_spin_record.last_spin
+            can_spin = time_since_last_spin.total_seconds() >=  24 * 60 * 60
+            next_spin_time = wheel_spin_record.last_spin.timestamp() + 24 * 60 * 60
+            print(f"DEBUG: Can spin: {can_spin}, Time since: {time_since_last_spin}")
+        else:
+            can_spin = True
+            next_spin_time = None
+            print("DEBUG: No previous spins, can spin")
+
+        return jsonify({
+            'can_spin': can_spin,
+            'next_spin_time': next_spin_time,
+            'spins_count': wheel_spin_record.spins_count if wheel_spin_record else 0
+        })
+    except Exception as e:
+        print(f"ERROR in wheel_status: {e}")
+        return jsonify({
+            'can_spin': False,
+            'next_spin_time': None,
+            'spins_count': 0
+        })
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
