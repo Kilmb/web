@@ -1,0 +1,311 @@
+/* ===============================================
+            СТИЛИ КОЛЕСА УДАЧИ
+===============================================
+*/
+
+.wheel-link-fixed {
+    position: fixed;
+    top: 15px;
+    left: 120px;
+    z-index: 1000;
+    padding: 10px 20px;
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: #333;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: bold;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
+    transition: all 0.3s ease;
+    border: 2px solid #FF8C00;
+}
+
+.wheel-link-fixed:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
+}
+
+.wheel-container {
+    position: relative;
+    width: 300px;
+    height: 300px;
+    margin: 40px auto;
+}
+
+.wheel {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: conic-gradient(
+        #FF6B6B 0deg 36deg,
+        #4ECDC4 36deg 72deg,
+        #45B7D1 72deg 108deg,
+        #96CEB4 108deg 144deg,
+        #FFEAA7 144deg 180deg,
+        #DDA0DD 180deg 216deg,
+        #98D8C8 216deg 252deg,
+        #F7DC6F 252deg 288deg,
+        #BB8FCE 288deg 324deg,
+        #85C1E9 324deg 360deg
+    );
+    position: relative;
+    transition: transform 4s cubic-bezier(0.2, 0.8, 0.3, 1);
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    overflow: hidden;
+}
+
+.wheel-pointer {
+    position: absolute;
+    top: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-top: 30px solid #FFD700;
+    z-index: 10;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+}
+
+.wheel-section {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 0;
+    left: 50%;
+    transform-origin: left bottom;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wheel-text {
+    position: absolute;
+    left: 40px;
+    top: 50%;
+    transform: translateY(-50%) rotate(90deg);
+    font-weight: bold;
+    font-size: 14px;
+    color: #333;
+    text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+    white-space: nowrap;
+    transform-origin: left center;
+}
+
+/* Корректное позиционирование для каждого сектора */
+.wheel-section:nth-child(1) { transform: rotate(0deg); }
+.wheel-section:nth-child(1) .wheel-text { transform: translateY(-50%) rotate(90deg); }
+
+.wheel-section:nth-child(2) { transform: rotate(36deg); }
+.wheel-section:nth-child(2) .wheel-text { transform: translateY(-50%) rotate(126deg); }
+
+.wheel-section:nth-child(3) { transform: rotate(72deg); }
+.wheel-section:nth-child(3) .wheel-text { transform: translateY(-50%) rotate(162deg); }
+
+.wheel-section:nth-child(4) { transform: rotate(108deg); }
+.wheel-section:nth-child(4) .wheel-text { transform: translateY(-50%) rotate(198deg); }
+
+.wheel-section:nth-child(5) { transform: rotate(144deg); }
+.wheel-section:nth-child(5) .wheel-text { transform: translateY(-50%) rotate(234deg); }
+
+.wheel-section:nth-child(6) { transform: rotate(180deg); }
+.wheel-section:nth-child(6) .wheel-text { transform: translateY(-50%) rotate(270deg); }
+
+.wheel-section:nth-child(7) { transform: rotate(216deg); }
+.wheel-section:nth-child(7) .wheel-text { transform: translateY(-50%) rotate(306deg); }
+
+.wheel-section:nth-child(8) { transform: rotate(252deg); }
+.wheel-section:nth-child(8) .wheel-text { transform: translateY(-50%) rotate(342deg); }
+
+.wheel-section:nth-child(9) { transform: rotate(288deg); }
+.wheel-section:nth-child(9) .wheel-text { transform: translateY(-50%) rotate(18deg); }
+
+.wheel-section:nth-child(10) { transform: rotate(324deg); }
+.wheel-section:nth-child(10) .wheel-text { transform: translateY(-50%) rotate(54deg); }
+
+.wheel-inner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    border: 4px solid gold;
+    z-index: 5;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.wheel-result-inner {
+    color: white;
+    font-weight: bold;
+    text-align: center;
+    font-size: 16px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+    padding: 10px;
+}
+
+.wheel-result-large {
+    font-size: 18px;
+    margin-bottom: 5px;
+    display: block;
+}
+
+.wheel-result-small {
+    font-size: 10px;
+    opacity: 0.9;
+    display: block;
+}
+
+.spin-button {
+    background: linear-gradient(45deg, #FFD700, #FFA500);
+    color: #333;
+    border: none;
+    padding: 15px 30px;
+    font-size: 18px;
+    font-weight: bold;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin: 20px auto;
+    display: block;
+}
+
+.spin-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(255, 215, 0, 0.4);
+}
+
+.spin-button:disabled {
+    background: #cccccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.wheel-result {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+}
+
+.cooldown-info {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #FFD700;
+    text-align: center;
+}
+
+.wheel-prizes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.prize-item {
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+/* Анимация подсветки выпавшего сектора */
+.wheel-section.highlight {
+    animation: pulseHighlight 2s ease-in-out;
+    z-index: 5;
+}
+
+@keyframes pulseHighlight {
+    0% {
+        filter: brightness(1) drop-shadow(0 0 5px gold);
+    }
+    50% {
+        filter: brightness(1.5) drop-shadow(0 0 20px gold);
+    }
+    100% {
+        filter: brightness(1) drop-shadow(0 0 5px gold);
+    }
+}
+
+.wheel-sparkle {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle, transparent 50%, rgba(255,215,0,0.3) 70%);
+    animation: sparkle 1s ease-in-out infinite;
+    pointer-events: none;
+    z-index: 6;
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 1; }
+}
+
+/* Анимации для результатов */
+@keyframes resultAppear {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+    100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+.winner-animation {
+    animation: resultAppear 0.5s ease-out forwards;
+}
+
+/* Эффект конфетти */
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #ff0000;
+    border-radius: 50%;
+    animation: confettiFall 3s linear forwards;
+    z-index: 20;
+    pointer-events: none;
+}
+
+@keyframes confettiFall {
+    0% {
+        transform: translateY(-100px) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(500px) rotate(360deg);
+        opacity: 0;
+    }
+}
+
+/* Особые стили для разных типов призов */
+.jackpot-inner {
+    background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+    color: #333;
+    border: 4px solid #FF0000;
+}
+
+.big-win-inner {
+    background: linear-gradient(135deg, #4CAF50 0%, #2E8B57 100%);
+    border: 4px solid #00FF00;
+}
+
+.loss-inner {
+    background: linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%);
+    border: 4px solid #8B0000;
+}
