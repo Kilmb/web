@@ -1,5 +1,3 @@
-import random
-
 from flask import Flask, render_template, request, redirect, url_for, flash, send_from_directory, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
@@ -16,6 +14,7 @@ from io import StringIO
 import threading
 import time
 from clubs import CLUBS_DATA, RPL_CLUBS
+import random
 
 # Инициализация Flask-приложения
 app = Flask(__name__)
@@ -139,6 +138,18 @@ class Match(db.Model):
 
     def __repr__(self):
         return f"Match('{self.home_team} vs {self.away_team}', {self.match_date})"
+
+
+class MatchMessage(db.Model):
+    __tablename__ = 'match_messages'
+
+    id = db.Column(db.Integer, primary_key=True)
+    match_id = db.Column(db.Integer, db.ForeignKey('matches.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    text = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    user = db.relationship('User')
 
 
 class ClubTest(db.Model):
@@ -421,24 +432,40 @@ def update_rpl_table_from_sstats():
 # Главная страница
 @app.route('/')
 def home():
+    # 1. Загружаем таблицу
     table = db.session.query(RPLTable).order_by(RPLTable.position).all()
+
+    # 2. Определяем текущий тур (как раньше)
     current_tour = load_current_tour()
 
-    prev_tour_matches = db.session.query(Match).filter(Match.tour_number == current_tour - 1) \
-        .order_by(Match.match_date).all() if current_tour > 1 else []
+    # 3. Загружаем ВСЕ матчи сезона
+    all_matches = db.session.query(Match).order_by(Match.match_date).all()
 
-    current_tour_matches = db.session.query(Match).filter(Match.tour_number == current_tour) \
-        .order_by(Match.match_date).all()
+    # 4. Группируем матчи по номерам туров
+    # Результат будет словарем: {1: [матч, матч...], 2: [матч...], ...}
+    matches_by_tour = {}
 
-    next_tour_matches = db.session.query(Match).filter(Match.tour_number == current_tour + 1) \
-        .order_by(Match.match_date).all()
+    # Определяем максимальный возможный тур (для РПЛ это 30)
+    max_tour = 30
+
+    # Заполняем словарь пустыми списками, чтобы туры шли по порядку
+    for i in range(1, max_tour + 1):
+        matches_by_tour[i] = []
+
+    for match in all_matches:
+        # Если у матча прописан тур (и он > 0), кладем в нужную ячейку
+        t_num = match.tour_number
+        if t_num and t_num in matches_by_tour:
+            matches_by_tour[t_num].append(match)
+        elif t_num == 0:
+            # Если тур 0 (не определен), можно временно кинуть в конец или игнорировать
+            pass
 
     context = {
         'rpl_table': table,
-        'current_tour_matches': current_tour_matches,
-        'prev_tour_matches': prev_tour_matches,
-        'next_tour_matches': next_tour_matches,
+        'matches_by_tour': matches_by_tour,  # Передаем весь словарь
         'current_tour': current_tour,
+        'max_tour': max_tour,
         'clubs': CLUBS_DATA
     }
 
@@ -928,15 +955,10 @@ def wheel_page():
 @login_required
 def wheel_spin():
     try:
-        print(f"DEBUG: Wheel spin request from user {current_user.id}")
-
-        # Проверяем, когда было последнее вращение
         wheel_spin_record = WheelSpin.query.filter_by(user_id=current_user.id).first()
-        print(f"DEBUG: Wheel spin record: {wheel_spin_record}")
 
         if wheel_spin_record and wheel_spin_record.last_spin:
             time_since_last_spin = datetime.now() - wheel_spin_record.last_spin
-            print(f"DEBUG: Time since last spin: {time_since_last_spin.total_seconds()} seconds")
 
             if time_since_last_spin.total_seconds() < 24 * 60 * 60:  # 24 часа
                 hours_left = 24 - (time_since_last_spin.total_seconds() // 3600)
@@ -945,7 +967,6 @@ def wheel_spin():
                     'message': f'Вы можете крутить колесо только раз в 24 часа. Попробуйте через {int(hours_left)} часов.'
                 })
 
-        # Определяем призы и их вероятности
         prizes = [
             {'type': 'add', 'amount': 50, 'probability': 20},  # 20%
             {'type': 'add', 'amount': 100, 'probability': 15},  # 15%
@@ -956,7 +977,7 @@ def wheel_spin():
             {'type': 'multiply', 'multiplier': 2, 'probability': 10},  # 10%
             {'type': 'multiply', 'multiplier': 3, 'probability': 5},  # 5%
             {'type': 'divide', 'divider': 2, 'probability': 8},  # 8%
-            {'type': 'jackpot', 'amount': 10000, 'probability': 4}  # 4%
+            {'type': 'jackpot', 'amount': 10000, 'probability': 4}
         ]
 
         # Выбираем приз на основе вероятностей
@@ -974,12 +995,10 @@ def wheel_spin():
 
         # Получаем баланс пользователя
         user_balance = UserBalance.query.filter_by(user_id=current_user.id).first()
-        print(f"DEBUG: User balance: {user_balance}")
 
         if not user_balance:
             user_balance = UserBalance(user_id=current_user.id, balance=100)
             db.session.add(user_balance)
-            print("DEBUG: Created new user balance")
 
         old_balance = user_balance.balance
         new_balance = old_balance
@@ -1011,14 +1030,11 @@ def wheel_spin():
         if not wheel_spin_record:
             wheel_spin_record = WheelSpin(user_id=current_user.id)
             db.session.add(wheel_spin_record)
-            print("DEBUG: Created new wheel spin record")
 
         wheel_spin_record.last_spin = datetime.now()
         wheel_spin_record.spins_count = (wheel_spin_record.spins_count or 0) + 1
 
         db.session.commit()
-        print("DEBUG: Database committed successfully")
-
         return jsonify({
             'success': True,
             'prize': selected_prize,
@@ -1043,17 +1059,14 @@ def wheel_spin():
 def wheel_status():
     try:
         wheel_spin_record = WheelSpin.query.filter_by(user_id=current_user.id).first()
-        print(f"DEBUG: Wheel status for user {current_user.id}: {wheel_spin_record}")
 
         if wheel_spin_record and wheel_spin_record.last_spin:
             time_since_last_spin = datetime.now() - wheel_spin_record.last_spin
             can_spin = time_since_last_spin.total_seconds() >=  24 * 60 * 60
             next_spin_time = wheel_spin_record.last_spin.timestamp() + 24 * 60 * 60
-            print(f"DEBUG: Can spin: {can_spin}, Time since: {time_since_last_spin}")
         else:
             can_spin = True
             next_spin_time = None
-            print("DEBUG: No previous spins, can spin")
 
         return jsonify({
             'can_spin': can_spin,
@@ -1061,12 +1074,12 @@ def wheel_status():
             'spins_count': wheel_spin_record.spins_count if wheel_spin_record else 0
         })
     except Exception as e:
-        print(f"ERROR in wheel_status: {e}")
         return jsonify({
             'can_spin': False,
             'next_spin_time': None,
             'spins_count': 0
         })
+
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
@@ -1172,20 +1185,13 @@ def profile():
 @login_required
 def show_users():
     try:
-        print("DEBUG: Начало функции show_users")
-
         users = User.query.all()
-        print(f"DEBUG: Найдено пользователей: {len(users)}")
-
         user_balances = {}
         try:
             balances = UserBalance.query.all()
-            print(f"DEBUG: Найдено балансов: {len(balances)}")
             for balance in balances:
                 user_balances[balance.user_id] = balance.balance
-                print(f"DEBUG: Баланс для user_id {balance.user_id}: {balance.balance}")
         except Exception as e:
-            print(f"DEBUG: Ошибка при запросе балансов: {e}")
             for user in users:
                 user_balances[user.id] = 100
 
@@ -1368,35 +1374,6 @@ def admin_update_balance_simple(user_id):
     return redirect(url_for('view_user', user_id=user_id))
 
 
-@app.route('/debug/users')
-@login_required
-def debug_users():
-    if not current_user.is_admin:
-        return "Доступ запрещен"
-
-    try:
-        users = User.query.all()
-        result = "<h1>Диагностика пользователей</h1>"
-
-        for user in users:
-            balance = UserBalance.query.filter_by(user_id=user.id).first()
-            result += f"""
-            <div style="border: 1px solid #ccc; margin: 10px; padding: 10px;">
-                <p><strong>ID:</strong> {user.id}</p>
-                <p><strong>Имя:</strong> {user.name}</p>
-                <p><strong>Email:</strong> {user.email}</p>
-                <p><strong>Баланс объект:</strong> {balance}</p>
-                <p><strong>Баланс значение:</strong> {balance.balance if balance else 'Не найден'}</p>
-                <p><a href="/user/{user.id}">Перейти к профилю</a></p>
-            </div>
-            """
-
-        return result
-
-    except Exception as e:
-        return f"Ошибка: {e}"
-
-
 def init_user_balances():
     try:
         users_without_balance = db.session.query(User).filter(
@@ -1413,84 +1390,165 @@ def init_user_balances():
         db.session.rollback()
 
 
-# === ИЗМЕНЕНИЕ 3: Добавлен новый маршрут для страницы матча ===
+def get_team_form(team_name, limit=5):
+    matches = (Match.query.filter(
+        ((Match.home_team == team_name) | (Match.away_team == team_name)), Match.is_played == True).
+               order_by(Match.match_date.desc()).limit(limit).all())
+
+    form = []
+    for m in matches:
+        if m.home_team == team_name:
+            if m.home_score > m.away_score:
+                res = {'class': 'win', 'text': 'В'}
+            elif m.home_score < m.away_score:
+                res = {'class': 'loss', 'text': 'П'}
+            else:
+                res = {'class': 'draw', 'text': 'Н'}
+        else:
+            if m.away_score > m.home_score:
+                res = {'class': 'win', 'text': 'В'}
+            elif m.away_score < m.home_score:
+                res = {'class': 'loss', 'text': 'П'}
+            else:
+                res = {'class': 'draw', 'text': 'Н'}
+        form.append(res)
+
+    return form
+
+
 @app.route('/match/<int:match_id_db>')
 @login_required
 def match_details(match_id_db):
     match = db.session.get(Match, match_id_db)
+    if not match: return redirect(url_for('home'))
 
-    if not match:
-        flash('Матч не найден', 'danger')
-        return redirect(url_for('home'))
-
-    if not match.sstats_id:
-        flash('Детальная информация для этого матча пока недоступна', 'warning')
-        return redirect(url_for('home'))
+    home_form = get_team_form(match.home_team)
+    away_form = get_team_form(match.away_team)
+    chat_messages = MatchMessage.query.filter_by(match_id=match_id_db) \
+        .order_by(MatchMessage.created_at.asc()).all()
 
     api_data = {}
-    try:
-        # === ВЫЗОВ 1: Получаем основную информацию (события, составы) ===
-        url = f"https://api.sstats.net/games/{match.sstats_id}"
-        headers = {'apikey': '8ftkpzresyxo7dqz'}
-        response = requests.get(url, headers=headers, timeout=10)
-        response.raise_for_status()
+    if match.sstats_id:
+        try:
+            headers = {'apikey': '8ftkpzresyxo7dqz'}
+            resp = requests.get(f"https://api.sstats.net/games/{match.sstats_id}", headers=headers, timeout=5)
+            if resp.ok: api_data = resp.json().get('data', {})
 
-        data = response.json()
-        if data.get('status') == 'OK':
-            api_data = data.get('data', {})
-        else:
-            flash('Не удалось загрузить данные матча из API', 'danger')
-            return redirect(url_for('home'))
+            stats_resp = requests.post("https://api.sstats.net/games/query-games", headers=headers,
+                                       json={"Condition": f"Id={match.sstats_id}", "Format": "json",
+                                             "Fields": ["BallPossessionHome", "BallPossessionAway", "TotalShotsHome",
+                                                        "TotalShotsAway",
+                                                        "ShotsOnGoalHome", "ShotsOnGoalAway", "CornerKicksHome",
+                                                        "CornerKicksAway",
+                                                        "OffsidesHome", "OffsidesAway", "FoulsHome", "FoulsAway",
+                                                        "YellowCardsHome", "YellowCardsAway", "RedCardsHome",
+                                                        "RedCardsAway"]}, timeout=5)
+            if stats_resp.ok and stats_resp.json().get('data'):
+                api_data['statistics'] = stats_resp.json().get('data')[0]
+        except:
+            pass
 
-    except requests.exceptions.RequestException as e:
-        print(f"Ошибка API (GET) при запросе матча {match.sstats_id}: {e}")
-        flash(f'Ошибка при загрузке данных матча: {e}', 'danger')
+    return render_template('match_details.html', match=match, api_data=api_data,
+                           home_form=home_form, away_form=away_form,
+                           chat_messages=chat_messages, clubs=CLUBS_DATA)
+
+
+@app.route('/admin/sync_season', methods=['POST'])
+@login_required
+def sync_full_season_route():
+    if not current_user.is_admin:
+        flash('Только для администратора', 'danger')
         return redirect(url_for('home'))
 
-    # === ВЫЗОВ 2: Отдельно запрашиваем СТАТИСТИКУ ===
-    # (Мы делаем это, потому что /games/:id не отдает статистику,
-    # а /query-games не отдает события/составы)
     try:
-        stats_url = "https://api.sstats.net/games/query-games"
-        stats_headers = {'apikey': '8ftkpzresyxo7dqz', 'Content-Type': 'application/json'}
+        db.session.query(Match).delete()
+        db.session.commit()
 
-        # Поля статистики, которые мы используем в шаблоне
-        stats_fields = [
-            "Id", "BallPossessionHome", "BallPossessionAway", "TotalShotsHome", "TotalShotsAway",
-            "ShotsOnGoalHome", "ShotsOnGoalAway", "CornerKicksHome", "CornerKicksAway",
-            "OffsidesHome", "OffsidesAway", "FoulsHome", "FoulsAway",
-            "YellowCardsHome", "YellowCardsAway", "RedCardsHome", "RedCardsAway"
-        ]
-
-        stats_payload = {
-            "Condition": f"Id = {match.sstats_id}",
-            "Format": "json",
-            "Fields": stats_fields
+        url = "https://api.sstats.net/games/list?"
+        params = {
+            'leagueId': 235,
+            'year': 2025,
+            'format': 'json',
+            'limit': 1000
         }
+        headers = {'apikey': '8ftkpzresyxo7dqz'}
 
-        stats_response = requests.post(stats_url, headers=stats_headers, json=stats_payload, timeout=10)
-        stats_response.raise_for_status()
+        response = requests.get(url, params=params, headers=headers, timeout=60)
+        response.raise_for_status()
+        data = response.json()
+        matches_data = data.get('data', [])
+        matches_data.sort(key=lambda x: x['date'])
 
-        stats_json = stats_response.json()
+        added = 0
 
-        if stats_json.get('status') == 'OK':
-            stats_data_list = stats_json.get('data', [])
-            if stats_data_list:
-                # Внедряем объект статистики в наши основные данные
-                # api_data['statistics'] по умолчанию 'null', мы заменяем его объектом
-                api_data['statistics'] = stats_data_list[0]
+        for i, match_data in enumerate(matches_data):
+            try:
+                calculated_tour = (i // 8) + 1
 
-    except requests.exceptions.RequestException as e:
-        # Не страшно, если статистика не загрузилась, страница все равно откроется
-        print(f"Ошибка API (POST) при запросе статистики для {match.sstats_id}: {e}")
-        # api_data['statistics'] останется null, и шаблон покажет "Статистика недоступна"
+                home_team = map_team_name(match_data['homeTeam']['name'])
+                away_team = map_team_name(match_data['awayTeam']['name'])
 
-    return render_template(
-        'match_details.html',
-        match=match,
-        api_data=api_data,
-        clubs=CLUBS_DATA  # Для работы тем
-    )
+                match_date_str = match_data['date']
+                match_date_utc = datetime.fromisoformat(match_date_str.replace('Z', '+00:00'))
+                match_date_msk = match_date_utc.replace(tzinfo=None) + timedelta(hours=3)
+
+                status = match_data.get('status', 2)
+                is_played = status in [8, 9, 10]
+                is_started = status in [3, 4, 5, 6, 7, 11]
+                sstats_id = match_data.get('id')
+
+                new_match = Match(
+                    home_team=home_team,
+                    away_team=away_team,
+                    match_date=match_date_msk,
+                    home_score=match_data.get('homeResult'),
+                    away_score=match_data.get('awayResult'),
+                    is_played=is_played,
+                    is_started=is_started,
+                    tour_number=calculated_tour,
+                    sstats_id=sstats_id
+                )
+                db.session.add(new_match)
+                added += 1
+
+            except Exception as e:
+                print(f"Ошибка при обработке матча: {e}")
+                continue
+
+        db.session.commit()
+        try:
+            current_tour = (len([m for m in matches_data if m.get('status') == 8]) // 8) + 1
+            save_current_tour(min(current_tour, 30))
+        except:
+            pass
+
+        flash(f'База полностью обновлена! Загружено матчей: {added}. Туры пересчитаны.', 'success')
+
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Ошибка: {e}', 'danger')
+
+    return redirect(url_for('home'))
+
+
+@app.route('/match/<int:match_id>/send_message', methods=['POST'])
+@login_required
+def send_match_message(match_id):
+    text = request.form.get('message_text')
+
+    if text and len(text.strip()) > 0:
+        if len(text) > 500:
+            text = text[:500]
+
+        new_msg = MatchMessage(
+            match_id=match_id,
+            user_id=current_user.id,
+            text=text.strip()
+        )
+        db.session.add(new_msg)
+        db.session.commit()
+
+    return redirect(url_for('match_details', match_id_db=match_id))
 
 
 @app.route('/logout')
