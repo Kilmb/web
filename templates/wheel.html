@@ -7,6 +7,47 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/wheel.css') }}">
+    <style>
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        /* Динамические стили для секторов */
+        .wheel-section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            top: 0;
+            left: 50%;
+            transform-origin: left bottom;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .wheel-text {
+            position: absolute;
+            left: 70px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-weight: bold;
+            font-size: 14px;
+            color: #333;
+            text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+            white-space: nowrap;
+            transform-origin: center;
+            text-align: center;
+            width: 40px;
+        }
+    </style>
 </head>
 <body class="theme-{{ current_user.theme or 'default' }} themed-body"
     {% if current_user.theme =='club' and current_user.club %}
@@ -19,6 +60,10 @@
 
     <a href="{{ url_for('logout') }}" class="logout-link-fixed">Выйти</a>
     <a href="{{ url_for('home') }}" class="wheel-link-fixed">🏠 На главную</a>
+
+    <div class="debug-info" id="debugInfo">
+        Ожидание вращения...
+    </div>
 
     <div class="home-container">
         <div class="page-header">
@@ -38,16 +83,16 @@
             <p>Крутите колесо и выигрывайте монеты! Можно крутить 1 раз в 24 часа.</p>
 
             <div class="wheel-prizes">
-                <div class="prize-item">🎯 +50 монет (20%)</div>
-                <div class="prize-item">🎯 +100 монет (15%)</div>
-                <div class="prize-item">🎯 +250 монет (8%)</div>
-                <div class="prize-item">⚠️ -50 монет (15%)</div>
-                <div class="prize-item">⚠️ -100 монет (10%)</div>
-                <div class="prize-item">⚠️ -250 монет (5%)</div>
-                <div class="prize-item">🚀 x2 баланс (10%)</div>
-                <div class="prize-item">🚀 x3 баланс (5%)</div>
-                <div class="prize-item">📉 ÷2 баланс (8%)</div>
-                <div class="prize-item">🎉 ДЖЕКПОТ 10к (4%)</div>
+                <div class="prize-item">Сектор 0: +50 монет (20%)</div>
+                <div class="prize-item">Сектор 1: +100 монет (15%)</div>
+                <div class="prize-item">Сектор 2: +250 монет (8%)</div>
+                <div class="prize-item">Сектор 3: -50 монет (15%)</div>
+                <div class="prize-item">Сектор 4: -100 монет (10%)</div>
+                <div class="prize-item">Сектор 5: -250 монет (5%)</div>
+                <div class="prize-item">Сектор 6: x2 баланс (10%)</div>
+                <div class="prize-item">Сектор 7: x3 баланс (5%)</div>
+                <div class="prize-item">Сектор 8: ÷2 баланс (8%)</div>
+                <div class="prize-item">Сектор 9: ДЖЕКПОТ 10к (4%)</div>
             </div>
 
             <div class="wheel-container">
@@ -81,31 +126,48 @@
     const spinButton = document.getElementById('spinButton');
     const wheelResult = document.getElementById('wheelResult');
     const cooldownInfo = document.getElementById('cooldownInfo');
+    const debugInfo = document.getElementById('debugInfo');
 
     let isSpinning = false;
     let canSpin = true;
 
-    // Призы с индексами для подсветки
+    // Призы в правильном порядке (по часовой стрелке)
     const prizes = [
-        { text: '+50', color: '#FF6B6B', type: 'add', amount: 50, display: '+50 🪙' },
-        { text: '+100', color: '#4ECDC4', type: 'add', amount: 100, display: '+100 🪙' },
-        { text: '+250', color: '#45B7D1', type: 'add', amount: 250, display: '+250 🪙' },
-        { text: '-50', color: '#96CEB4', type: 'subtract', amount: 50, display: '-50 🪙' },
-        { text: '-100', color: '#FFEAA7', type: 'subtract', amount: 100, display: '-100 🪙' },
-        { text: '-250', color: '#DDA0DD', type: 'subtract', amount: 250, display: '-250 🪙' },
-        { text: 'x2', color: '#98D8C8', type: 'multiply', multiplier: 2, display: 'x2 БАЛАНС' },
-        { text: 'x3', color: '#F7DC6F', type: 'multiply', multiplier: 3, display: 'x3 БАЛАНС' },
-        { text: '÷2', color: '#BB8FCE', type: 'divide', divider: 2, display: '÷2 БАЛАНС' },
-        { text: '10K!', color: '#85C1E9', type: 'jackpot', amount: 10000, display: 'ДЖЕКПОТ!' }
+        { text: '+50', type: 'add', amount: 50, display: '+50 🪙', color: '#FF6B6B' },
+        { text: '+100', type: 'add', amount: 100, display: '+100 🪙', color: '#4ECDC4' },
+        { text: '+250', type: 'add', amount: 250, display: '+250 🪙', color: '#45B7D1' },
+        { text: '-50', type: 'subtract', amount: 50, display: '-50 🪙', color: '#96CEB4' },
+        { text: '-100', type: 'subtract', amount: 100, display: '-100 🪙', color: '#FFEAA7' },
+        { text: '-250', type: 'subtract', amount: 250, display: '-250 🪙', color: '#DDA0DD' },
+        { text: 'x2', type: 'multiply', multiplier: 2, display: 'x2 БАЛАНС', color: '#98D8C8' },
+        { text: 'x3', type: 'multiply', multiplier: 3, display: 'x3 БАЛАНС', color: '#F7DC6F' },
+        { text: '÷2', type: 'divide', divider: 2, display: '÷2 БАЛАНС', color: '#BB8FCE' },
+        { text: '10K!', type: 'jackpot', amount: 10000, display: 'ДЖЕКПОТ!', color: '#85C1E9' }
     ];
 
-    // Создаем секции колеса
+    // Создаем секции колеса через JavaScript
     function createWheelSections() {
+        wheel.innerHTML = '';
+
+        // Создаем градиент для колеса в правильном порядке
+        const gradientStops = prizes.map((prize, index) => {
+            const startAngle = index * 36;
+            const endAngle = (index + 1) * 36;
+            return `${prize.color} ${startAngle}deg ${endAngle}deg`;
+        }).join(', ');
+
+        wheel.style.background = `conic-gradient(${gradientStops})`;
+
+        // Создаем сектора с текстом в ТОЧНОМ порядке
         prizes.forEach((prize, index) => {
             const section = document.createElement('div');
             section.className = 'wheel-section';
-            section.style.transform = `rotate(${index * 36}deg)`;
-            section.dataset.index = index;
+            section.dataset.sector = index;
+            section.dataset.prize = prize.text;
+
+            // Устанавливаем поворот для сектора
+            const rotation = index * 36;
+            section.style.transform = `rotate(${rotation}deg)`;
 
             const text = document.createElement('div');
             text.className = 'wheel-text';
@@ -114,9 +176,52 @@
             text.style.fontWeight = 'bold';
             text.style.textShadow = '1px 1px 2px rgba(255,255,255,0.8)';
 
+            // Поворачиваем текст чтобы он был читаемым
+            const textRotation = 90 - (index * 36);
+            text.style.transform = `translateY(-50%) rotate(${textRotation}deg)`;
+
             section.appendChild(text);
             wheel.appendChild(section);
         });
+
+        console.log('Колесо создано. Порядок секторов:');
+        prizes.forEach((p, i) => {
+            console.log(`Сектор ${i}: ${p.text} (цвет: ${p.color})`);
+        });
+    }
+
+    // Функция для вычисления угла остановки для сектора
+    function calculateStopAngle(sector) {
+        // СМЕЩЕНИЕ: стрелка указывает на предыдущий сектор
+        // Поэтому добавляем 1 к сектору чтобы компенсировать
+        const adjustedSector = (sector + 1) % 10;
+
+        // Центр скорректированного сектора
+        const sectorCenterAngle = (adjustedSector * 36) + 18;
+        const fullRotations = 5 * 360;
+        const stopAngle = fullRotations - sectorCenterAngle;
+
+        debugInfo.innerHTML = `
+            Нужный сектор: ${sector} (${prizes[sector].text})<br>
+            Скорректированный: ${adjustedSector} (${prizes[adjustedSector].text})<br>
+            Центр сектора: ${sectorCenterAngle}°<br>
+            Стоп угол: ${stopAngle}°
+        `;
+
+        console.log(`Сектор ${sector} -> ${adjustedSector}: центр=${sectorCenterAngle}°, стоп=${stopAngle}°`);
+        return stopAngle;
+    }
+
+    // Функция для проверки расположения секторов
+    function checkWheelLayout() {
+        console.log('=== ПРОВЕРКА РАСПОЛОЖЕНИЯ СЕКТОРОВ ===');
+        const sections = document.querySelectorAll('.wheel-section');
+
+        sections.forEach((section, index) => {
+            const angle = index * 36;
+            console.log(`Сектор ${index} (${prizes[index].text}): угол=${angle}°`);
+        });
+        console.log('=== КОНЕЦ ПРОВЕРКИ ===');
     }
 
     // Функция для создания конфетти
@@ -124,7 +229,6 @@
         const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
         const container = document.querySelector('.wheel-container');
 
-        // Очищаем старые конфетти
         const oldConfetti = container.querySelectorAll('.confetti');
         oldConfetti.forEach(confetti => confetti.remove());
 
@@ -139,7 +243,6 @@
 
             container.appendChild(confetti);
 
-            // Удаляем конфетти после анимации
             setTimeout(() => {
                 if (confetti.parentNode) {
                     confetti.remove();
@@ -150,12 +253,6 @@
 
     // Функция для отображения результата в центре
     function showInnerResult(prize, isJackpot = false) {
-        const prizeData = prizes.find(p => p.type === prize.type &&
-            (p.amount === prize.amount || p.multiplier === prize.multiplier || p.divider === prize.divider));
-
-        if (!prizeData) return;
-
-        // Настраиваем стиль в зависимости от типа приза
         if (isJackpot) {
             wheelInner.className = 'wheel-inner jackpot-inner winner-animation';
             createConfetti();
@@ -168,16 +265,13 @@
             wheelInner.className = 'wheel-inner winner-animation';
         }
 
-        // Устанавливаем текст
         wheelResultInner.innerHTML = `
-            <span class="wheel-result-large">${prizeData.display}</span>
+            <span class="wheel-result-large">${prize.display}</span>
             <span class="wheel-result-small">${getPrizeDescription(prize)}</span>
         `;
 
-        // Показываем результат
         wheelInner.style.display = 'flex';
 
-        // Скрываем через 5 секунд
         setTimeout(() => {
             wheelInner.style.display = 'none';
         }, 5000);
@@ -196,20 +290,21 @@
     }
 
     // Функция для подсветки сектора
-    function highlightSection(sectionIndex, isJackpot = false) {
+    function highlightSection(sector) {
         const sections = document.querySelectorAll('.wheel-section');
         sections.forEach(section => section.classList.remove('highlight'));
 
-        const targetSection = sections[sectionIndex];
+        const targetSection = Array.from(sections).find(section =>
+            parseInt(section.dataset.sector) === sector
+        );
+
         if (targetSection) {
             targetSection.classList.add('highlight');
 
-            // Добавляем эффект искр
             const sparkle = document.createElement('div');
             sparkle.className = 'wheel-sparkle';
             targetSection.appendChild(sparkle);
 
-            // Убираем подсветку через 3 секунды
             setTimeout(() => {
                 targetSection.classList.remove('highlight');
                 if (sparkle.parentNode) {
@@ -219,41 +314,10 @@
         }
     }
 
-    // Функция для вычисления выпавшего сектора (ИСПРАВЛЕННАЯ)
-    function calculateWinningSection(degrees) {
-        // Нормализуем градусы (0-360)
-        const normalizedDegrees = degrees % 360;
-
-        // Учитываем, что указатель находится на 0° (вверху)
-        // Сектора расположены по часовой стрелке
-        const sectionSize = 36; // 360° / 10 секторов
-
-        // Вычисляем индекс сектора (0-9)
-        // Добавляем половину сектора для центрирования и вычитаем из 360
-        let winningAngle = (360 - normalizedDegrees + (sectionSize / 2)) % 360;
-
-        const sectionIndex = Math.floor(winningAngle / sectionSize) % 10;
-
-        console.log('Расчет сектора:', {
-            inputDegrees: degrees,
-            normalizedDegrees,
-            winningAngle,
-            sectionIndex,
-            prize: prizes[sectionIndex]?.text
-        });
-
-        return sectionIndex;
-    }
-
     // Проверяем статус колеса
     function checkWheelStatus() {
         fetch('/api/wheel/status')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 canSpin = data.can_spin;
 
@@ -267,15 +331,12 @@
                     if (data.next_spin_time) {
                         const nextSpin = new Date(data.next_spin_time * 1000);
                         cooldownInfo.textContent = `Следующее вращение: ${nextSpin.toLocaleString()}`;
-                    } else {
-                        cooldownInfo.textContent = 'Не удалось получить время следующего вращения';
                     }
                 }
             })
             .catch(error => {
                 console.error('Ошибка при проверке статуса:', error);
                 cooldownInfo.textContent = 'Ошибка загрузки статуса';
-                // Разрешаем вращение при ошибке
                 canSpin = true;
                 spinButton.disabled = false;
             });
@@ -289,88 +350,63 @@
         spinButton.disabled = true;
         spinButton.textContent = 'Крутится...';
         wheelResult.textContent = 'Колесо вращается...';
-        wheelInner.style.display = 'none'; // Скрываем предыдущий результат
+        wheelInner.style.display = 'none';
 
-        // Случайный угол вращения (минимум 5 полных оборотов)
-        const spins = 5 + Math.random() * 3;
-        const randomBonus = Math.random() * 360;
-        const totalDegrees = spins * 360 + randomBonus;
-
-        // Применяем вращение
-        wheel.style.transition = 'transform 4s cubic-bezier(0.2, 0.8, 0.3, 1)';
-        wheel.style.transform = `rotate(${totalDegrees}deg)`;
-
-        // Отправляем запрос на сервер
+        // Сначала получаем результат с сервера
         fetch('/api/wheel/spin', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             }
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            // Вычисляем выпавший сектор после вращения
-            const winningSection = calculateWinningSection(totalDegrees);
-            const isJackpot = data.prize && data.prize.type === 'jackpot';
+            if (data.success) {
+                const prize = data.prize;
+                const sector = data.sector;
+                const isJackpot = prize.type === 'jackpot';
 
-            console.log('Вращение завершено:', {
-                totalDegrees,
-                winningSection,
-                prizeFromServer: data.prize,
-                prizeFromWheel: prizes[winningSection]
-            });
+                console.log('СЕРВЕР ВЕРНУЛ сектор:', sector, 'приз:', prize.text);
+                console.log('КЛИЕНТ ОЖИДАЕТ:', prizes[sector].text);
 
-            // Подсвечиваем правильный сектор через 3.5 секунды
-            setTimeout(() => {
-                highlightSection(winningSection, isJackpot);
-
-                // Показываем результат в центре через 3.7 секунды
-                setTimeout(() => {
-                    if (data.success && data.prize) {
-                        showInnerResult(data.prize, isJackpot);
-                    }
-                }, 200);
-            }, 3500);
-
-            setTimeout(() => {
-                isSpinning = false;
-
-                if (data.success) {
-                    const wheelPrize = prizes[winningSection];
-                    wheelResult.innerHTML = `
-                        <strong>🎊 Результат:</strong> ${data.message}<br>
-                        <strong>💰 Баланс:</strong> ${data.old_balance} → ${data.new_balance} 🪙<br>
-                        <small>Выпал сектор: ${winningSection + 1} (${wheelPrize?.text})</small>
-                    `;
-
-                    // Проверяем соответствие призов
-                    if (data.prize && wheelPrize) {
-                        const serverPrizeText = data.prize.type === 'add' ? `+${data.prize.amount}` :
-                                              data.prize.type === 'subtract' ? `-${data.prize.amount}` :
-                                              data.prize.type === 'multiply' ? `x${data.prize.multiplier}` :
-                                              data.prize.type === 'divide' ? `÷${data.prize.divider}` :
-                                              data.prize.type === 'jackpot' ? '10K!' : '?';
-
-                        if (serverPrizeText !== wheelPrize.text) {
-                            console.warn('Несоответствие призов:', {
-                                server: serverPrizeText,
-                                wheel: wheelPrize.text
-                            });
-                        }
-                    }
-
-                    // Обновляем статус
-                    setTimeout(checkWheelStatus, 2000);
-                } else {
-                    wheelResult.textContent = data.message;
-                    checkWheelStatus();
+                // Проверяем соответствие
+                if (prize.text !== prizes[sector].text) {
+                    console.error('НЕСОВПАДЕНИЕ! Серверный приз не совпадает с клиентским');
                 }
-            }, 4000);
+
+                // Сбрасываем трансформацию
+                wheel.style.transition = 'none';
+                wheel.style.transform = 'rotate(0deg)';
+
+                // Даем время на сброс
+                setTimeout(() => {
+                    const stopAngle = calculateStopAngle(sector);
+
+                    // Запускаем анимацию
+                    wheel.style.transition = 'transform 4s cubic-bezier(0.2, 0.8, 0.3, 1)';
+                    wheel.style.transform = `rotate(${stopAngle}deg)`;
+
+                    // После остановки
+                    setTimeout(() => {
+                        highlightSection(sector);
+                        showInnerResult(prizes[sector], isJackpot);
+
+                        wheelResult.innerHTML = `
+                            <strong>🎊 Результат:</strong> ${data.message}<br>
+                            <strong>💰 Баланс:</strong> ${data.old_balance} → ${data.new_balance} 🪙<br>
+                            <small>Выпал сектор: ${sector} (${prizes[sector].text})</small>
+                        `;
+
+                        isSpinning = false;
+                        setTimeout(checkWheelStatus, 2000);
+                    }, 4000);
+                }, 50);
+
+            } else {
+                wheelResult.textContent = data.message;
+                isSpinning = false;
+                checkWheelStatus();
+            }
         })
         .catch(error => {
             console.error('Ошибка при вращении:', error);
@@ -383,10 +419,10 @@
     // Инициализация
     function initWheel() {
         createWheelSections();
+        checkWheelLayout();
+
         checkWheelStatus();
         spinButton.addEventListener('click', spinWheel);
-
-        // Скрываем внутренний круг по умолчанию
         wheelInner.style.display = 'none';
     }
 
