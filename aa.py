@@ -15,7 +15,6 @@ import threading
 import time
 from clubs import CLUBS_DATA, RPL_CLUBS
 import random
-import translators as ts
 
 # Инициализация Flask-приложения
 app = Flask(__name__)
@@ -205,32 +204,6 @@ class Bet(db.Model):
     match = db.relationship('Match')
 
 
-class Player(db.Model):
-    __tablename__ = 'players'
-
-    id = db.Column(db.Integer, primary_key=True) # ID из SStats API
-    name = db.Column(db.String(100), nullable=False) # Русское имя
-    team_id = db.Column(db.Integer, nullable=True)   # ID команды (необязательно, но полезно)
-
-    def __repr__(self):
-        return f"Player({self.id}, '{self.name}')"
-
-
-class MatchEvent(db.Model):
-    __tablename__ = 'match_events'
-
-    id = db.Column(db.Integer, primary_key=True)
-    match_id = db.Column(db.Integer, db.ForeignKey('matches.id'), nullable=False)
-    team_id = db.Column(db.Integer)  # ID команды
-    minute = db.Column(db.Integer)   # Минута
-    type = db.Column(db.Integer)     # 1=Гол, 2=ЖК, 3=Замена
-    player_name = db.Column(db.String(100)) # Имя игрока (уже русское)
-    extra_info = db.Column(db.String(100))  # Ассистент или ушедший игрок
-
-    def __repr__(self):
-        return f"Event({self.minute}', {self.player_name})"
-
-
 def map_team_name(api_name):
     mapping = {
         "CSKA Moscow": "ЦСКА",
@@ -251,35 +224,6 @@ def map_team_name(api_name):
         "FC Sochi": "Сочи"
     }
     return mapping.get(api_name, api_name)
-
-
-names_cache = {}
-
-
-def transliterate_name(text):
-    """
-    Перевод через библиотеку translators (использует онлайн-сервисы).
-    """
-    if not text: return ""
-
-    # Если уже переводили - берем из памяти
-    if text in names_cache:
-        return names_cache[text]
-
-    # Если уже кириллица - возвращаем
-    if any('\u0400' <= char <= '\u04FF' for char in text):
-        return text
-
-    try:
-        # Используем движок 'google' или 'bing' (bing часто быстрее для бесплатных запросов)
-        # Можно попробовать translator='yandex', но он иногда требует капчу
-        rus_text = ts.translate_text(text, translator='google', from_language='en', to_language='ru')
-
-        names_cache[text] = rus_text
-        return rus_text
-    except Exception as e:
-        print(f"Ошибка API перевода для {text}: {e}")
-        return text
 
 
 # Загружает пользователя
@@ -1015,41 +959,43 @@ def wheel_spin():
 
         if wheel_spin_record and wheel_spin_record.last_spin:
             time_since_last_spin = datetime.now() - wheel_spin_record.last_spin
-
-            if time_since_last_spin.total_seconds() < 24 * 60 * 60:  # 24 часа
+            if time_since_last_spin.total_seconds() < 24 * 60 * 60:
                 hours_left = 24 - (time_since_last_spin.total_seconds() // 3600)
                 return jsonify({
                     'success': False,
                     'message': f'Вы можете крутить колесо только раз в 24 часа. Попробуйте через {int(hours_left)} часов.'
                 })
 
+        # Призы в ТОЧНОМ порядке как на клиенте
         prizes = [
-            {'type': 'add', 'amount': 50, 'probability': 20},  # 20%
-            {'type': 'add', 'amount': 100, 'probability': 15},  # 15%
-            {'type': 'add', 'amount': 250, 'probability': 8},  # 8%
-            {'type': 'subtract', 'amount': 50, 'probability': 15},  # 15%
-            {'type': 'subtract', 'amount': 100, 'probability': 10},  # 10%
-            {'type': 'subtract', 'amount': 250, 'probability': 5},  # 5%
-            {'type': 'multiply', 'multiplier': 2, 'probability': 10},  # 10%
-            {'type': 'multiply', 'multiplier': 3, 'probability': 5},  # 5%
-            {'type': 'divide', 'divider': 2, 'probability': 8},  # 8%
-            {'type': 'jackpot', 'amount': 10000, 'probability': 4}
+            {'type': 'add', 'amount': 50, 'probability': 20, 'text': '+50', 'display': '+50'},
+            {'type': 'add', 'amount': 100, 'probability': 15, 'text': '+100', 'display': '+100'},
+            {'type': 'add', 'amount': 250, 'probability': 8, 'text': '+250', 'display': '+250'},
+            {'type': 'subtract', 'amount': 50, 'probability': 15, 'text': '-50', 'display': '-50'},
+            {'type': 'subtract', 'amount': 100, 'probability': 10, 'text': '-100', 'display': '-100'},
+            {'type': 'subtract', 'amount': 250, 'probability': 5, 'text': '-250', 'display': '-250'},
+            {'type': 'multiply', 'multiplier': 2, 'probability': 10, 'text': 'x2', 'display': 'x2'},
+            {'type': 'multiply', 'multiplier': 3, 'probability': 5, 'text': 'x3', 'display': 'x3'},
+            {'type': 'divide', 'divider': 2, 'probability': 8, 'text': '÷2', 'display': '÷2'},
+            {'type': 'jackpot', 'amount': 10000, 'probability': 4, 'text': '10K!', 'display': '10K!'}
         ]
 
-        # Выбираем приз на основе вероятностей
         total_probability = sum(prize['probability'] for prize in prizes)
         random_value = random.uniform(0, total_probability)
 
         current_probability = 0
         selected_prize = None
+        selected_sector = 0
 
-        for prize in prizes:
+        for i, prize in enumerate(prizes):
             current_probability += prize['probability']
             if random_value <= current_probability:
                 selected_prize = prize
+                selected_sector = i
                 break
 
-        # Получаем баланс пользователя
+        print(f"СЕРВЕР: выбран сектор {selected_sector} - {selected_prize['text']}")
+
         user_balance = UserBalance.query.filter_by(user_id=current_user.id).first()
 
         if not user_balance:
@@ -1059,30 +1005,24 @@ def wheel_spin():
         old_balance = user_balance.balance
         new_balance = old_balance
 
-        # Применяем приз
         if selected_prize['type'] == 'add':
             new_balance = old_balance + selected_prize['amount']
             message = f"+{selected_prize['amount']} монет!"
-
         elif selected_prize['type'] == 'subtract':
             new_balance = max(0, old_balance - selected_prize['amount'])
             message = f"-{selected_prize['amount']} монет"
-
         elif selected_prize['type'] == 'multiply':
             new_balance = old_balance * selected_prize['multiplier']
             message = f"x{selected_prize['multiplier']} к балансу!"
-
         elif selected_prize['type'] == 'divide':
             new_balance = max(0, old_balance // selected_prize['divider'])
             message = f"÷{selected_prize['divider']} к балансу"
-
         elif selected_prize['type'] == 'jackpot':
             new_balance = old_balance + selected_prize['amount']
-            message = f"ДЖЕКПОТ! +{selected_prize['amount']} монет! 🎉"
+            message = f"ДЖЕКПОТ! +{selected_prize['amount']} монет!"
 
         user_balance.balance = new_balance
 
-        # Обновляем запись о вращении
         if not wheel_spin_record:
             wheel_spin_record = WheelSpin(user_id=current_user.id)
             db.session.add(wheel_spin_record)
@@ -1091,9 +1031,11 @@ def wheel_spin():
         wheel_spin_record.spins_count = (wheel_spin_record.spins_count or 0) + 1
 
         db.session.commit()
+
         return jsonify({
             'success': True,
             'prize': selected_prize,
+            'sector': selected_sector,
             'message': message,
             'old_balance': old_balance,
             'new_balance': new_balance,
@@ -1447,18 +1389,28 @@ def init_user_balances():
 
 
 def get_team_form(team_name, limit=5):
-    matches = Match.query.filter(((Match.home_team == team_name) | (Match.away_team == team_name)),
-                                 Match.is_played == True).order_by(Match.match_date.desc()).limit(limit).all()
+    matches = (Match.query.filter(
+        ((Match.home_team == team_name) | (Match.away_team == team_name)), Match.is_played == True).
+               order_by(Match.match_date.desc()).limit(limit).all())
+
     form = []
     for m in matches:
         if m.home_team == team_name:
-            form.append(
-                {'class': 'win' if m.home_score > m.away_score else ('loss' if m.home_score < m.away_score else 'draw'),
-                 'text': 'В' if m.home_score > m.away_score else ('П' if m.home_score < m.away_score else 'Н')})
+            if m.home_score > m.away_score:
+                res = {'class': 'win', 'text': 'В'}
+            elif m.home_score < m.away_score:
+                res = {'class': 'loss', 'text': 'П'}
+            else:
+                res = {'class': 'draw', 'text': 'Н'}
         else:
-            form.append(
-                {'class': 'win' if m.away_score > m.home_score else ('loss' if m.away_score < m.home_score else 'draw'),
-                 'text': 'В' if m.away_score > m.home_score else ('П' if m.away_score < m.home_score else 'Н')})
+            if m.away_score > m.home_score:
+                res = {'class': 'win', 'text': 'В'}
+            elif m.away_score < m.home_score:
+                res = {'class': 'loss', 'text': 'П'}
+            else:
+                res = {'class': 'draw', 'text': 'Н'}
+        form.append(res)
+
     return form
 
 
@@ -1470,97 +1422,29 @@ def match_details(match_id_db):
 
     home_form = get_team_form(match.home_team)
     away_form = get_team_form(match.away_team)
-    chat_messages = MatchMessage.query.filter_by(match_id=match_id_db).order_by(MatchMessage.created_at.asc()).all()
+    chat_messages = MatchMessage.query.filter_by(match_id=match_id_db) \
+        .order_by(MatchMessage.created_at.asc()).all()
 
     api_data = {}
-
     if match.sstats_id:
         try:
             headers = {'apikey': '8ftkpzresyxo7dqz'}
-            url_main = f"https://api.sstats.net/Games/{match.sstats_id}"
-            resp = requests.get(url_main, headers=headers, timeout=15)
+            resp = requests.get(f"https://api.sstats.net/games/{match.sstats_id}", headers=headers, timeout=5)
+            if resp.ok: api_data = resp.json().get('data', {})
 
-            if resp.ok:
-                json_resp = resp.json()
-                api_data = json_resp.get('data', {}) if isinstance(json_resp, dict) else {}
-
-                # 1. Перевод тренеров
-                if api_data.get('lineups'):
-                    for side in ['homeCoach', 'awayCoach']:
-                        if api_data['lineups'].get(side):
-                            c_name = api_data['lineups'][side].get('name')
-                            api_data['lineups'][side]['name'] = transliterate_name(c_name)
-
-                # === СБОР ТОЛЬКО ЗАМЕН (ОСТАЛЬНОЕ ИГНОРИРУЕМ) ===
-                player_events_data = {}
-
-                events = api_data.get('events')
-                if events and isinstance(events, list):
-                    for e in events:
-                        if not isinstance(e, dict): continue
-
-                        minute = e.get('elapsed', 0)
-                        etype = e.get('type')  # 3 = Замена
-
-                        # Обрабатываем ТОЛЬКО замены
-                        if etype == 3:
-                            pid_raw = e.get('player', {}).get('id') if e.get('player') else None
-                            aid_raw = e.get('assistPlayer', {}).get('id') if e.get('assistPlayer') else None
-
-                            pid = str(pid_raw) if pid_raw is not None else None
-                            aid = str(aid_raw) if aid_raw is not None else None
-
-                            # Тот кто ВЫХОДИТ (Запасной) -> ВВЕРХ (Зеленая)
-                            if pid:
-                                if pid not in player_events_data: player_events_data[pid] = []
-                                player_events_data[pid].append({'type': 'sub_out', 'min': minute})
-
-                            # Тот кто УХОДИТ (Старт) -> ВНИЗ (Красная)
-                            if aid:
-                                if aid not in player_events_data: player_events_data[aid] = []
-                                player_events_data[aid].append({'type': 'sub_in', 'min': minute})
-
-                # 3. Обработка игроков
-                lineups = api_data.get('lineupPlayers')
-                if lineups and isinstance(lineups, list):
-                    pos_weights = {'G': 1, 'D': 2, 'M': 3, 'F': 4}
-                    for p in lineups:
-                        if isinstance(p, dict):
-                            if p.get('playerName'): p['playerName'] = transliterate_name(p['playerName'])
-
-                            p_id = str(p.get('playerId'))
-
-                            # Добавляем ТОЛЬКО замены
-                            p['events_list'] = player_events_data.get(p_id, [])
-
-                            pos_char = str(p.get('position', 'M'))
-                            p['sort_weight'] = pos_weights.get(pos_char, 3)
-                            p['is_bench'] = 0 if p.get('startXI') else 1
-
-                    lineups.sort(key=lambda x: (x.get('is_bench', 1), x.get('sort_weight', 5)))
-
-            # Статистика
-            stats_url = "https://api.sstats.net/games/query-games"
-            stats_payload = {"Condition": f"Id = {match.sstats_id}", "Format": "json",
-                             "Fields": ["BallPossessionHome", "BallPossessionAway", "TotalShotsHome", "TotalShotsAway",
-                                        "ShotsOnGoalHome", "ShotsOnGoalAway", "CornerKicksHome", "CornerKicksAway",
-                                        "OffsidesHome", "OffsidesAway", "FoulsHome", "FoulsAway", "YellowCardsHome",
-                                        "YellowCardsAway", "RedCardsHome", "RedCardsAway", "ExpectedGoalsHome",
-                                        "ExpectedGoalsAway"]}
-            try:
-                stats_resp = requests.post(stats_url, headers=headers, json=stats_payload, timeout=5)
-                if stats_resp.ok:
-                    stats_json = stats_resp.json()
-                    if isinstance(stats_json, dict) and isinstance(stats_json.get('data'), list) and len(
-                            stats_json['data']) > 0:
-                        s_raw = stats_json['data'][0]
-                        if 'statistics' not in api_data: api_data['statistics'] = {}
-                        for key, val in s_raw.items(): api_data['statistics'][key[0].lower() + key[1:]] = val
-            except:
-                pass
-
-        except Exception as e:
-            print(f"API Error: {e}")
+            stats_resp = requests.post("https://api.sstats.net/games/query-games", headers=headers,
+                                       json={"Condition": f"Id={match.sstats_id}", "Format": "json",
+                                             "Fields": ["BallPossessionHome", "BallPossessionAway", "TotalShotsHome",
+                                                        "TotalShotsAway",
+                                                        "ShotsOnGoalHome", "ShotsOnGoalAway", "CornerKicksHome",
+                                                        "CornerKicksAway",
+                                                        "OffsidesHome", "OffsidesAway", "FoulsHome", "FoulsAway",
+                                                        "YellowCardsHome", "YellowCardsAway", "RedCardsHome",
+                                                        "RedCardsAway"]}, timeout=5)
+            if stats_resp.ok and stats_resp.json().get('data'):
+                api_data['statistics'] = stats_resp.json().get('data')[0]
+        except:
+            pass
 
     return render_template('match_details.html', match=match, api_data=api_data,
                            home_form=home_form, away_form=away_form,
