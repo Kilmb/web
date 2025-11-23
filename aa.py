@@ -1491,53 +1491,34 @@ def match_details(match_id_db):
                             c_name = api_data['lineups'][side].get('name')
                             api_data['lineups'][side]['name'] = transliterate_name(c_name)
 
-                # === КАРТА СОБЫТИЙ ДЛЯ ИГРОКОВ ===
-                # ID -> Список объектов событий (не HTML, а данные)
+                # === СБОР ТОЛЬКО ЗАМЕН (ОСТАЛЬНОЕ ИГНОРИРУЕМ) ===
                 player_events_data = {}
 
-                # 2. Обработка событий (Наполняем карту данными)
                 events = api_data.get('events')
                 if events and isinstance(events, list):
                     for e in events:
                         if not isinstance(e, dict): continue
 
                         minute = e.get('elapsed', 0)
-                        etype = e.get('type')  # 1=Goal, 2=Card, 3=Sub
-                        ename = str(e.get('name', '')).lower()
+                        etype = e.get('type')  # 3 = Замена
 
-                        # Определяем тип события для шаблона
-                        event_obj = None
-
-                        if etype == 1:
-                            event_obj = {'type': 'goal', 'min': minute}
-                        elif etype == 2:
-                            if 'yellow' in ename or 'желтая' in ename:
-                                event_obj = {'type': 'yellow', 'min': minute}
-                            elif 'red' in ename or 'красная' in ename:
-                                event_obj = {'type': 'red', 'min': minute}
-                        elif etype == 4:
-                            event_obj = {'type': 'red', 'min': minute}
-
-                        # ID игроков (Приводим к строке)
-                        pid = str(e.get('player', {}).get('id')) if e.get('player') else None
-                        aid = str(e.get('assistPlayer', {}).get('id')) if e.get('assistPlayer') else None
-
-                        # --- ЗАМЕНЫ (СТРЕЛКИ) ---
+                        # Обрабатываем ТОЛЬКО замены
                         if etype == 3:
-                            # PID = Игрок выходит (Запасной) -> ВВЕРХ (sub_in)
-                            if pid and pid != 'None':
+                            pid_raw = e.get('player', {}).get('id') if e.get('player') else None
+                            aid_raw = e.get('assistPlayer', {}).get('id') if e.get('assistPlayer') else None
+
+                            pid = str(pid_raw) if pid_raw is not None else None
+                            aid = str(aid_raw) if aid_raw is not None else None
+
+                            # Тот кто ВЫХОДИТ (Запасной) -> ВВЕРХ (Зеленая)
+                            if pid:
                                 if pid not in player_events_data: player_events_data[pid] = []
                                 player_events_data[pid].append({'type': 'sub_out', 'min': minute})
 
-                            # AID = Игрок уходит (Стартовый) -> ВНИЗ (sub_out)
-                            if aid and aid != 'None':
+                            # Тот кто УХОДИТ (Старт) -> ВНИЗ (Красная)
+                            if aid:
                                 if aid not in player_events_data: player_events_data[aid] = []
                                 player_events_data[aid].append({'type': 'sub_in', 'min': minute})
-
-                        # --- ГОЛЫ И КАРТОЧКИ ---
-                        elif pid and pid != 'None' and event_obj:
-                            if pid not in player_events_data: player_events_data[pid] = []
-                            player_events_data[pid].append(event_obj)
 
                 # 3. Обработка игроков
                 lineups = api_data.get('lineupPlayers')
@@ -1549,7 +1530,7 @@ def match_details(match_id_db):
 
                             p_id = str(p.get('playerId'))
 
-                            # Внедряем СПИСОК событий, а не HTML
+                            # Добавляем ТОЛЬКО замены
                             p['events_list'] = player_events_data.get(p_id, [])
 
                             pos_char = str(p.get('position', 'M'))
