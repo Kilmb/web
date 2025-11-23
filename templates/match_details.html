@@ -15,18 +15,14 @@
         .match-header-card { background: var(--card-bg); padding: 30px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); text-align: center; margin-bottom: 30px; }
         .match-score { font-size: 4em; font-weight: 800; color: var(--text-color); margin: 15px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
 
-        /* Статусы */
         .match-status-badge { display: inline-block; padding: 8px 20px; border-radius: 30px; font-weight: bold; font-size: 1.2em; text-transform: uppercase; }
         .status-live { background: #fff3cd; color: #ff6b00; border: 2px solid #ff6b00; animation: pulse 2s infinite; }
         .status-finished { background: #d4edda; color: #28a745; border: 2px solid #28a745; }
         .status-time { background: rgba(0,0,0,0.05); color: #007bff; border: 1px solid #007bff; }
         @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-        /* ФОРМА (Горизонтально) */
-        .form-container {
-            display: flex; flex-direction: row !important; justify-content: center; align-items: center;
-            gap: 80px; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);
-        }
+        /* ФОРМА */
+        .form-container { display: flex; flex-direction: row !important; justify-content: center; align-items: center; gap: 80px; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); }
         .team-form-block { text-align: center; display: flex; flex-direction: column; align-items: center; }
         .team-name-small { font-weight: bold; color: var(--heading-color); margin-bottom: 10px; font-size: 1.2em; }
         .form-badges { display: flex; flex-direction: row; gap: 5px; }
@@ -47,20 +43,13 @@
         .stat-table { width: 100%; border-collapse: collapse; font-size: 0.85em; table-layout: auto; }
         .stat-table th { background: rgba(0,0,0,0.03); padding: 10px 4px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-color); font-weight: bold; }
         .stat-table td { padding: 8px 4px; text-align: center; border-bottom: 1px solid var(--border-color); }
-        .stat-table tr:hover { background: rgba(0,0,0,0.03); }
 
         .p-name { text-align: left; width: auto; min-width: 140px; font-weight: 600; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
         .p-pos { font-size: 0.75em; color: #555; display: inline-block; min-width: 35px; height: 22px; line-height: 22px; font-weight: bold; background: rgba(0,0,0,0.1); border-radius: 6px; text-align: center; flex-shrink: 0; }
 
-        /* === СТИЛИ ЗНАЧКОВ СОБЫТИЙ === */
-        .ev-badge { margin-left: 4px; font-weight: bold; white-space: nowrap; }
-        .ev-goal { color: #000; }
-        .ev-yellow { color: #d4ac0d; }
-        .ev-red { color: #dc3545; }
-
-        /* СТРЕЛКИ ЗАМЕН */
-        .ev-sub-out { color: #28a745; } /* ВНИЗ (Красная, ушел) */
-        .ev-sub-in { color: #dc3545; }  /* ВВЕРХ (Зеленая, вышел) */
+        /* СТРЕЛКИ (ИСПРАВЛЕНО: sub-out = Вниз, sub-in = Вверх) */
+        .sub-in { color: #28a745; font-weight: bold; margin-left: 5px; } /* Green Up */
+        .sub-out { color: #dc3545; font-weight: bold; margin-left: 5px; } /* Red Down */
 
         .rating-badge { padding: 3px 6px; border-radius: 6px; color: white; font-weight: bold; font-size: 0.9em; }
         .rating-high { background: #28a745; } .rating-mid { background: #ffc107; color: #333; } .rating-low { background: #dc3545; }
@@ -161,7 +150,18 @@
                         {% set pos_map = {'G': 'ВР', 'D': 'ЗАЩ', 'M': 'ПЗ', 'F': 'НАП'} %}
                         <div class="section-divider">{{ title }}</div>
                         <table class="stat-table">
-                            <thead><tr><th class="p-name">Игрок</th><th>Рейт</th><th>Г</th><th>А</th><th>Уд</th><th>Пас</th><th>Отб</th></tr></thead>
+                            <thead>
+                                <tr>
+                                    <th class="p-name">Игрок</th>
+                                    <th>Рейт</th>
+                                    <th>Г</th>
+                                    <th>А</th>
+                                    <th>Уд</th>
+                                    <th>Пас</th>
+                                    <th>Отб</th>
+                                    <th>ЖК</th> <th>КК</th>
+                                </tr>
+                            </thead>
                             <tbody>
                                 {% for p in players %}
                                     {% set stat = api_data.playerStats|selectattr('playerId', 'equalto', p.playerId)|first %}
@@ -172,17 +172,8 @@
 
                                             {% if p.events_list %}
                                                 {% for ev in p.events_list %}
-                                                    {% if ev.type == 'goal' %}
-                                                        <span class="ev-badge ev-goal">⚽ {{ ev.min }}'</span>
-                                                    {% elif ev.type == 'yellow' %}
-                                                        <span class="ev-badge ev-yellow">▮ {{ ev.min }}'</span>
-                                                    {% elif ev.type == 'red' %}
-                                                        <span class="ev-badge ev-red">▮ {{ ev.min }}'</span>
-                                                    {% elif ev.type == 'sub_in' %}
-                                                        <span class="ev-badge ev-sub-out">⬆ {{ ev.min }}'</span>
-                                                    {% elif ev.type == 'sub_out' %}
-                                                        <span class="ev-badge ev-sub-in">⬇ {{ ev.min }}'</span>
-                                                    {% endif %}
+                                                    {% if ev.type == 'sub_in' %}<span class="sub-in">⬆ {{ ev.min }}'</span>{% endif %}
+                                                    {% if ev.type == 'sub_out' %}<span class="sub-out">⬇ {{ ev.min }}'</span>{% endif %}
                                                 {% endfor %}
                                             {% endif %}
                                         </td>
@@ -192,6 +183,8 @@
                                         <td>{{ stat.shotsTotal or '' }}</td>
                                         <td>{{ stat.passesTotal or '' }}</td>
                                         <td>{{ stat.tacklesTotal or '' }}</td>
+                                        <td>{% if stat and stat.cardsYellow and stat.cardsYellow > 0 %}<span style="color:#d4ac0d; font-weight:900;">{{ stat.cardsYellow }}</span>{% endif %}</td>
+                                        <td>{% if stat and stat.cardsRed and stat.cardsRed > 0 %}<span style="color:#dc3545; font-weight:900;">{{ stat.cardsRed }}</span>{% endif %}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
