@@ -15,6 +15,7 @@ import threading
 import time
 from clubs import CLUBS_DATA, RPL_CLUBS
 import random
+import translators as ts
 
 # Инициализация Flask-приложения
 app = Flask(__name__)
@@ -204,6 +205,32 @@ class Bet(db.Model):
     match = db.relationship('Match')
 
 
+class Player(db.Model):
+    __tablename__ = 'players'
+
+    id = db.Column(db.Integer, primary_key=True) # ID из SStats API
+    name = db.Column(db.String(100), nullable=False) # Русское имя
+    team_id = db.Column(db.Integer, nullable=True)   # ID команды (необязательно, но полезно)
+
+    def __repr__(self):
+        return f"Player({self.id}, '{self.name}')"
+
+
+class MatchEvent(db.Model):
+    __tablename__ = 'match_events'
+
+    id = db.Column(db.Integer, primary_key=True)
+    match_id = db.Column(db.Integer, db.ForeignKey('matches.id'), nullable=False)
+    team_id = db.Column(db.Integer)  # ID команды
+    minute = db.Column(db.Integer)   # Минута
+    type = db.Column(db.Integer)     # 1=Гол, 2=ЖК, 3=Замена
+    player_name = db.Column(db.String(100)) # Имя игрока (уже русское)
+    extra_info = db.Column(db.String(100))  # Ассистент или ушедший игрок
+
+    def __repr__(self):
+        return f"Event({self.minute}', {self.player_name})"
+
+
 def map_team_name(api_name):
     mapping = {
         "CSKA Moscow": "ЦСКА",
@@ -224,6 +251,35 @@ def map_team_name(api_name):
         "FC Sochi": "Сочи"
     }
     return mapping.get(api_name, api_name)
+
+
+names_cache = {}
+
+
+def transliterate_name(text):
+    """
+    Перевод через библиотеку translators (использует онлайн-сервисы).
+    """
+    if not text: return ""
+
+    # Если уже переводили - берем из памяти
+    if text in names_cache:
+        return names_cache[text]
+
+    # Если уже кириллица - возвращаем
+    if any('\u0400' <= char <= '\u04FF' for char in text):
+        return text
+
+    try:
+        # Используем движок 'google' или 'bing' (bing часто быстрее для бесплатных запросов)
+        # Можно попробовать translator='yandex', но он иногда требует капчу
+        rus_text = ts.translate_text(text, translator='google', from_language='en', to_language='ru')
+
+        names_cache[text] = rus_text
+        return rus_text
+    except Exception as e:
+        print(f"Ошибка API перевода для {text}: {e}")
+        return text
 
 
 # Загружает пользователя
@@ -1391,28 +1447,18 @@ def init_user_balances():
 
 
 def get_team_form(team_name, limit=5):
-    matches = (Match.query.filter(
-        ((Match.home_team == team_name) | (Match.away_team == team_name)), Match.is_played == True).
-               order_by(Match.match_date.desc()).limit(limit).all())
-
+    matches = Match.query.filter(((Match.home_team == team_name) | (Match.away_team == team_name)),
+                                 Match.is_played == True).order_by(Match.match_date.desc()).limit(limit).all()
     form = []
     for m in matches:
         if m.home_team == team_name:
-            if m.home_score > m.away_score:
-                res = {'class': 'win', 'text': 'В'}
-            elif m.home_score < m.away_score:
-                res = {'class': 'loss', 'text': 'П'}
-            else:
-                res = {'class': 'draw', 'text': 'Н'}
+            form.append(
+                {'class': 'win' if m.home_score > m.away_score else ('loss' if m.home_score < m.away_score else 'draw'),
+                 'text': 'В' if m.home_score > m.away_score else ('П' if m.home_score < m.away_score else 'Н')})
         else:
-            if m.away_score > m.home_score:
-                res = {'class': 'win', 'text': 'В'}
-            elif m.away_score < m.home_score:
-                res = {'class': 'loss', 'text': 'П'}
-            else:
-                res = {'class': 'draw', 'text': 'Н'}
-        form.append(res)
-
+            form.append(
+                {'class': 'win' if m.away_score > m.home_score else ('loss' if m.away_score < m.home_score else 'draw'),
+                 'text': 'В' if m.away_score > m.home_score else ('П' if m.away_score < m.home_score else 'Н')})
     return form
 
 
@@ -1424,29 +1470,116 @@ def match_details(match_id_db):
 
     home_form = get_team_form(match.home_team)
     away_form = get_team_form(match.away_team)
-    chat_messages = MatchMessage.query.filter_by(match_id=match_id_db) \
-        .order_by(MatchMessage.created_at.asc()).all()
+    chat_messages = MatchMessage.query.filter_by(match_id=match_id_db).order_by(MatchMessage.created_at.asc()).all()
 
     api_data = {}
+
     if match.sstats_id:
         try:
             headers = {'apikey': '8ftkpzresyxo7dqz'}
-            resp = requests.get(f"https://api.sstats.net/games/{match.sstats_id}", headers=headers, timeout=5)
-            if resp.ok: api_data = resp.json().get('data', {})
+            url_main = f"https://api.sstats.net/Games/{match.sstats_id}"
+            resp = requests.get(url_main, headers=headers, timeout=15)
 
-            stats_resp = requests.post("https://api.sstats.net/games/query-games", headers=headers,
-                                       json={"Condition": f"Id={match.sstats_id}", "Format": "json",
-                                             "Fields": ["BallPossessionHome", "BallPossessionAway", "TotalShotsHome",
-                                                        "TotalShotsAway",
-                                                        "ShotsOnGoalHome", "ShotsOnGoalAway", "CornerKicksHome",
-                                                        "CornerKicksAway",
-                                                        "OffsidesHome", "OffsidesAway", "FoulsHome", "FoulsAway",
-                                                        "YellowCardsHome", "YellowCardsAway", "RedCardsHome",
-                                                        "RedCardsAway"]}, timeout=5)
-            if stats_resp.ok and stats_resp.json().get('data'):
-                api_data['statistics'] = stats_resp.json().get('data')[0]
-        except:
-            pass
+            if resp.ok:
+                json_resp = resp.json()
+                api_data = json_resp.get('data', {}) if isinstance(json_resp, dict) else {}
+
+                # 1. Перевод тренеров
+                if api_data.get('lineups'):
+                    for side in ['homeCoach', 'awayCoach']:
+                        if api_data['lineups'].get(side):
+                            c_name = api_data['lineups'][side].get('name')
+                            api_data['lineups'][side]['name'] = transliterate_name(c_name)
+
+                # === КАРТА СОБЫТИЙ ДЛЯ ИГРОКОВ ===
+                # ID -> Список объектов событий (не HTML, а данные)
+                player_events_data = {}
+
+                # 2. Обработка событий (Наполняем карту данными)
+                events = api_data.get('events')
+                if events and isinstance(events, list):
+                    for e in events:
+                        if not isinstance(e, dict): continue
+
+                        minute = e.get('elapsed', 0)
+                        etype = e.get('type')  # 1=Goal, 2=Card, 3=Sub
+                        ename = str(e.get('name', '')).lower()
+
+                        # Определяем тип события для шаблона
+                        event_obj = None
+
+                        if etype == 1:
+                            event_obj = {'type': 'goal', 'min': minute}
+                        elif etype == 2:
+                            if 'yellow' in ename or 'желтая' in ename:
+                                event_obj = {'type': 'yellow', 'min': minute}
+                            elif 'red' in ename or 'красная' in ename:
+                                event_obj = {'type': 'red', 'min': minute}
+                        elif etype == 4:
+                            event_obj = {'type': 'red', 'min': minute}
+
+                        # ID игроков (Приводим к строке)
+                        pid = str(e.get('player', {}).get('id')) if e.get('player') else None
+                        aid = str(e.get('assistPlayer', {}).get('id')) if e.get('assistPlayer') else None
+
+                        # --- ЗАМЕНЫ (СТРЕЛКИ) ---
+                        if etype == 3:
+                            # PID = Игрок выходит (Запасной) -> ВВЕРХ (sub_in)
+                            if pid and pid != 'None':
+                                if pid not in player_events_data: player_events_data[pid] = []
+                                player_events_data[pid].append({'type': 'sub_out', 'min': minute})
+
+                            # AID = Игрок уходит (Стартовый) -> ВНИЗ (sub_out)
+                            if aid and aid != 'None':
+                                if aid not in player_events_data: player_events_data[aid] = []
+                                player_events_data[aid].append({'type': 'sub_in', 'min': minute})
+
+                        # --- ГОЛЫ И КАРТОЧКИ ---
+                        elif pid and pid != 'None' and event_obj:
+                            if pid not in player_events_data: player_events_data[pid] = []
+                            player_events_data[pid].append(event_obj)
+
+                # 3. Обработка игроков
+                lineups = api_data.get('lineupPlayers')
+                if lineups and isinstance(lineups, list):
+                    pos_weights = {'G': 1, 'D': 2, 'M': 3, 'F': 4}
+                    for p in lineups:
+                        if isinstance(p, dict):
+                            if p.get('playerName'): p['playerName'] = transliterate_name(p['playerName'])
+
+                            p_id = str(p.get('playerId'))
+
+                            # Внедряем СПИСОК событий, а не HTML
+                            p['events_list'] = player_events_data.get(p_id, [])
+
+                            pos_char = str(p.get('position', 'M'))
+                            p['sort_weight'] = pos_weights.get(pos_char, 3)
+                            p['is_bench'] = 0 if p.get('startXI') else 1
+
+                    lineups.sort(key=lambda x: (x.get('is_bench', 1), x.get('sort_weight', 5)))
+
+            # Статистика
+            stats_url = "https://api.sstats.net/games/query-games"
+            stats_payload = {"Condition": f"Id = {match.sstats_id}", "Format": "json",
+                             "Fields": ["BallPossessionHome", "BallPossessionAway", "TotalShotsHome", "TotalShotsAway",
+                                        "ShotsOnGoalHome", "ShotsOnGoalAway", "CornerKicksHome", "CornerKicksAway",
+                                        "OffsidesHome", "OffsidesAway", "FoulsHome", "FoulsAway", "YellowCardsHome",
+                                        "YellowCardsAway", "RedCardsHome", "RedCardsAway", "ExpectedGoalsHome",
+                                        "ExpectedGoalsAway"]}
+            try:
+                stats_resp = requests.post(stats_url, headers=headers, json=stats_payload, timeout=5)
+                if stats_resp.ok:
+                    stats_json = stats_resp.json()
+                    if isinstance(stats_json, dict) and isinstance(stats_json.get('data'), list) and len(
+                            stats_json['data']) > 0:
+                        s_raw = stats_json['data'][0]
+                        if 'statistics' not in api_data: api_data['statistics'] = {}
+                        for key, val in s_raw.items(): api_data['statistics'][key[0].lower() + key[1:]] = val
+            except:
+                pass
+
+        except Exception as e:
+            print(f"API Error: {e}")
 
     return render_template('match_details.html', match=match, api_data=api_data,
                            home_form=home_form, away_form=away_form,
