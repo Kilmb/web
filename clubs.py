@@ -118,7 +118,7 @@ CLUBS_DATA = [
      'latitude': 55.8178, 'longitude': 37.4403},
 
     {'name': 'Балтика', 'city': 'Калининград', 'stadium': 'Ростех Арена', 'places': '30 600', 'year': '2018',
-     'founded': '23.08.1954', 'first_name': 'Пищевик', 'logo': 'Baltica.png', 'color1': '#E0FFFF', 'color2': '#0000FF',
+     'founded': '23.08.1954', 'first_name': 'Пищевик', 'logo': 'Baltica.png', 'color1': '#0000FF', 'color2': '#E0FFFF',
      'best_bombardier': 'Юрий Бондарев', 'goals': '185', 'best_assistant': 'Максим Кузьмин', 'assists': '29',
      'official_site': 'https://fc-baltika.ru',
      'wikipedia': 'https://ru.wikipedia.org/wiki/Балтика_(футбольный_клуб,_Воронеж)',
@@ -126,7 +126,7 @@ CLUBS_DATA = [
      'latitude': 54.698290, 'longitude': 20.533873},
 
     {'name': 'Сочи', 'city': 'Сочи', 'stadium': 'Фишт', 'places': '45 959', 'year': '2013',
-     'founded': '04.07.2018', 'first_name': 'Сочи', 'logo': 'Сочи.png', 'color1': '#E0FFFF', 'color2': '#0000FF',
+     'founded': '04.07.2018', 'first_name': 'Сочи', 'logo': 'Сочи.png', 'color1': '#0000FF', 'color2': '#E0FFFF',
      'best_bombardier': 'Кристиан Нобоа', 'goals': '40', 'best_assistant': 'Никита Бурмистров', 'assists': '28',
      'official_site': 'https://pfcsochi.ru', 'wikipedia': 'https://ru.wikipedia.org/wiki/Сочи_(футбольный_клуб)',
      'transfermarkt': 'https://www.transfermarkt.world/fk-sochi/startseite/verein/41231',

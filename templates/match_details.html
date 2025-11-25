@@ -4,66 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ match.home_team }} vs {{ match.away_team }}</title>
-
     <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home.css') }}">
-
-    <style>
-        .home-container { max-width: 1250px; margin: 0 auto; padding-bottom: 50px; }
-
-        /* ШАПКА */
-        .match-header-card { background: var(--card-bg); padding: 30px; border-radius: 15px; box-shadow: 0 8px 25px rgba(0,0,0,0.15); text-align: center; margin-bottom: 30px; }
-        .match-score { font-size: 4em; font-weight: 800; color: var(--text-color); margin: 15px 0; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); }
-
-        .match-status-badge { display: inline-block; padding: 8px 20px; border-radius: 30px; font-weight: bold; font-size: 1.2em; text-transform: uppercase; }
-        .status-live { background: #fff3cd; color: #ff6b00; border: 2px solid #ff6b00; animation: pulse 2s infinite; }
-        .status-finished { background: #d4edda; color: #28a745; border: 2px solid #28a745; }
-        .status-time { background: rgba(0,0,0,0.05); color: #007bff; border: 1px solid #007bff; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
-
-        /* ФОРМА */
-        .form-container { display: flex; flex-direction: row !important; justify-content: center; align-items: center; gap: 80px; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color); }
-        .team-form-block { text-align: center; display: flex; flex-direction: column; align-items: center; }
-        .team-name-small { font-weight: bold; color: var(--heading-color); margin-bottom: 10px; font-size: 1.2em; }
-        .form-badges { display: flex; flex-direction: row; gap: 5px; }
-        .form-badge { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.9em; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
-        .form-win { background: #28a745; } .form-loss { background: #dc3545; } .form-draw { background: #6c757d; }
-
-        /* Сетка */
-        .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        .full-width { grid-column: 1 / -1; }
-        .content-card { background: var(--card-bg); padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .content-card h3 { border-bottom: 2px solid var(--border-color); padding-bottom: 15px; text-align: center; margin-bottom: 20px; color: var(--heading-color); font-size: 1.5em; }
-
-        /* ТАБЛИЦА ИГРОКОВ */
-        .player-stats-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-        .team-header-banner { padding: 15px; border-radius: 10px; color: white; text-align: center; font-size: 1.4em; font-weight: bold; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); text-shadow: 1px 1px 2px rgba(0,0,0,0.4); }
-        .section-divider { background: rgba(0,0,0,0.05); color: var(--text-color); font-weight: bold; text-transform: uppercase; padding: 8px; text-align: center; margin: 15px 0 10px 0; border-radius: 5px; font-size: 0.9em; }
-
-        .stat-table { width: 100%; border-collapse: collapse; font-size: 0.85em; table-layout: auto; }
-        .stat-table th { background: rgba(0,0,0,0.03); padding: 10px 4px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-color); font-weight: bold; }
-        .stat-table td { padding: 8px 4px; text-align: center; border-bottom: 1px solid var(--border-color); }
-
-        .p-name { text-align: left; width: auto; min-width: 140px; font-weight: 600; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-        .p-pos { font-size: 0.75em; color: #555; display: inline-block; min-width: 35px; height: 22px; line-height: 22px; font-weight: bold; background: rgba(0,0,0,0.1); border-radius: 6px; text-align: center; flex-shrink: 0; }
-
-        /* СТРЕЛКИ (ИСПРАВЛЕНО: sub-out = Вниз, sub-in = Вверх) */
-        .sub-in { color: #28a745; font-weight: bold; margin-left: 5px; } /* Green Up */
-        .sub-out { color: #dc3545; font-weight: bold; margin-left: 5px; } /* Red Down */
-
-        .rating-badge { padding: 3px 6px; border-radius: 6px; color: white; font-weight: bold; font-size: 0.9em; }
-        .rating-high { background: #28a745; } .rating-mid { background: #ffc107; color: #333; } .rating-low { background: #dc3545; }
-
-        /* Чат */
-        .chat-window { height: 400px; overflow-y: auto; background: rgba(0,0,0,0.02); border: 1px solid var(--border-color); border-radius: 10px; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .message-bubble { padding: 12px 18px; border-radius: 18px; max-width: 80%; font-size: 1em; line-height: 1.4; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        .my-message { align-self: flex-end; background: var(--link-color, #007bff); color: white; border-bottom-right-radius: 4px; }
-        .other-message { align-self: flex-start; background: white; border: 1px solid #ddd; border-bottom-left-radius: 4px; color: #333; }
-        .chat-input { width: 100%; padding: 15px; border-radius: 30px; border: 1px solid #ccc; margin-top: 20px; outline: none; font-size: 1em; }
-        .btn-back { display: inline-block; padding: 10px 25px; background: linear-gradient(45deg, #6c757d, #495057); color: white; text-decoration: none; border-radius: 25px; font-weight: bold; }
-
-        @media (max-width: 1024px) { .details-grid, .player-stats-wrapper { grid-template-columns: 1fr; } .team-stats-block { overflow-x: auto; } .stat-table { min-width: 500px; } }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/match_details.css') }}">
 </head>
 <body class="theme-{{ current_user.theme or 'default' }} {% if current_user.is_authenticated %}themed-body{% endif %}"
     {% if current_user.is_authenticated and current_user.theme =='club' and current_user.club %}
@@ -85,56 +28,135 @@
     {% set a_c2 = away_club.color2 if away_club else '#a71d2a' %}
 
     <div class="match-header-card">
-        <h1>{{ match.home_team }} <span style="color:var(--text-color); opacity:0.5; font-size:0.6em;">vs</span> {{ match.away_team }}</h1>
 
-        {% if match.is_played or match.is_started %}
-            <div class="match-score">{{ match.home_score }} : {{ match.away_score }}</div>
-            {% if match.is_started and not match.is_played %}
-                <div class="match-status-badge status-live">🔴 LIVE</div>
-            {% else %}
-                <div class="match-status-badge status-finished">Матч завершен</div>
+        <div class="match-score-board-row">
+
+            <div class="team-info-side left-side">
+                <div class="team-name-small">
+                    {{ match.home_team }}
+                </div>
+                <div class="form-badges">
+                    {% if home_form %}
+                        {% for f in home_form %}<div class="form-badge form-{{ f.class }}">{{ f.text }}</div>{% endfor %}
+                    {% else %}
+                        <span style="color:#999; font-size: 0.8em;">Нет данных</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if home_club %}
+                <img src="{{ url_for('static', filename='img/' + home_club.logo) }}"
+                     alt="{{ match.home_team }}"
+                     class="match-team-logo">
             {% endif %}
-        {% else %}
-            <div class="match-score">vs</div>
-            <div class="match-status-badge status-time">{{ match.match_date.strftime('%d.%m.%Y %H:%M') }}</div>
-        {% endif %}
 
-        <div class="form-container">
-            <div class="team-form-block">
-                <div class="team-name-small">{{ match.home_team }}</div>
-                <div class="form-badges">{% if home_form %}{% for f in home_form %}<div class="form-badge form-{{ f.class }}">{{ f.text }}</div>{% endfor %}{% else %}<span style="color:#999">Нет данных</span>{% endif %}</div>
+            <div class="score-container">
+                {% if match.is_played or match.is_started %}
+                    <div class="match-score">
+                        {{ match.home_score }} : {{ match.away_score }}
+                    </div>
+                    {% if match.is_started and not match.is_played %}
+                        <div class="match-status-badge status-live">🔴 LIVE</div>
+                    {% else %}
+                        <div class="match-status-badge status-finished">Завершен</div>
+                    {% endif %}
+                {% else %}
+                    <div class="match-score" style="font-size: 3em;">VS</div>
+                    <div class="match-status-badge status-time">
+                        {{ match.match_date.strftime('%d.%m %H:%M') }}
+                    </div>
+                {% endif %}
             </div>
-            <div class="team-form-block">
-                <div class="team-name-small">{{ match.away_team }}</div>
-                <div class="form-badges">{% if away_form %}{% for f in away_form %}<div class="form-badge form-{{ f.class }}">{{ f.text }}</div>{% endfor %}{% else %}<span style="color:#999">Нет данных</span>{% endif %}</div>
+
+            {% if away_club %}
+                <img src="{{ url_for('static', filename='img/' + away_club.logo) }}"
+                     alt="{{ match.away_team }}"
+                     class="match-team-logo">
+            {% endif %}
+
+            <div class="team-info-side right-side">
+                <div class="team-name-small">
+                    {{ match.away_team }}
+                </div>
+                <div class="form-badges">
+                    {% if away_form %}
+                        {% for f in away_form %}<div class="form-badge form-{{ f.class }}">{{ f.text }}</div>{% endfor %}
+                    {% else %}
+                        <span style="color:#999; font-size: 0.8em;">Нет данных</span>
+                    {% endif %}
+                </div>
             </div>
+
         </div>
     </div>
 
     <div class="details-grid">
 
-        <div class="content-card">
-            <h3>📊 Статистика матча</h3>
+        <div class="content-card stats-centered">
+            <h3>📊 Подробная статистика</h3>
             {% if api_data.statistics %}
                 {% set s = api_data.statistics %}
-                <div style="display:flex; flex-direction:column; gap:12px;">
-                    {% macro row(label, home, away) %}
-                    <div style="display:flex; justify-content:space-between; border-bottom:1px dashed var(--border-color); padding-bottom:6px;">
-                        <span style="font-weight:bold; color:{{ h_c1 }}; font-size:1.2em;">{{ home or 0 }}</span>
-                        <span style="color:var(--text-color); opacity:0.7;">{{ label }}</span>
-                        <span style="font-weight:bold; color:{{ a_c1 }}; font-size:1.2em;">{{ away or 0 }}</span>
-                    </div>
-                    {% endmacro %}
-                    {{ row('Владение (%)', s.ballPossessionHome, s.ballPossessionAway) }}
-                    {{ row('xG (Ожидаемые голы)', "%.2f"|format(s.expectedGoalsHome or 0), "%.2f"|format(s.expectedGoalsAway or 0)) }}
-                    {{ row('Удары (в створ)', s.totalShotsHome ~ ' (' ~ s.shotsOnGoalHome ~ ')', s.totalShotsAway ~ ' (' ~ s.shotsOnGoalAway ~ ')') }}
-                    {{ row('Угловые', s.cornerKicksHome, s.cornerKicksAway) }}
-                    {{ row('Офсайды', s.offsidesHome, s.offsidesAway) }}
-                    {{ row('Фолы', s.foulsHome, s.foulsAway) }}
-                    {{ row('Желтые карточки', s.yellowCardsHome, s.yellowCardsAway) }}
-                    {% if (s.redCardsHome or 0) > 0 or (s.redCardsAway or 0) > 0 %}
-                        {{ row('Красные карточки', s.redCardsHome, s.redCardsAway) }}
-                    {% endif %}
+                {% set stats_list = [
+                    ('expectedGoals', 'xG (Ожидаемые голы)'),
+                    ('ballPossession', 'Владение мячом (%)'),
+                    ('totalShots', 'Всего ударов'),
+                    ('shotsOnGoal', 'Удары в створ'),
+                    ('shotsOffGoal', 'Удары мимо'),
+                    ('blockedShots', 'Заблокированные удары'),
+                    ('shotsInsideBox', 'Удары из штрафной'),
+                    ('shotsOutsideBox', 'Удары из-за штрафной'),
+                    ('bigChances', 'Большие шансы'),
+                    ('hitTheWoodwork', 'Попадание в каркас'),
+                    ('cornerKicks', 'Угловые'),
+                    ('offsides', 'Офсайды'),
+                    ('fouls', 'Фолы'),
+                    ('yellowCards', 'Желтые карточки'),
+                    ('redCards', 'Красные карточки'),
+                    ('goalkeeperSaves', 'Сейвы вратаря'),
+                    ('totalPasses', 'Всего пасов'),
+                    ('passesAccurate', 'Точные пасы'),
+                    ('longPasses', 'Длинные передачи'),
+                    ('crosses', 'Навесы'),
+                    ('totalTackles', 'Отборы'),
+                    ('interceptions', 'Перехваты'),
+                    ('clearances', 'Выносы'),
+                    ('duelsWon', 'Выигранные дуэли'),
+                    ('freeKicks', 'Штрафные удары'),
+                    ('throwins', 'Ауты')
+                ] %}
+
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    {% for key, label in stats_list %}
+                        {% set val_home = s.get(key ~ 'Home') %}
+                        {% set val_away = s.get(key ~ 'Away') %}
+
+                        {# Проверяем, есть ли данные #}
+                        {% if val_home is not none or val_away is not none %}
+                            <div class="stats-row-item">
+                                <span style="font-weight:bold; color:{{ h_c1 }}; font-size:1.2em; width: 60px; text-align: right;">
+                                    {# ЛОГИКА ОКРУГЛЕНИЯ xG #}
+                                    {% if key == 'expectedGoals' %}
+                                        {{ "%.2f"|format(val_home|float) if val_home is not none else '0.00' }}
+                                    {% else %}
+                                        {{ val_home if val_home is not none else 0 }}
+                                    {% endif %}
+                                </span>
+
+                                <span style="color:var(--text-color); opacity:0.8; text-transform: uppercase; font-size: 0.9em; font-weight: 600;">
+                                    {{ label }}
+                                </span>
+
+                                <span style="font-weight:bold; color:{{ a_c1 }}; font-size:1.2em; width: 60px; text-align: left;">
+                                    {# ЛОГИКА ОКРУГЛЕНИЯ xG #}
+                                    {% if key == 'expectedGoals' %}
+                                        {{ "%.2f"|format(val_away|float) if val_away is not none else '0.00' }}
+                                    {% else %}
+                                        {{ val_away if val_away is not none else 0 }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
                 </div>
             {% else %}
                 <p style="text-align:center; color:#999; padding:20px;">Статистика будет доступна после начала матча</p>
@@ -142,7 +164,7 @@
         </div>
 
         <div class="content-card full-width">
-            <h3>⭐ Составы и статистика</h3>
+            <h3>⭐ Составы и статистика игроков</h3>
             {% if api_data.playerStats and api_data.lineupPlayers %}
                 <div class="player-stats-wrapper">
 
@@ -169,7 +191,6 @@
                                         <td class="p-name">
                                             <span class="p-pos">{{ pos_map[p.position] if p.position in pos_map else p.position }}</span>
                                             {{ p.playerName }}
-
                                             {% if p.events_list %}
                                                 {% for ev in p.events_list %}
                                                     {% if ev.type == 'sub_in' %}<span class="sub-in">⬆ {{ ev.min }}'</span>{% endif %}
@@ -217,18 +238,36 @@
 
         <div class="content-card full-width">
             <h3>💬 Обсуждение матча</h3>
+
             <div class="chat-window" id="chatWindow">
                 {% for msg in chat_messages %}
-                    <div class="message-bubble {{ 'my-message' if msg.user_id == current_user.id else 'other-message' }}">
-                        <div style="font-weight:bold; font-size:0.85em; margin-bottom:4px; color: {{ '#fff' if msg.user_id == current_user.id else '#007bff' }};">{{ msg.user.name }}</div>
-                        {{ msg.text }}
+                    <div class="chat-row {{ 'mine' if msg.user_id == current_user.id else 'others' }}">
+
+                        {% if msg.user.avatar %}
+                            <img src="{{ url_for('uploaded_file', filename=msg.user.avatar) }}" class="chat-avatar" alt="Ava">
+                        {% else %}
+                            <div class="chat-avatar" style="display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:14px;">
+                                {{ msg.user.name[0]|upper }}
+                            </div>
+                        {% endif %}
+
+                        <div style="max-width: 100%;">
+                            <div class="chat-username">
+                                {{ msg.user.name }} <span style="opacity:0.6; font-weight:normal; font-size:0.9em;">{{ msg.created_at.strftime('%H:%M') }}</span>
+                            </div>
+                            <div class="message-bubble">
+                                {{ msg.text }}
+                            </div>
+                        </div>
                     </div>
                 {% else %}
                     <div style="text-align:center; color:#999; margin-top:50px;">Будьте первым, кто напишет сообщение!</div>
                 {% endfor %}
             </div>
-            <form action="{{ url_for('send_match_message', match_id=match.id) }}" method="POST">
+
+            <form action="{{ url_for('send_match_message', match_id=match.id) }}" method="POST" class="chat-form-container">
                 <input type="text" name="message_text" class="chat-input" placeholder="Написать сообщение..." required autocomplete="off">
+                <button type="submit" class="btn-send-chat">➤</button>
             </form>
         </div>
 

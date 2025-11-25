@@ -85,6 +85,11 @@
 
     {% if current_user.is_authenticated %}
 
+    {% set user_club_data = none %}
+    {% if current_user.club %}
+        {% set user_club_data = clubs|selectattr('name','equalto', current_user.club)|first %}
+    {% endif %}
+
     <a href="{{ url_for('logout') }}" class="logout-link-fixed">Выйти</a>
     <a href="{{ url_for('wheel_page') }}" class="wheel-link-fixed">🎡 Колесо удачи</a>
     <div class="home-container">
@@ -153,7 +158,18 @@
                         {% if matches_by_tour[tour_num] %}
                             <div class="matches-grid center-small-grid">
                                 {% for match in matches_by_tour[tour_num] %}
-                                <div class="match-card">
+                                <div class="match-card"
+                                    {% if user_club_data and (match.home_team == current_user.club or match.away_team == current_user.club) %}
+                                        style="
+                                            border: 3px solid {{ user_club_data.color1 }};
+                                            background: linear-gradient(to bottom right, #ffffff, rgba(255,255,255,0.8)), linear-gradient(to right, {{ user_club_data.color1 }}, {{ user_club_data.color2 }});
+                                            background-origin: border-box;
+                                            background-clip: padding-box, border-box;
+                                            box-shadow: 0 0 15px {{ user_club_data.color1 }}60;
+                                            transform: scale(1.02);
+                                        "
+                                    {% endif %}
+                                >
                                     <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
                                         {{ match.home_team }} vs {{ match.away_team }}
                                     </div>
@@ -273,7 +289,7 @@
                             <p><strong>Стадион:</strong> {{ club.stadium }} ({{club.year}}), {{ club.places }} мест.</p>
 
                             <div class="stadium-map-container">
-                                <h4>Местоположение стадиона</h4>
+                                <h4>⬇️ Местоположение стадиона</h4>
                                 <div id="map-fav-{{ club.name|replace(' ', '-') }}" class="stadium-map"
                                      data-lat="{{ club.latitude }}"
                                      data-lng="{{ club.longitude }}"
@@ -314,7 +330,7 @@
                         <p><strong>Стадион:</strong> {{ club.stadium }} ({{club.year}}), {{ club.places }} мест.</p>
 
                         <div class="stadium-map-container">
-                            <h4>Местоположение стадиона</h4>
+                            <h4>⬇️ Местоположение стадиона</h4>
                             <div id="map-{{ club.name|replace(' ', '-') }}" class="stadium-map"
                                  data-lat="{{ club.latitude }}"
                                  data-lng="{{ club.longitude }}"
@@ -337,57 +353,99 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Инициализация карт
+        // Функция для инициализации карт
         function initializeMaps() {
             const mapElements = document.querySelectorAll('.stadium-map');
+
             mapElements.forEach(mapElement => {
-                if (mapElement._leaflet_id) return;
+                // Проверяем, была ли карта уже инициализирована
+                if (mapElement._leaflet_id) {
+                    return;
+                }
+
                 const lat = parseFloat(mapElement.dataset.lat);
                 const lng = parseFloat(mapElement.dataset.lng);
                 const stadium = mapElement.dataset.stadium;
                 const city = mapElement.dataset.city;
 
                 if (lat && lng) {
+                    // Создаем карту с правильными координатами
                     const map = L.map(mapElement).setView([lat, lng], 14);
+
+                    // Используем OpenStreetMap
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         attribution: '© OpenStreetMap contributors',
                         maxZoom: 19
                     }).addTo(map);
+
+                    // Создаем кастомную иконку
                     const stadiumIcon = L.divIcon({
                         className: 'stadium-marker',
                         html: '🏟️',
                         iconSize: [30, 30],
                         iconAnchor: [15, 30]
                     });
-                    L.marker([lat, lng], {icon: stadiumIcon}).addTo(map).bindPopup(`<b>${stadium}</b><br>${city}`);
-                    L.circle([lat, lng], { color: 'blue', fillColor: '#007bff', fillOpacity: 0.1, radius: 250 }).addTo(map);
+
+                    // Добавляем маркер
+                    L.marker([lat, lng], {icon: stadiumIcon})
+                        .addTo(map)
+                        .bindPopup(`<b>${stadium}</b><br>${city}`)
+                        .openPopup();
+
+                    // Добавляем круг для лучшей видимости
+                    L.circle([lat, lng], {
+                        color: 'blue',
+                        fillColor: '#007bff',
+                        fillOpacity: 0.1,
+                        radius: 250
+                    }).addTo(map);
                 }
             });
         }
 
-        // Скрипт переключения туров
-        let currentDisplayTour = {{ current_tour }};
-        const maxTour = {{ max_tour }};
-
-        function changeTour(direction) {
-            let newTour = currentDisplayTour + direction;
-            if (newTour < 1) newTour = 1;
-            if (newTour > maxTour) newTour = maxTour;
-            if (newTour === currentDisplayTour) return;
-
-            const currentBlock = document.getElementById('tour-' + currentDisplayTour);
-            if (currentBlock) currentBlock.classList.remove('active');
-
-            currentDisplayTour = newTour;
-            document.getElementById('tour-number-display').innerText = currentDisplayTour;
-
-            const newBlock = document.getElementById('tour-' + currentDisplayTour);
-            if (newBlock) newBlock.classList.add('active');
-        }
-
+        // Инициализируем карты после загрузки страницы
         document.addEventListener('DOMContentLoaded', function() {
             initializeMaps();
         });
+
+        function showTour(tourType) {
+            // Скрыть все блоки с матчами
+            document.querySelectorAll('.tour-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Убрать активный класс со всех кнопок
+            document.querySelectorAll('.tour-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Показать выбранный блок и активировать кнопку
+            document.getElementById(tourType + '-tour').classList.add('active');
+
+            // Находим кнопку по типу
+            document.querySelector(`.tour-btn[onclick="showTour('${tourType}')"]`).classList.add('active');
+        }
+
+        // Скрипт переключения туров
+        const maxTour = {{ max_tour }};
+        let currentTourDisplay = {{ current_tour }};
+
+        function changeTour(delta) {
+            const nextTour = currentTourDisplay + delta;
+            if (nextTour >= 1 && nextTour <= maxTour) {
+                // Скрываем текущий
+                const currentBlock = document.getElementById('tour-' + currentTourDisplay);
+                if (currentBlock) currentBlock.classList.remove('active');
+
+                // Показываем новый
+                currentTourDisplay = nextTour;
+                const nextBlock = document.getElementById('tour-' + currentTourDisplay);
+                if (nextBlock) nextBlock.classList.add('active');
+
+                // Обновляем цифру
+                document.getElementById('tour-number-display').textContent = currentTourDisplay;
+            }
+        }
     </script>
 </body>
 </html>

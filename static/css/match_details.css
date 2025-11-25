@@ -1,0 +1,322 @@
+/* ===============================================
+    СТИЛИ СТРАНИЦЫ МАТЧА (match_details.css)
+===============================================
+*/
+
+.home-container {
+    max-width: 1250px;
+    margin: 0 auto;
+    padding-bottom: 50px;
+}
+
+/* --- Кнопка Назад --- */
+.btn-back {
+    display: inline-block;
+    padding: 10px 25px;
+    background: linear-gradient(45deg, #6c757d, #495057);
+    color: white;
+    text-decoration: none;
+    border-radius: 25px;
+    font-weight: bold;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-back:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    color: white;
+}
+
+/* --- Шапка матча (ОСНОВНОЙ КОНТЕЙНЕР) --- */
+.match-header-card {
+    background: var(--card-bg);
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    text-align: center;
+    margin-bottom: 30px;
+    position: relative;
+}
+
+/* Сетка шапки: Текст - Лого - Счет - Лого - Текст */
+.match-score-board-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+}
+
+/* Боковые блоки с названиями */
+.team-info-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 120px;
+}
+
+.team-info-side.left-side {
+    align-items: flex-end; /* Текст прижат вправо (к логотипу) */
+    text-align: right;
+}
+
+.team-info-side.right-side {
+    align-items: flex-start; /* Текст прижат влево (к логотипу) */
+    text-align: left;
+}
+
+.team-name-small {
+    font-weight: 800;
+    color: var(--heading-color);
+    margin-bottom: 5px;
+    line-height: 1.1;
+    font-size: 1.6em;
+}
+
+/* --- ЛОГОТИПЫ (Скругленный квадрат) --- */
+.match-team-logo {
+    width: 90px;
+    height: 90px;
+
+    /* Скругленный квадрат, чтобы ромбик Спартака не резался */
+    border-radius: 20px;
+
+    /* Обрезка широкой картинки по центру */
+    object-fit: cover;
+    object-position: center center;
+
+    border: 3px solid white;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    background-color: white;
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+}
+
+.match-team-logo:hover {
+    transform: scale(1.05);
+}
+
+/* --- Центральный блок счета --- */
+.score-container {
+    text-align: center;
+    min-width: 120px;
+    padding: 0 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.match-score {
+    font-size: 4em;
+    font-weight: 800;
+    color: var(--text-color);
+    margin: 0;
+    line-height: 1;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Статусы матча */
+.match-status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 30px;
+    font-weight: bold;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    margin-top: 5px;
+}
+.status-live { background: #fff3cd; color: #ff6b00; border: 2px solid #ff6b00; animation: pulse 2s infinite; }
+.status-finished { background: #d4edda; color: #28a745; border: 2px solid #28a745; }
+.status-time { background: rgba(0,0,0,0.05); color: #007bff; border: 1px solid #007bff; }
+
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+
+/* Форма (кружочки) */
+.form-badges {
+    display: flex;
+    flex-direction: row;
+    gap: 5px;
+}
+.form-badge { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8em; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+.form-win { background: #28a745; } .form-loss { background: #dc3545; } .form-draw { background: #6c757d; }
+
+/* --- СЕТКА КОНТЕНТА --- */
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.full-width { grid-column: 1 / -1; }
+
+.content-card {
+    background: var(--card-bg);
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.content-card h3 {
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 15px;
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--heading-color);
+    font-size: 1.5em;
+    margin-top: 0;
+}
+
+/* --- СТАТИСТИКА (По центру) --- */
+.stats-centered {
+    grid-column: 1 / -1;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.stats-row-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(128,128,128, 0.1);
+    padding: 8px 0;
+}
+
+/* --- ЧАТ (С аватарками) --- */
+.chat-window {
+    height: 400px;
+    overflow-y: auto;
+    background: rgba(0,0,0,0.02);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.chat-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    max-width: 85%;
+}
+
+.chat-row.mine {
+    align-self: flex-end;
+    flex-direction: row-reverse;
+}
+
+.chat-row.others {
+    align-self: flex-start;
+    flex-direction: row;
+}
+
+.chat-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+    background-color: #ccc;
+}
+
+.message-bubble {
+    padding: 12px 18px;
+    border-radius: 18px;
+    font-size: 1em;
+    line-height: 1.4;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    position: relative;
+}
+
+.chat-row.mine .message-bubble {
+    background: var(--link-color, #007bff);
+    color: white;
+    border-bottom-right-radius: 4px;
+}
+
+.chat-row.others .message-bubble {
+    background: white;
+    border: 1px solid #ddd;
+    border-bottom-left-radius: 4px;
+    color: #333;
+}
+
+.chat-username {
+    font-size: 0.75em;
+    color: #777;
+    margin-bottom: 4px;
+    font-weight: bold;
+}
+.chat-row.mine .chat-username { text-align: right; margin-right: 5px; }
+.chat-row.others .chat-username { margin-left: 5px; }
+
+/* Форма чата */
+.chat-form-container {
+    position: relative;
+    margin-top: 10px;
+}
+
+.chat-input {
+    width: 100%;
+    padding: 15px;
+    padding-right: 60px;
+    border-radius: 30px;
+    border: 1px solid #ccc;
+    outline: none;
+    font-size: 1em;
+    box-sizing: border-box;
+    background: #fff;
+}
+
+.btn-send-chat {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--link-color, #007bff);
+    font-size: 1.2em;
+    cursor: pointer;
+    padding: 5px 10px;
+    font-weight: bold;
+}
+
+/* --- Таблицы игроков (для составов) --- */
+.player-stats-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+.team-stats-block { overflow-x: auto; }
+.team-header-banner { padding: 15px; border-radius: 10px; color: white; text-align: center; font-size: 1.4em; font-weight: bold; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); text-shadow: 1px 1px 2px rgba(0,0,0,0.4); }
+.section-divider { background: rgba(0,0,0,0.05); color: var(--text-color); font-weight: bold; text-transform: uppercase; padding: 8px; text-align: center; margin: 15px 0 10px 0; border-radius: 5px; font-size: 0.9em; }
+
+.stat-table { width: 100%; border-collapse: collapse; font-size: 0.85em; table-layout: auto; }
+.stat-table th { background: rgba(0,0,0,0.03); padding: 10px 4px; text-align: center; border-bottom: 2px solid var(--border-color); color: var(--text-color); font-weight: bold; }
+.stat-table td { padding: 8px 4px; text-align: center; border-bottom: 1px solid var(--border-color); }
+
+.p-name { text-align: left; width: auto; min-width: 140px; font-weight: 600; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.p-pos { font-size: 0.75em; color: #555; display: inline-block; min-width: 35px; height: 22px; line-height: 22px; font-weight: bold; background: rgba(0,0,0,0.1); border-radius: 6px; text-align: center; flex-shrink: 0; }
+
+.sub-in { color: #28a745; font-weight: bold; margin-left: 5px; }
+.sub-out { color: #dc3545; font-weight: bold; margin-left: 5px; }
+.rating-badge { padding: 3px 6px; border-radius: 6px; color: white; font-weight: bold; font-size: 0.9em; }
+.rating-high { background: #28a745; } .rating-mid { background: #ffc107; color: #333; } .rating-low { background: #dc3545; }
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .match-score-board-row { gap: 10px; }
+    .team-info-side { display: none; } /* На мобилках скрываем боковые названия */
+    .match-team-logo { width: 70px; height: 70px; }
+    .match-score { font-size: 2.5em; }
+    .details-grid, .player-stats-wrapper { grid-template-columns: 1fr; }
+    .stat-table { min-width: 500px; }
+}
+@media (min-width: 480px) and (max-width: 768px) {
+    .team-info-side { display: flex; font-size: 0.8em; } /* На планшетах возвращаем названия */
+}

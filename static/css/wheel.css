@@ -1,8 +1,9 @@
 /* ===============================================
-            СТИЛИ КОЛЕСА УДАЧИ
+            СТИЛИ КОЛЕСА УДАЧИ (WHEEL.CSS)
 ===============================================
 */
 
+/* --- Фиксированная кнопка навигации --- */
 .wheel-link-fixed {
     position: fixed;
     top: 15px;
@@ -25,6 +26,15 @@
     box-shadow: 0 6px 20px rgba(255, 215, 0, 0.6);
 }
 
+.wheel-link-fixed.disabled {
+    background: linear-gradient(45deg, #cccccc, #999999);
+    color: #666;
+    border-color: #999;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* --- Контейнеры и разметка --- */
 .wheel-container {
     position: relative;
     width: 300px;
@@ -32,6 +42,23 @@
     margin: 40px auto;
 }
 
+/* Список призов (легенда) */
+.wheel-prizes {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.prize-item {
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 5px;
+    font-size: 12px;
+}
+
+/* --- Само Колесо --- */
 .wheel {
     width: 100%;
     height: 100%;
@@ -40,8 +67,40 @@
     transition: transform 4s cubic-bezier(0.2, 0.8, 0.3, 1);
     box-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
     overflow: hidden;
+    /* Градиент задается через JS, но здесь можно оставить базовый фон */
+    background: #ccc;
 }
 
+/* Сектора колеса (перенесено из inline-style html для чистоты) */
+.wheel-section {
+    position: absolute;
+    width: 50%;
+    height: 50%;
+    top: 0;
+    left: 50%;
+    transform-origin: left bottom;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+/* Текст на секторах */
+.wheel-text {
+    position: absolute;
+    left: 70px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-weight: bold;
+    font-size: 14px;
+    color: #333;
+    text-shadow: 1px 1px 2px rgba(255,255,255,0.8);
+    white-space: nowrap;
+    transform-origin: center;
+    text-align: center;
+    width: 40px;
+}
+
+/* Стрелка-указатель */
 .wheel-pointer {
     position: absolute;
     top: -20px;
@@ -56,18 +115,19 @@
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
+/* --- Центр колеса (Результат) --- */
 .wheel-inner {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 120px;
+    width: 120px; /* Оставляем 120px, чтобы не перекрывать сектора слишком сильно */
     height: 120px;
     border-radius: 50%;
     background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
     border: 4px solid gold;
     z-index: 5;
-    display: none;
+    display: none; /* JS переключает на flex */
     align-items: center;
     justify-content: center;
     box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
@@ -83,17 +143,18 @@
 }
 
 .wheel-result-large {
-    font-size: 18px;
+    font-size: 18px; /* Увеличил для лучшей читаемости */
     margin-bottom: 5px;
     display: block;
 }
 
 .wheel-result-small {
-    font-size: 10px;
+    font-size: 11px;
     opacity: 0.9;
     display: block;
 }
 
+/* --- Кнопка вращения --- */
 .spin-button {
     background: linear-gradient(45deg, #FFD700, #FFA500);
     color: #333;
@@ -120,6 +181,7 @@
     box-shadow: none;
 }
 
+/* --- Текстовые результаты под колесом --- */
 .wheel-result {
     margin-top: 20px;
     padding: 15px;
@@ -137,22 +199,26 @@
     text-align: center;
 }
 
-.wheel-prizes {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-    margin: 20px 0;
-    text-align: left;
-}
-
-.prize-item {
-    padding: 8px;
-    background: rgba(255, 255, 255, 0.1);
+/* --- Отладка --- */
+.debug-info {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 10px;
     border-radius: 5px;
     font-size: 12px;
+    z-index: 1000;
+    display: none; /* Скрыто по умолчанию */
 }
 
-/* Анимация подсветки выпавшего сектора */
+/* ===============================================
+            АНИМАЦИИ И ЭФФЕКТЫ
+===============================================
+*/
+
+/* Подсветка выигравшего сектора */
 .wheel-section.highlight {
     animation: pulseHighlight 2s ease-in-out;
     z-index: 5;
@@ -170,6 +236,7 @@
     }
 }
 
+/* Искры на секторе */
 .wheel-sparkle {
     position: absolute;
     width: 100%;
@@ -186,7 +253,7 @@
     50% { opacity: 1; }
 }
 
-/* Анимации для результатов */
+/* Появление результата в центре */
 @keyframes resultAppear {
     0% {
         opacity: 0;
@@ -202,7 +269,26 @@
     animation: resultAppear 0.5s ease-out forwards;
 }
 
-/* Эффект конфетти */
+/* Эффект Джекпота (текст) */
+.jackpot-effect {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 48px;
+    font-weight: bold;
+    color: gold;
+    text-shadow: 0 0 20px red;
+    animation: jackpotAnim 1s ease-in-out infinite;
+    z-index: 10;
+}
+
+@keyframes jackpotAnim {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.2); }
+}
+
+/* Конфетти */
 .confetti {
     position: absolute;
     width: 10px;
@@ -225,7 +311,7 @@
     }
 }
 
-/* Особые стили для разных типов призов */
+/* --- Стили для разных типов выигрыша (в центре) --- */
 .jackpot-inner {
     background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
     color: #333;
@@ -241,6 +327,46 @@
     background: linear-gradient(135deg, #FF6B6B 0%, #DC143C 100%);
     border: 4px solid #8B0000;
 }
-.debug-info {
+
+/* ===============================================
+    ОПЦИОНАЛЬНО: СТИЛИ ДЛЯ МОДАЛЬНОГО ОКНА
+    (Если вы захотите сделать колесо в pop-up)
+===============================================
+*/
+.wheel-modal {
     display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+}
+
+.wheel-modal-content {
+    background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+    margin: 5% auto;
+    padding: 30px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    color: white;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    position: relative;
+}
+
+.wheel-close {
+    position: absolute;
+    right: 15px;
+    top: 15px;
+    color: white;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.wheel-close:hover {
+    color: #FFD700;
 }

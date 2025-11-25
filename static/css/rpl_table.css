@@ -32,6 +32,12 @@ body {
 h1 {
     color: var(--heading-color);
     text-align: center;
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    margin-bottom: 25px;
+    margin-top: 0;
 }
 
 .menu {
@@ -135,4 +141,32 @@ input {
 .btn-save:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 15px var(--shadow-color);
+}
+
+.btn-back {
+    display: inline-block;
+    padding: 10px 20px;
+    background: var(--card-bg);
+    color: var(--link-color);
+    border: 2px solid var(--border-color);
+    border-radius: 25px;
+    text-decoration: none;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+.btn-back:hover {
+    background: var(--border-color);
+    color: var(--link-color-dark, #fff);
+    box-shadow: 0 4px 10px var(--shadow-color);
+    transform: translateY(-2px);
+}
+/* Адаптация для светлой темы (если нужно жестко задать цвета) */
+body:not(.theme-dark) .btn-back {
+    background: #f1f1f1;
+    color: #333;
+    border-color: #ddd;
+}
+body:not(.theme-dark) .btn-back:hover {
+    background: #e0e0e0;
 }

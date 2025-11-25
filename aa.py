@@ -15,6 +15,7 @@ import threading
 import time
 from clubs import CLUBS_DATA, RPL_CLUBS
 import random
+import translators as ts
 
 # Инициализация Flask-приложения
 app = Flask(__name__)
@@ -204,6 +205,40 @@ class Bet(db.Model):
     match = db.relationship('Match')
 
 
+class Player(db.Model):
+    __tablename__ = 'players'
+
+    id = db.Column(db.Integer, primary_key=True) # ID из SStats API
+    name = db.Column(db.String(100), nullable=False) # Русское имя
+    team_id = db.Column(db.Integer, nullable=True)   # ID команды (необязательно, но полезно)
+
+    def __repr__(self):
+        return f"Player({self.id}, '{self.name}')"
+
+
+class MatchEvent(db.Model):
+    __tablename__ = 'match_events'
+
+    id = db.Column(db.Integer, primary_key=True)
+    match_id = db.Column(db.Integer, db.ForeignKey('matches.id'), nullable=False)
+    team_id = db.Column(db.Integer)  # ID команды
+    minute = db.Column(db.Integer)   # Минута
+    type = db.Column(db.Integer)     # 1=Гол, 2=ЖК, 3=Замена
+    player_name = db.Column(db.String(100)) # Имя игрока (уже русское)
+    extra_info = db.Column(db.String(100))  # Ассистент или ушедший игрок
+
+    def __repr__(self):
+        return f"Event({self.minute}', {self.player_name})"
+
+
+class NameTranslation(db.Model):
+    __tablename__ = 'name_translations'
+
+    id = db.Column(db.Integer, primary_key=True)
+    original = db.Column(db.String(150), unique=True, nullable=False, index=True)  # Английское имя
+    translated = db.Column(db.String(150), nullable=False)  # Русское имя
+
+
 def map_team_name(api_name):
     mapping = {
         "CSKA Moscow": "ЦСКА",
@@ -224,6 +259,42 @@ def map_team_name(api_name):
         "FC Sochi": "Сочи"
     }
     return mapping.get(api_name, api_name)
+
+
+names_cache = {}
+
+
+# Замените старую функцию transliterate_name на эту:
+def transliterate_name(text):
+    if not text: return ""
+    text = text.strip()
+
+    if text in names_cache:
+        return names_cache[text]
+
+    try:
+        stored_translation = db.session.query(NameTranslation).filter_by(original=text).first()
+        if stored_translation:
+            names_cache[text] = stored_translation.translated
+            return stored_translation.translated
+    except Exception as e:
+        print(f"Ошибка чтения перевода из БД: {e}")
+
+    try:
+        rus_text = ts.translate_text(text, translator='google', from_language='en', to_language='ru')
+        names_cache[text] = rus_text
+        try:
+            new_trans = NameTranslation(original=text, translated=rus_text)
+            db.session.add(new_trans)
+            db.session.commit()
+        except Exception as db_err:
+            db.session.rollback()
+            print(f"Не удалось сохранить перевод в БД: {db_err}")
+
+        return rus_text
+    except Exception as e:
+        print(f"Ошибка API перевода для {text}: {e}")
+        return text
 
 
 # Загружает пользователя
@@ -326,107 +397,93 @@ def schedule_tour_update():
 
 def update_rpl_table_from_sstats():
     try:
-        url = "https://api.sstats.net/games/season-table"
+        url = "https://api.sstats.net/games/list"
         params = {
-            'league': 235,
-            'year': 2025,
-            'format': 'csv',
-            'fields': 'Rank,TeamName,Wins,Draws,Loss,GoalsScored,GoalsMissed,Points',
-            'orderField': 'Rank'
+            'leagueId': 235,
+            'year': 2025,  # Текущий сезон
+            'format': 'json',
+            'limit': 300  # Берем с запасом, чтобы получить все туры
         }
-
         headers = {'apikey': '8ftkpzresyxo7dqz'}
 
         response = requests.get(url, params=params, headers=headers, timeout=30)
-
         response.raise_for_status()
+        data = response.json()
 
-        csv_data = StringIO(response.text)
-        reader = csv.DictReader(csv_data)
+        matches = data.get('data', [])
+        if not matches:
+            return False, "Не удалось получить список матчей для расчета таблицы"
 
-        rows = list(reader)
-        db.session.query(RPLTable).delete()
-        teams_added = 0
+        stats = {}
 
-        for i, row in enumerate(rows):
-            try:
-                team_name_key = None
-                rank_key = None
-                wins_key = None
-                draws_key = None
-                loss_key = None
-                goals_scored_key = None
-                goals_missed_key = None
-                points_key = None
-
-                for key in row.keys():
-                    key_lower = key.lower()
-                    if 'team' in key_lower:
-                        team_name_key = key
-                    elif 'rank' in key_lower:
-                        rank_key = key
-                    elif 'win' in key_lower:
-                        wins_key = key
-                    elif 'draw' in key_lower:
-                        draws_key = key
-                    elif 'loss' in key_lower:
-                        loss_key = key
-                    elif 'score' in key_lower:
-                        goals_scored_key = key
-                    elif 'goals' in key_lower:
-                        goals_missed_key = key
-                    elif 'point' in key_lower:
-                        points_key = key
-
-                team_name = map_team_name(row[team_name_key])
-
-                position = int(row[rank_key]) if rank_key and row[rank_key] else i + 1
-                wins = int(row[wins_key]) if wins_key and row[wins_key] else 0
-                draws = int(row[draws_key]) if draws_key and row[draws_key] else 0
-                losses = int(row[loss_key]) if loss_key and row[loss_key] else 0
-                goals_scored = int(row[goals_scored_key]) if goals_scored_key and row[goals_scored_key] else 0
-                goals_missed = int(row[goals_missed_key]) if goals_missed_key and row[goals_missed_key] else 0
-                points = int(row[points_key]) if points_key and row[points_key] else 0
-
-                matches = wins + draws + losses
-
-                team = RPLTable(
-                    position=position,
-                    team=team_name,
-                    matches=matches,
-                    wins=wins,
-                    draws=draws,
-                    losses=losses,
-                    goals_for=goals_scored,
-                    goals_against=goals_missed,
-                    points=points
-                )
-
-                db.session.add(team)
-                teams_added += 1
-
-            except Exception as e:
-                print(f"Ошибка при обработке строки {i + 1}: {e}")
-                print(f"Данные строки: {row}")
+        for match in matches:
+            status = match.get('status')
+            if status not in [8, 9, 10]:
                 continue
 
+            home_team_raw = match['homeTeam']['name']
+            away_team_raw = match['awayTeam']['name']
+
+            home_team = map_team_name(home_team_raw)
+            away_team = map_team_name(away_team_raw)
+
+            home_score = match.get('homeResult', 0) or 0
+            away_score = match.get('awayResult', 0) or 0
+
+            if home_team not in stats: stats[home_team] = {'m': 0, 'w': 0, 'd': 0, 'l': 0, 'gf': 0, 'ga': 0, 'pts': 0}
+            if away_team not in stats: stats[away_team] = {'m': 0, 'w': 0, 'd': 0, 'l': 0, 'gf': 0, 'ga': 0, 'pts': 0}
+
+            stats[home_team]['m'] += 1
+            stats[away_team]['m'] += 1
+            stats[home_team]['gf'] += home_score
+            stats[home_team]['ga'] += away_score
+            stats[away_team]['gf'] += away_score
+            stats[away_team]['ga'] += home_score
+
+            if home_score > away_score:
+                stats[home_team]['w'] += 1
+                stats[home_team]['pts'] += 3
+                stats[away_team]['l'] += 1
+            elif away_score > home_score:
+                stats[away_team]['w'] += 1
+                stats[away_team]['pts'] += 3
+                stats[home_team]['l'] += 1
+            else:
+                stats[home_team]['d'] += 1
+                stats[home_team]['pts'] += 1
+                stats[away_team]['d'] += 1
+                stats[away_team]['pts'] += 1
+        sorted_teams = sorted(
+            stats.items(),
+            key=lambda x: (
+                x[1]['pts'],
+                x[1]['w'],
+                (x[1]['gf'] - x[1]['ga']),
+                x[1]['gf']
+            ),reverse=True)
+        db.session.query(RPLTable).delete()
+
+        for i, (team_name, s) in enumerate(sorted_teams, 1):
+            row = RPLTable(
+                position=i,
+                team=team_name,
+                matches=s['m'],
+                wins=s['w'],
+                draws=s['d'],
+                losses=s['l'],
+                goals_for=s['gf'],
+                goals_against=s['ga'],
+                points=s['pts']
+            )
+            db.session.add(row)
+
         db.session.commit()
-        teams_in_db = db.session.query(RPLTable).order_by(RPLTable.position).all()
-        for team in teams_in_db:
-            print(f"{team.position}. {team.team} - {team.points} очков")
+        return True, f"Таблица пересчитана по {len(matches)} матчам"
 
-        return True, f"Добавлено {teams_added} команд"
-
-    except requests.exceptions.HTTPError as e:
-        print(f"HTTP ошибка: {e}")
-        print(f"URL: {e.response.url}")
-        print(f"Статус: {e.response.status_code}")
-        print(f"Ответ: {e.response.text}")
-        return False, f"Ошибка API: {e.response.status_code}"
     except Exception as e:
-        print(f"Общая ошибка: {e}")
+        print(f"Ошибка расчета таблицы: {e}")
         db.session.rollback()
-        return False, f"Ошибка при обновлении таблицы: {e}"
+        return False, f"Ошибка: {e}"
 
 
 # Главная страница
@@ -731,33 +788,6 @@ def edit_test(test_id):
     return render_template('edit_test.html', test=test, clubs=CLUBS_DATA)
 
 
-@app.route('/restore_table', methods=['POST'])
-@login_required
-def restore_table():
-    if not current_user.is_admin:
-        return redirect(url_for('home'))
-
-    db.session.query(RPLTable).delete()
-
-    for i, club in enumerate(RPL_CLUBS, 1):
-        team = RPLTable(
-            position=i,
-            team=club,
-            matches=0,
-            wins=0,
-            draws=0,
-            losses=0,
-            goals_for=0,
-            goals_against=0,
-            points=0
-        )
-        db.session.add(team)
-
-    db.session.commit()
-
-    return redirect(url_for('edit_rpl_table'))
-
-
 @app.route('/edit_rpl_table', methods=['GET', 'POST'])
 @login_required
 def edit_rpl_table():
@@ -1051,6 +1081,7 @@ def wheel_spin():
             'success': False,
             'message': f'Произошла ошибка: {str(e)}'
         })
+
 
 @app.route('/api/wheel/status')
 @login_required
@@ -1389,28 +1420,18 @@ def init_user_balances():
 
 
 def get_team_form(team_name, limit=5):
-    matches = (Match.query.filter(
-        ((Match.home_team == team_name) | (Match.away_team == team_name)), Match.is_played == True).
-               order_by(Match.match_date.desc()).limit(limit).all())
-
+    matches = Match.query.filter(((Match.home_team == team_name) | (Match.away_team == team_name)),
+                                 Match.is_played == True).order_by(Match.match_date.desc()).limit(limit).all()
     form = []
     for m in matches:
         if m.home_team == team_name:
-            if m.home_score > m.away_score:
-                res = {'class': 'win', 'text': 'В'}
-            elif m.home_score < m.away_score:
-                res = {'class': 'loss', 'text': 'П'}
-            else:
-                res = {'class': 'draw', 'text': 'Н'}
+            form.append(
+                {'class': 'win' if m.home_score > m.away_score else ('loss' if m.home_score < m.away_score else 'draw'),
+                 'text': 'В' if m.home_score > m.away_score else ('П' if m.home_score < m.away_score else 'Н')})
         else:
-            if m.away_score > m.home_score:
-                res = {'class': 'win', 'text': 'В'}
-            elif m.away_score < m.home_score:
-                res = {'class': 'loss', 'text': 'П'}
-            else:
-                res = {'class': 'draw', 'text': 'Н'}
-        form.append(res)
-
+            form.append(
+                {'class': 'win' if m.away_score > m.home_score else ('loss' if m.away_score < m.home_score else 'draw'),
+                 'text': 'В' if m.away_score > m.home_score else ('П' if m.away_score < m.home_score else 'Н')})
     return form
 
 
@@ -1422,33 +1443,127 @@ def match_details(match_id_db):
 
     home_form = get_team_form(match.home_team)
     away_form = get_team_form(match.away_team)
-    chat_messages = MatchMessage.query.filter_by(match_id=match_id_db) \
-        .order_by(MatchMessage.created_at.asc()).all()
+    chat_messages = MatchMessage.query.filter_by(match_id=match_id_db).order_by(MatchMessage.created_at.asc()).all()
 
     api_data = {}
+
+    # Переменные для ID команд (чтобы шаблон не ломался)
+    home_team_id = None
+    away_team_id = None
+
     if match.sstats_id:
         try:
             headers = {'apikey': '8ftkpzresyxo7dqz'}
-            resp = requests.get(f"https://api.sstats.net/games/{match.sstats_id}", headers=headers, timeout=5)
-            if resp.ok: api_data = resp.json().get('data', {})
+            url_main = f"https://api.sstats.net/Games/{match.sstats_id}"
+            resp = requests.get(url_main, headers=headers, timeout=15)
 
-            stats_resp = requests.post("https://api.sstats.net/games/query-games", headers=headers,
-                                       json={"Condition": f"Id={match.sstats_id}", "Format": "json",
-                                             "Fields": ["BallPossessionHome", "BallPossessionAway", "TotalShotsHome",
-                                                        "TotalShotsAway",
-                                                        "ShotsOnGoalHome", "ShotsOnGoalAway", "CornerKicksHome",
-                                                        "CornerKicksAway",
-                                                        "OffsidesHome", "OffsidesAway", "FoulsHome", "FoulsAway",
-                                                        "YellowCardsHome", "YellowCardsAway", "RedCardsHome",
-                                                        "RedCardsAway"]}, timeout=5)
-            if stats_resp.ok and stats_resp.json().get('data'):
-                api_data['statistics'] = stats_resp.json().get('data')[0]
-        except:
-            pass
+            if resp.ok:
+                json_resp = resp.json()
+                api_data = json_resp.get('data', {}) if isinstance(json_resp, dict) else {}
 
-    return render_template('match_details.html', match=match, api_data=api_data,
-                           home_form=home_form, away_form=away_form,
-                           chat_messages=chat_messages, clubs=CLUBS_DATA)
+                # --- ВАЖНО: ПОЛУЧАЕМ ID КОМАНД НАДЕЖНО ---
+                # 1. Пробуем взять из lineups
+                if api_data.get('lineups'):
+                    home_team_id = api_data['lineups'].get('homeTeam', {}).get('id')
+                    away_team_id = api_data['lineups'].get('awayTeam', {}).get('id')
+
+                # 2. Если там нет, берем из корневого объекта (резервный вариант)
+                if not home_team_id:
+                    home_team_id = api_data.get('homeTeam', {}).get('id')
+                if not away_team_id:
+                    away_team_id = api_data.get('awayTeam', {}).get('id')
+
+                # --- ПЕРЕВОД ТРЕНЕРОВ ---
+                if api_data.get('lineups'):
+                    for side in ['homeCoach', 'awayCoach']:
+                        if api_data['lineups'].get(side):
+                            c_name = api_data['lineups'][side].get('name')
+                            api_data['lineups'][side]['name'] = transliterate_name(c_name)
+
+                # --- ОБРАБОТКА ЗАМЕН ---
+                player_events_data = {}
+                events = api_data.get('events')
+                if events and isinstance(events, list):
+                    for e in events:
+                        if not isinstance(e, dict): continue
+                        minute = e.get('elapsed', 0)
+                        etype = e.get('type')  # 3 = Замена
+                        if etype == 3:
+                            pid = str(e.get('player', {}).get('id')) if e.get('player') else None
+                            aid = str(e.get('assistPlayer', {}).get('id')) if e.get('assistPlayer') else None
+
+                            if pid:
+                                if pid not in player_events_data: player_events_data[pid] = []
+                                player_events_data[pid].append({'type': 'sub_out', 'min': minute})
+                            if aid:
+                                if aid not in player_events_data: player_events_data[aid] = []
+                                player_events_data[aid].append({'type': 'sub_in', 'min': minute})
+
+                # --- ОБРАБОТКА ИГРОКОВ ---
+                lineups = api_data.get('lineupPlayers')
+                if lineups and isinstance(lineups, list):
+                    pos_weights = {'G': 1, 'D': 2, 'M': 3, 'F': 4}
+                    for p in lineups:
+                        if isinstance(p, dict):
+                            if p.get('playerName'):
+                                p['playerName'] = transliterate_name(p['playerName'])
+
+                            p_id = str(p.get('playerId'))
+                            p['events_list'] = player_events_data.get(p_id, [])
+                            pos_char = str(p.get('position', 'M'))
+                            p['sort_weight'] = pos_weights.get(pos_char, 3)
+                            p['is_bench'] = 0 if p.get('startXI') else 1
+
+                    lineups.sort(key=lambda x: (x.get('is_bench', 1), x.get('sort_weight', 5)))
+
+            # Статистика (ваш обновленный список)
+            stats_url = "https://api.sstats.net/games/query-games"
+            stats_payload = {
+                "Condition": f"Id = {match.sstats_id}",
+                "Format": "json",
+                "Fields": [
+                    "BallPossessionHome", "BallPossessionAway", "TotalShotsHome", "TotalShotsAway",
+                    "ShotsOnGoalHome", "ShotsOnGoalAway", "ShotsOffGoalHome", "ShotsOffGoalAway",
+                    "BlockedShotsHome", "BlockedShotsAway", "ShotsInsideBoxHome", "ShotsInsideBoxAway",
+                    "ShotsOutsideBoxHome", "ShotsOutsideBoxAway", "CornerKicksHome", "CornerKicksAway",
+                    "OffsidesHome", "OffsidesAway", "FoulsHome", "FoulsAway",
+                    "YellowCardsHome", "YellowCardsAway", "RedCardsHome", "RedCardsAway",
+                    "GoalkeeperSavesHome", "GoalkeeperSavesAway", "TotalPassesHome", "TotalPassesAway",
+                    "PassesAccurateHome", "PassesAccurateAway", "ExpectedGoalsHome", "ExpectedGoalsAway",
+                    "ExpectedAssistsHome", "ExpectedAssistsAway", "BigChancesHome", "BigChancesAway",
+                    "XgOnTargetHome", "XgOnTargetAway", "HitTheWoodworkHome", "HitTheWoodworkAway",
+                    "HeadedGoalsHome", "HeadedGoalsAway", "FreeKicksHome", "FreeKicksAway",
+                    "ThrowinsHome", "ThrowinsAway", "GoalsPreventedHome", "GoalsPreventedAway",
+                    "LongPassesHome", "LongPassesAway", "CrossesHome", "CrossesAway",
+                    "TotalTacklesHome", "TotalTacklesAway", "InterceptionsHome", "InterceptionsAway",
+                    "ClearancesHome", "ClearancesAway", "DuelsWonHome", "DuelsWonAway"
+                ]
+            }
+            try:
+                stats_resp = requests.post(stats_url, headers=headers, json=stats_payload, timeout=5)
+                if stats_resp.ok:
+                    stats_json = stats_resp.json()
+                    if isinstance(stats_json, dict) and isinstance(stats_json.get('data'), list) and len(
+                            stats_json['data']) > 0:
+                        s_raw = stats_json['data'][0]
+                        if 'statistics' not in api_data: api_data['statistics'] = {}
+                        for key, val in s_raw.items(): api_data['statistics'][key[0].lower() + key[1:]] = val
+            except:
+                pass
+
+        except Exception as e:
+            print(f"API Error: {e}")
+
+    return render_template('match_details.html',
+                           match=match,
+                           api_data=api_data,
+                           home_form=home_form,
+                           away_form=away_form,
+                           chat_messages=chat_messages,
+                           clubs=CLUBS_DATA,
+                           # ПЕРЕДАЕМ ID КОМАНД ЯВНО
+                           home_team_id=home_team_id,
+                           away_team_id=away_team_id)
 
 
 @app.route('/admin/sync_season', methods=['POST'])

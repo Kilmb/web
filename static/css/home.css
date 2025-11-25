@@ -3,7 +3,6 @@
 ===============================================
 */
 
-/* Общий контейнер для home */
 .home-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -12,7 +11,6 @@
     gap: 25px;
 }
 
-/* Карточка-обертка для контента */
 .content-card,
 .profile-header {
     background: var(--card-bg);
@@ -38,9 +36,7 @@
 .content-card h3 {
     color: var(--heading-color);
     margin-top: 0;
-    /* text-align: left; (Теперь управляется в HTML) */
 }
-
 
 /* ===============================================
         СТИЛИ HOME (home.html)
@@ -52,7 +48,6 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 0;
-
     background: var(--card-bg);
     padding: 25px;
     border-radius: 15px;
@@ -87,6 +82,7 @@
     border: 2px solid white;
 }
 
+/* Меню и кнопки */
 .menu {
     display: flex;
     flex-wrap: wrap;
@@ -143,9 +139,8 @@ th, td {
     padding: 12px;
     text-align: center;
 }
-
 th {
-    background-color: #4682B4; /* SteelBlue */
+    background-color: #4682B4;
     color: white;
     font-size: clamp(16px, 2.5vw, 18px);
     border: 1px solid #3a719c;
@@ -153,14 +148,12 @@ th {
 td {
      border: 1px solid var(--border-color);
 }
-
 tr:nth-child(even) {
     background-color: rgba(128, 128, 128, 0.05);
 }
 tr:hover {
     background-color: rgba(128, 128, 128, 0.15);
 }
-
 body:not(.theme-dark) th {
     background-color: #4682B4;
     color: white;
@@ -172,7 +165,6 @@ body:not(.theme-dark) tr:nth-child(even) {
 body:not(.theme-dark) tr:hover {
     background-color: #f1f1f1;
 }
-
 .user-club-row td {
     background: linear-gradient(to bottom, var(--club-color1), var(--club-color2)) !important;
     color: white;
@@ -192,7 +184,7 @@ body:not(.theme-dark) tr:hover {
 }
 
 /* ===============================================
-            СТИЛИ МАТЧЕЙ (Перенесено из HTML)
+            СТИЛИ МАТЧЕЙ И ТУРОВ
 ===============================================
 */
 
@@ -202,63 +194,83 @@ body:not(.theme-dark) tr:hover {
     background: none;
 }
 
-/* Стили для навигации по турам */
-.tour-navigation {
+/* НОВАЯ НАВИГАЦИЯ (СТРЕЛКИ) */
+.tour-navigation-controls {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    align-items: center;
+    gap: 20px;
     margin-bottom: 20px;
 }
-.tour-btn {
-    padding: 10px 15px;
-    border: 2px solid #007bff;
-    background: white;
-    color: #007bff;
-    border-radius: 5px;
+
+.tour-arrow-btn {
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    color: var(--text-color);
+    font-size: 1.5em;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
     cursor: pointer;
-    transition: all 0.3s;
-    font-size: 14px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-bottom: 4px;
+    user-select: none;
 }
-.tour-btn:hover:not(.disabled) {
+.tour-arrow-btn:hover {
     background: #007bff;
     color: white;
-}
-.tour-btn.active {
-    background: #007bff;
-    color: white;
-}
-.tour-btn.disabled {
-    border-color: #ccc;
-    color: #ccc;
-    cursor: not-allowed;
+    border-color: #007bff;
+    transform: scale(1.1);
 }
 
-/* Стили для контента туров */
+.tour-display {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-width: 100px;
+}
+.tour-number-text {
+    font-size: 2em;
+    font-weight: bold;
+    color: var(--heading-color);
+}
+.tour-label {
+    font-size: 0.9em;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Скрываем неактивные туры */
 .tour-content {
     display: none;
+    animation: fadeIn 0.3s ease;
 }
 .tour-content.active {
     display: block;
 }
 
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
-/* ИСПРАВЛЕНИЕ 1: Сетка матчей (по умолчанию) */
+/* СЕТКА МАТЧЕЙ */
 .matches-grid {
     display: grid;
-    /* Эта сетка (для 8 матчей) будет растягиваться */
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 15px;
 }
-
-/* ИСПРАВЛЕНИЕ 1: НОВЫЙ КЛАСС для центрирования 1-2 матчей */
+/* Центрирование малого количества матчей */
 .matches-grid.center-small-grid {
-    /* Эта сетка будет использовать flex для центрирования */
     display: flex;
     flex-wrap: wrap;
     justify-content: center;
     gap: 15px;
 }
-
 
 .match-card {
     background-color: var(--card-bg);
@@ -266,13 +278,18 @@ body:not(.theme-dark) tr:hover {
     padding: 15px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     border: 1px solid var(--border-color);
-    /* Задаем жесткую ширину, чтобы flex-центр работал */
     width: 300px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.match-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
 }
 body:not(.theme-dark) .match-card {
     background-color: #f8f9fa;
     border: 1px solid #eee;
 }
+
 .match-teams {
     font-size: 18px;
     font-weight: bold;
@@ -303,10 +320,34 @@ body:not(.theme-dark) .match-card {
     border-radius: 5px;
 }
 
+/* Кнопка подробнее */
+.btn-details {
+    display: block;
+    text-align: center;
+    margin: 12px 0 5px 0;
+    padding: 10px;
+    background: var(--grad-start, #007bff);
+    color: white;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+}
+.btn-details:hover {
+    background: var(--grad-end, #0056b3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px var(--shadow-color, rgba(0,0,0,0.2));
+}
+
 /* Форма ставок */
 .bet-form {
-    margin-top: 15px;
-    padding-top: 15px;
+    margin-top: 5px;
+    padding-top: 10px;
     border-top: 1px solid var(--border-color);
 }
 .bet-form h4 {
@@ -322,26 +363,22 @@ body:not(.theme-dark) .match-card {
 .bet-form select,
 .bet-form input {
     width: 100%;
-    padding: 12px;
-    font-size: 16px;
+    padding: 10px;
+    font-size: 14px;
     border: 1px solid #ccc;
     border-radius: 6px;
     background: #fff;
     color: #333;
     box-sizing: border-box;
 }
-.bet-form input::placeholder {
-    color: #999;
-}
 .bet-form .btn-bet {
     width: 100%;
-    padding: 12px;
+    padding: 10px;
     background: linear-gradient(45deg, #28a745, #20c997);
     color: white;
     border: none;
     border-radius: 6px;
     font-weight: bold;
-    font-size: 16px;
     cursor: pointer;
     transition: all 0.3s;
 }
@@ -358,24 +395,15 @@ body:not(.theme-dark) .match-card {
     background: linear-gradient(var(--color1), var(--color2));
     color: white;
     border-radius: 15px;
-    padding: 25px;
-    /* margin: 0; <-- УДАЛЕНО: Эта строка сбрасывала отступ */
+    padding: 15px 20px;
     max-width: 1400px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-
-    /* ИСПРАВЛЕНИЕ: Отступ для всех карточек */
     margin-bottom: 30px;
 }
-/* ИСПРАВЛЕНИЕ: Увеличенный отступ для любимой */
 .club-info.favorite-club {
     margin-bottom: 60px;
 }
-
-
-.club-info p {
-    color: white;
-}
-.club-info h2, .club-info h3, .club-info h4 {
+.club-info p, .club-info h2, .club-info h3, .club-info h4 {
     color: white !important;
 }
 .club-logo {
@@ -413,35 +441,47 @@ body:not(.theme-dark) .match-card {
     flex: 1;
     font-size: clamp(14px, 3vw, 18px);
     font-weight: bold;
-    text-align: center;
 }
 .kit-label.left { text-align: left; padding-left: 3%; }
 .kit-label.center { text-align: center; }
 .kit-label.right { text-align: right; padding-right: 4%; }
+/* Контейнер кнопок */
 .club-links {
     display: flex;
     justify-content: center;
     gap: 15px;
-    margin-top: 15px;
+    margin-top: 20px;
     flex-wrap: wrap;
 }
+
+/* Сами кнопки */
 .club-link {
     display: inline-block;
-    padding: 8px 15px;
-    background-color: rgba(255, 255, 255, 0.2);
-    color: white;
+    padding: 10px 20px;
+    /* Фон делаем чисто белым */
+    background-color: #ffffff;
+    /* Текст делаем темным цветом клуба (переменная определена в HTML) */
+    color: var(--color1, #333);
     text-decoration: none;
-    border-radius: 4px;
+    border-radius: 25px; /* Закругленные края */
     font-size: clamp(14px, 3vw, 16px);
-    transition: background-color 0.3s;
-    border: 1px solid rgba(255, 255, 255, 0.3);
-}
-.club-link:hover {
-    background-color: rgba(255, 255, 255, 0.3);
-    color: white;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    border: 2px solid white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Тень для контраста */
 }
 
-/* Стили для карт (перенесено из HTML) */
+/* Эффект при наведении */
+.club-link:hover {
+    /* Меняем местами: фон становится цветным, текст белым */
+    background-color: var(--color1, #333);
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+    border-color: var(--color1, #333);
+}
+
+/* Стили для карт */
 .stadium-map-container {
     margin: 20px 0;
     border-radius: 8px;
@@ -453,11 +493,8 @@ body:not(.theme-dark) .match-card {
 }
 .stadium-map-container h4 {
     margin-bottom: 10px;
-    font-size: 1.2em;
-    text-align: center;
-}
-.club-info .stadium-map-container h4 {
     font-size: 18px;
+    text-align: center;
     color: white !important;
 }
 .stadium-map {
@@ -470,10 +507,9 @@ body:not(.theme-dark) .match-card {
 }
 
 /* ===============================================
-            БЛОК ПРИВЕТСТВИЯ (welcome-page)
+            БЛОК ПРИВЕТСТВИЯ
 ===============================================
 */
-
 .welcome-page .welcome-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -606,110 +642,26 @@ body:not(.theme-dark) .match-card {
     padding: 10px;
 }
 
-
-/* ===============================================
-            АДАПТИВНОСТЬ (ОБЩАЯ)
-===============================================
-*/
+/* АДАПТИВНОСТЬ */
 @media (max-width: 768px) {
-    body {
-        padding: 50px 10px 10px 10px;
-    }
-    .logout-link-fixed {
-        top: 10px;
-        left: 10px;
-        padding: 8px 15px;
-        font-size: 14px;
-    }
-    .page-header {
-        flex-direction: column;
-        gap: 15px;
-        text-align: center;
-    }
-    .stadium-map {
-        height: 250px;
-    }
-
-    .welcome-page .rpl-logo-group {
-        flex-direction: column;
-    }
-    .welcome-page .rpl-logo-side {
-        max-width: 60px;
-    }
-    .welcome-page .rpl-logo-main {
-        max-width: 150px;
-    }
+    body { padding: 50px 10px 10px 10px; }
+    .logout-link-fixed { top: 10px; left: 10px; padding: 8px 15px; font-size: 14px; }
+    .page-header { flex-direction: column; gap: 15px; text-align: center; }
+    .stadium-map { height: 250px; }
+    .welcome-page .rpl-logo-group { flex-direction: column; }
+    .welcome-page .rpl-logo-side { max-width: 60px; }
+    .welcome-page .rpl-logo-main { max-width: 150px; }
 }
-
 @media (max-width: 480px) {
-    .stadium-map {
-        height: 200px;
-    }
+    .stadium-map { height: 200px; }
 }
-
 @media (min-width: 768px) {
-    .club-header {
-        flex-direction: row;
-        justify-content: center;
-        gap: 15px;
-    }
+    .club-header { flex-direction: row; justify-content: center; gap: 15px; }
     .club-logo { max-height: 250px; }
-    /* ИСПРАВЛЕНИЕ: Убран 'margin: 0', который все сбрасывал */
-    .club-info { padding: 15px 20px; }
 }
 @media (min-width: 1200px) {
     .club-logo { max-height: 300px; }
 }
 
 .leaflet-control-attribution,
-.leaflet-control-scale {
-    display: none !important;
-}
-
-
-/* ===============================================
-        === НОВЫЕ СТИЛИ (Добавлено) ===
-===============================================
-*/
-
-/* Эффект наведения на карточку матча */
-.match-card {
-    /* Добавляем transition к существующему классу */
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.match-card:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
-}
-
-
-/* Стили для новой кнопки "Подробнее" */
-.btn-details {
-    display: block;
-    text-align: center;
-    margin: 12px 0 5px 0; /* Отступы */
-    padding: 10px;
-    background: var(--grad-start, #007bff);
-    color: white;
-    text-decoration: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: bold;
-    transition: all 0.3s;
-    border: none;
-    cursor: pointer;
-    /* z-index, чтобы кнопка была "поверх" */
-    position: relative;
-    z-index: 2;
-}
-
-.btn-details:hover {
-    background: var(--grad-end, #0056b3);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px var(--shadow-color, rgba(0,0,0,0.2));
-}
-
-/* Исправляем отступ, если есть форма ставки */
-.bet-form {
-    margin-top: 5px; /* Уменьшаем отступ, т.к. кнопка дала свой */
-}
+.leaflet-control-scale { display: none !important; }
