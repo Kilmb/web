@@ -10,8 +10,9 @@
 </head>
 <body class="theme-{{ current_user.theme or 'default' }} {% if current_user.is_authenticated %}themed-body{% endif %}"
     {% if current_user.is_authenticated and current_user.theme =='club' and current_user.club %}
-        {% set user_club = clubs|selectattr('name','equalto', current_user.club)|first %}
-        {% if user_club %}
+        {% set user_club_list = clubs|selectattr('name','equalto', current_user.club)|list %}
+        {% if user_club_list %}
+            {% set user_club = user_club_list[0] %}
             style="--club-color-1: {{ user_club.color1 }}; --club-color-2: {{ user_club.color2 }}; --club-shadow-color: {{ user_club.color1 }}80;"
         {% endif %}
     {% endif %}
@@ -20,21 +21,23 @@
 <div class="home-container">
     <div style="margin: 20px 0;"><a href="{{ url_for('home') }}" class="btn-back">← На главную</a></div>
 
-    {% set home_club = clubs|selectattr('name', 'equalto', match.home_team)|first %}
-    {% set away_club = clubs|selectattr('name', 'equalto', match.away_team)|first %}
+    {# --- Данные клубов --- #}
+    {% set home_club_list = clubs|selectattr('name', 'equalto', match.home_team)|list %}
+    {% set home_club = home_club_list[0] if home_club_list else none %}
+
+    {% set away_club_list = clubs|selectattr('name', 'equalto', match.away_team)|list %}
+    {% set away_club = away_club_list[0] if away_club_list else none %}
+
     {% set h_c1 = home_club.color1 if home_club else '#007bff' %}
     {% set h_c2 = home_club.color2 if home_club else '#0056b3' %}
     {% set a_c1 = away_club.color1 if away_club else '#dc3545' %}
     {% set a_c2 = away_club.color2 if away_club else '#a71d2a' %}
 
     <div class="match-header-card">
-
         <div class="match-score-board-row">
 
             <div class="team-info-side left-side">
-                <div class="team-name-small">
-                    {{ match.home_team }}
-                </div>
+                <div class="team-name-small">{{ match.home_team }}</div>
                 <div class="form-badges">
                     {% if home_form %}
                         {% for f in home_form %}<div class="form-badge form-{{ f.class }}">{{ f.text }}</div>{% endfor %}
@@ -45,16 +48,14 @@
             </div>
 
             {% if home_club %}
-                <img src="{{ url_for('static', filename='img/' + home_club.logo) }}"
-                     alt="{{ match.home_team }}"
-                     class="match-team-logo">
+                <img src="{{ url_for('static', filename='img/' + home_club.logo) }}" alt="{{ match.home_team }}" class="match-team-logo">
+            {% else %}
+                <div class="match-team-logo" style="display:flex; align-items:center; justify-content:center; background:#eee; color:#999; font-weight:bold;">{{ match.home_team[0] }}</div>
             {% endif %}
 
             <div class="score-container">
                 {% if match.is_played or match.is_started %}
-                    <div class="match-score">
-                        {{ match.home_score }} : {{ match.away_score }}
-                    </div>
+                    <div class="match-score">{{ match.home_score }} : {{ match.away_score }}</div>
                     {% if match.is_started and not match.is_played %}
                         <div class="match-status-badge status-live">🔴 LIVE</div>
                     {% else %}
@@ -62,22 +63,18 @@
                     {% endif %}
                 {% else %}
                     <div class="match-score" style="font-size: 3em;">VS</div>
-                    <div class="match-status-badge status-time">
-                        {{ match.match_date.strftime('%d.%m %H:%M') }}
-                    </div>
+                    <div class="match-status-badge status-time">{{ match.match_date.strftime('%d.%m %H:%M') }}</div>
                 {% endif %}
             </div>
 
             {% if away_club %}
-                <img src="{{ url_for('static', filename='img/' + away_club.logo) }}"
-                     alt="{{ match.away_team }}"
-                     class="match-team-logo">
+                <img src="{{ url_for('static', filename='img/' + away_club.logo) }}" alt="{{ match.away_team }}" class="match-team-logo">
+            {% else %}
+                <div class="match-team-logo" style="display:flex; align-items:center; justify-content:center; background:#eee; color:#999; font-weight:bold;">{{ match.away_team[0] }}</div>
             {% endif %}
 
             <div class="team-info-side right-side">
-                <div class="team-name-small">
-                    {{ match.away_team }}
-                </div>
+                <div class="team-name-small">{{ match.away_team }}</div>
                 <div class="form-badges">
                     {% if away_form %}
                         {% for f in away_form %}<div class="form-badge form-{{ f.class }}">{{ f.text }}</div>{% endfor %}
@@ -86,7 +83,6 @@
                     {% endif %}
                 </div>
             </div>
-
         </div>
     </div>
 
@@ -96,58 +92,48 @@
             <h3>📊 Подробная статистика</h3>
             {% if api_data.statistics %}
                 {% set s = api_data.statistics %}
-                {% set stats_list = [
+                {% set stats_config = [
                     ('expectedGoals', 'xG (Ожидаемые голы)'),
                     ('ballPossession', 'Владение мячом (%)'),
                     ('totalShots', 'Всего ударов'),
                     ('shotsOnGoal', 'Удары в створ'),
                     ('shotsOffGoal', 'Удары мимо'),
-                    ('blockedShots', 'Заблокированные удары'),
-                    ('shotsInsideBox', 'Удары из штрафной'),
-                    ('shotsOutsideBox', 'Удары из-за штрафной'),
+                    ('blockedShots', 'Заблокированные'),
+                    ('shotsInsideBox', 'Из штрафной'),
+                    ('shotsOutsideBox', 'Из-за штрафной'),
                     ('bigChances', 'Большие шансы'),
-                    ('hitTheWoodwork', 'Попадание в каркас'),
+                    ('hitTheWoodwork', 'Каркас ворот'),
                     ('cornerKicks', 'Угловые'),
                     ('offsides', 'Офсайды'),
                     ('fouls', 'Фолы'),
                     ('yellowCards', 'Желтые карточки'),
                     ('redCards', 'Красные карточки'),
-                    ('goalkeeperSaves', 'Сейвы вратаря'),
-                    ('totalPasses', 'Всего пасов'),
-                    ('passesAccurate', 'Точные пасы'),
+                    ('goalkeeperSaves', 'Сейвы'),
+                    ('totalPasses', 'Всего передач'),
+                    ('passesAccurate', 'Точные передачи'),
                     ('longPasses', 'Длинные передачи'),
                     ('crosses', 'Навесы'),
                     ('totalTackles', 'Отборы'),
                     ('interceptions', 'Перехваты'),
                     ('clearances', 'Выносы'),
-                    ('duelsWon', 'Выигранные дуэли'),
-                    ('freeKicks', 'Штрафные удары'),
-                    ('throwins', 'Ауты')
+                    ('duelsWon', 'Выигранные дуэли')
                 ] %}
 
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    {% for key, label in stats_list %}
+                    {% for key, label in stats_config %}
                         {% set val_home = s.get(key ~ 'Home') %}
                         {% set val_away = s.get(key ~ 'Away') %}
-
-                        {# Проверяем, есть ли данные #}
                         {% if val_home is not none or val_away is not none %}
                             <div class="stats-row-item">
                                 <span style="font-weight:bold; color:{{ h_c1 }}; font-size:1.2em; width: 60px; text-align: right;">
-                                    {# ЛОГИКА ОКРУГЛЕНИЯ xG #}
                                     {% if key == 'expectedGoals' %}
                                         {{ "%.2f"|format(val_home|float) if val_home is not none else '0.00' }}
                                     {% else %}
                                         {{ val_home if val_home is not none else 0 }}
                                     {% endif %}
                                 </span>
-
-                                <span style="color:var(--text-color); opacity:0.8; text-transform: uppercase; font-size: 0.9em; font-weight: 600;">
-                                    {{ label }}
-                                </span>
-
+                                <span style="color:var(--text-color); opacity:0.8; text-transform: uppercase; font-size: 0.9em; font-weight: 600;">{{ label }}</span>
                                 <span style="font-weight:bold; color:{{ a_c1 }}; font-size:1.2em; width: 60px; text-align: left;">
-                                    {# ЛОГИКА ОКРУГЛЕНИЯ xG #}
                                     {% if key == 'expectedGoals' %}
                                         {{ "%.2f"|format(val_away|float) if val_away is not none else '0.00' }}
                                     {% else %}
@@ -165,7 +151,13 @@
 
         <div class="content-card full-width">
             <h3>⭐ Составы и статистика игроков</h3>
-            {% if api_data.playerStats and api_data.lineupPlayers %}
+
+            {% if api_data.lineupPlayers %}
+
+                {# Безопасное определение ID #}
+                {% set safe_home_id = home_team_id if home_team_id else api_data.game.homeTeam.id %}
+                {% set safe_away_id = away_team_id if away_team_id else api_data.game.awayTeam.id %}
+
                 <div class="player-stats-wrapper">
 
                     {% macro player_table_full(players, title) %}
@@ -186,26 +178,38 @@
                             </thead>
                             <tbody>
                                 {% for p in players %}
-                                    {% set stat = api_data.playerStats|selectattr('playerId', 'equalto', p.playerId)|first %}
                                     <tr>
                                         <td class="p-name">
                                             <span class="p-pos">{{ pos_map[p.position] if p.position in pos_map else p.position }}</span>
                                             {{ p.playerName }}
+
+                                            {# === ВОТ ОНИ, СТРЕЛОЧКИ ЗАМЕН! === #}
                                             {% if p.events_list %}
                                                 {% for ev in p.events_list %}
-                                                    {% if ev.type == 'sub_in' %}<span class="sub-in">⬆ {{ ev.min }}'</span>{% endif %}
-                                                    {% if ev.type == 'sub_out' %}<span class="sub-out">⬇ {{ ev.min }}'</span>{% endif %}
+                                                    {% if ev.type == 'sub_in' %}
+                                                        <span class="sub-in" title="Вышел на поле">⬆ {{ ev.min }}'</span>
+                                                    {% endif %}
+                                                    {% if ev.type == 'sub_out' %}
+                                                        <span class="sub-out" title="Ушел с поля">⬇ {{ ev.min }}'</span>
+                                                    {% endif %}
                                                 {% endfor %}
                                             {% endif %}
+                                            {# ================================= #}
                                         </td>
-                                        <td>{% if stat and stat.rating %}<span class="rating-badge {{ 'rating-high' if stat.rating >= 7.5 else ('rating-mid' if stat.rating >= 6.0 else 'rating-low') }}">{{ stat.rating }}</span>{% else %}-{% endif %}</td>
-                                        <td>{{ stat.goalsTotal or '' }}</td>
-                                        <td>{{ stat.goalsAssists or '' }}</td>
-                                        <td>{{ stat.shotsTotal or '' }}</td>
-                                        <td>{{ stat.passesTotal or '' }}</td>
-                                        <td>{{ stat.tacklesTotal or '' }}</td>
-                                        <td>{% if stat and stat.cardsYellow and stat.cardsYellow > 0 %}<span style="color:#d4ac0d; font-weight:900;">{{ stat.cardsYellow }}</span>{% endif %}</td>
-                                        <td>{% if stat and stat.cardsRed and stat.cardsRed > 0 %}<span style="color:#dc3545; font-weight:900;">{{ stat.cardsRed }}</span>{% endif %}</td>
+                                        <td>
+                                            {% if p.rating %}
+                                                <span class="rating-badge {{ 'rating-high' if p.rating|float >= 7.5 else ('rating-mid' if p.rating|float >= 6.0 else 'rating-low') }}">
+                                                    {{ p.rating }}
+                                                </span>
+                                            {% else %}-{% endif %}
+                                        </td>
+                                        <td>{{ p.goals if p.goals else '' }}</td>
+                                        <td>{{ p.assists if p.assists else '' }}</td>
+                                        <td>{{ p.shots if p.shots else '' }}</td>
+                                        <td>{{ p.passes if p.passes else '' }}</td>
+                                        <td>{{ p.tackles if p.tackles else '' }}</td>
+                                        <td>{% if p.yellowCards %}<span style="color:#d4ac0d; font-weight:900;">{{ p.yellowCards }}</span>{% endif %}</td>
+                                        <td>{% if p.redCards %}<span style="color:#dc3545; font-weight:900;">{{ p.redCards }}</span>{% endif %}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
@@ -214,20 +218,36 @@
 
                     <div class="team-stats-block">
                         <div class="team-header-banner" style="background: linear-gradient(45deg, {{ h_c1 }}, {{ h_c2 }});">{{ match.home_team }}</div>
-                        {% if api_data.lineups.homeCoach %}<div style="text-align:center; margin-bottom:15px; font-size:1.1em;">Главный тренер: <strong>{{ api_data.lineups.homeCoach.name }}</strong></div>{% endif %}
-                        {% set home_start = api_data.lineupPlayers|selectattr('teamId', 'equalto', api_data.game.homeTeam.id)|selectattr('startXI', 'equalto', true)|list %}
-                        {{ player_table_full(home_start, 'Стартовый состав') }}
-                        {% set home_subs = api_data.lineupPlayers|selectattr('teamId', 'equalto', api_data.game.homeTeam.id)|selectattr('startXI', 'equalto', false)|list %}
-                        {{ player_table_full(home_subs, 'Запасные') }}
+                        {% if api_data.lineups and api_data.lineups.homeCoach %}
+                            <div style="text-align:center; margin-bottom:15px; font-size:1.1em;">Главный тренер: <strong>{{ api_data.lineups.homeCoach.name }}</strong></div>
+                        {% endif %}
+
+                        {% set home_start = api_data.lineupPlayers|selectattr('teamId', 'equalto', safe_home_id)|selectattr('startXI', 'equalto', true)|list %}
+                        {% set home_subs = api_data.lineupPlayers|selectattr('teamId', 'equalto', safe_home_id)|selectattr('startXI', 'equalto', false)|list %}
+
+                        {% if home_start %}
+                            {{ player_table_full(home_start, 'Стартовый состав') }}
+                            {{ player_table_full(home_subs, 'Запасные') }}
+                        {% else %}
+                            <p style="text-align:center; padding:10px; color:#999;">Нет данных о составе</p>
+                        {% endif %}
                     </div>
 
                     <div class="team-stats-block">
                         <div class="team-header-banner" style="background: linear-gradient(45deg, {{ a_c1 }}, {{ a_c2 }});">{{ match.away_team }}</div>
-                        {% if api_data.lineups.awayCoach %}<div style="text-align:center; margin-bottom:15px; font-size:1.1em;">Главный тренер: <strong>{{ api_data.lineups.awayCoach.name }}</strong></div>{% endif %}
-                        {% set away_start = api_data.lineupPlayers|selectattr('teamId', 'equalto', api_data.game.awayTeam.id)|selectattr('startXI', 'equalto', true)|list %}
-                        {{ player_table_full(away_start, 'Стартовый состав') }}
-                        {% set away_subs = api_data.lineupPlayers|selectattr('teamId', 'equalto', api_data.game.awayTeam.id)|selectattr('startXI', 'equalto', false)|list %}
-                        {{ player_table_full(away_subs, 'Запасные') }}
+                        {% if api_data.lineups and api_data.lineups.awayCoach %}
+                            <div style="text-align:center; margin-bottom:15px; font-size:1.1em;">Главный тренер: <strong>{{ api_data.lineups.awayCoach.name }}</strong></div>
+                        {% endif %}
+
+                        {% set away_start = api_data.lineupPlayers|selectattr('teamId', 'equalto', safe_away_id)|selectattr('startXI', 'equalto', true)|list %}
+                        {% set away_subs = api_data.lineupPlayers|selectattr('teamId', 'equalto', safe_away_id)|selectattr('startXI', 'equalto', false)|list %}
+
+                        {% if away_start %}
+                            {{ player_table_full(away_start, 'Стартовый состав') }}
+                            {{ player_table_full(away_subs, 'Запасные') }}
+                        {% else %}
+                            <p style="text-align:center; padding:10px; color:#999;">Нет данных о составе</p>
+                        {% endif %}
                     </div>
 
                 </div>
@@ -238,33 +258,25 @@
 
         <div class="content-card full-width">
             <h3>💬 Обсуждение матча</h3>
-
             <div class="chat-window" id="chatWindow">
                 {% for msg in chat_messages %}
                     <div class="chat-row {{ 'mine' if msg.user_id == current_user.id else 'others' }}">
-
                         {% if msg.user.avatar %}
                             <img src="{{ url_for('uploaded_file', filename=msg.user.avatar) }}" class="chat-avatar" alt="Ava">
                         {% else %}
-                            <div class="chat-avatar" style="display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:14px;">
-                                {{ msg.user.name[0]|upper }}
-                            </div>
+                            <div class="chat-avatar" style="display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:14px;">{{ msg.user.name[0]|upper }}</div>
                         {% endif %}
-
                         <div style="max-width: 100%;">
                             <div class="chat-username">
                                 {{ msg.user.name }} <span style="opacity:0.6; font-weight:normal; font-size:0.9em;">{{ msg.created_at.strftime('%H:%M') }}</span>
                             </div>
-                            <div class="message-bubble">
-                                {{ msg.text }}
-                            </div>
+                            <div class="message-bubble">{{ msg.text }}</div>
                         </div>
                     </div>
                 {% else %}
                     <div style="text-align:center; color:#999; margin-top:50px;">Будьте первым, кто напишет сообщение!</div>
                 {% endfor %}
             </div>
-
             <form action="{{ url_for('send_match_message', match_id=match.id) }}" method="POST" class="chat-form-container">
                 <input type="text" name="message_text" class="chat-input" placeholder="Написать сообщение..." required autocomplete="off">
                 <button type="submit" class="btn-send-chat">➤</button>
