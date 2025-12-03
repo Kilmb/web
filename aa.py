@@ -1446,8 +1446,6 @@ def match_details(match_id_db):
     chat_messages = MatchMessage.query.filter_by(match_id=match_id_db).order_by(MatchMessage.created_at.asc()).all()
 
     api_data = {}
-
-    # Переменные для ID команд (чтобы шаблон не ломался)
     home_team_id = None
     away_team_id = None
 
@@ -1461,37 +1459,28 @@ def match_details(match_id_db):
                 json_resp = resp.json()
                 api_data = json_resp.get('data', {}) if isinstance(json_resp, dict) else {}
 
-                # --- ВАЖНО: ПОЛУЧАЕМ ID КОМАНД НАДЕЖНО ---
-                # 1. Пробуем взять из lineups
                 if api_data.get('lineups'):
                     home_team_id = api_data['lineups'].get('homeTeam', {}).get('id')
                     away_team_id = api_data['lineups'].get('awayTeam', {}).get('id')
+                if not home_team_id: home_team_id = api_data.get('homeTeam', {}).get('id')
+                if not away_team_id: away_team_id = api_data.get('awayTeam', {}).get('id')
 
-                # 2. Если там нет, берем из корневого объекта (резервный вариант)
-                if not home_team_id:
-                    home_team_id = api_data.get('homeTeam', {}).get('id')
-                if not away_team_id:
-                    away_team_id = api_data.get('awayTeam', {}).get('id')
-
-                # --- ПЕРЕВОД ТРЕНЕРОВ ---
                 if api_data.get('lineups'):
                     for side in ['homeCoach', 'awayCoach']:
                         if api_data['lineups'].get(side):
                             c_name = api_data['lineups'][side].get('name')
                             api_data['lineups'][side]['name'] = transliterate_name(c_name)
 
-                # --- ОБРАБОТКА ЗАМЕН ---
                 player_events_data = {}
                 events = api_data.get('events')
                 if events and isinstance(events, list):
                     for e in events:
                         if not isinstance(e, dict): continue
                         minute = e.get('elapsed', 0)
-                        etype = e.get('type')  # 3 = Замена
+                        etype = e.get('type')
                         if etype == 3:
                             pid = str(e.get('player', {}).get('id')) if e.get('player') else None
                             aid = str(e.get('assistPlayer', {}).get('id')) if e.get('assistPlayer') else None
-
                             if pid:
                                 if pid not in player_events_data: player_events_data[pid] = []
                                 player_events_data[pid].append({'type': 'sub_out', 'min': minute})
@@ -1499,7 +1488,12 @@ def match_details(match_id_db):
                                 if aid not in player_events_data: player_events_data[aid] = []
                                 player_events_data[aid].append({'type': 'sub_in', 'min': minute})
 
-                # --- ОБРАБОТКА ИГРОКОВ ---
+                stats_map = {}
+                p_stats_list = api_data.get('playerStats', [])
+                if p_stats_list and isinstance(p_stats_list, list):
+                    for s in p_stats_list:
+                        s_pid = str(s.get('playerId'))
+                        stats_map[s_pid] = s
                 lineups = api_data.get('lineupPlayers')
                 if lineups and isinstance(lineups, list):
                     pos_weights = {'G': 1, 'D': 2, 'M': 3, 'F': 4}
@@ -1510,30 +1504,35 @@ def match_details(match_id_db):
 
                             p_id = str(p.get('playerId'))
                             p['events_list'] = player_events_data.get(p_id, [])
+
+                            stat = stats_map.get(p_id, {})
+
+                            p['rating'] = stat.get('rating')
+                            p['goals'] = stat.get('goalsTotal')
+                            p['assists'] = stat.get('goalsAssists')
+                            p['shots'] = stat.get('shotsTotal')
+                            p['passes'] = stat.get('passesTotal')
+                            p['tackles'] = stat.get('tacklesTotal')
+                            p['yellowCards'] = stat.get('cardsYellow')
+                            p['redCards'] = stat.get('cardsRed')
+
                             pos_char = str(p.get('position', 'M'))
                             p['sort_weight'] = pos_weights.get(pos_char, 3)
                             p['is_bench'] = 0 if p.get('startXI') else 1
 
                     lineups.sort(key=lambda x: (x.get('is_bench', 1), x.get('sort_weight', 5)))
 
-            # Статистика (ваш обновленный список)
             stats_url = "https://api.sstats.net/games/query-games"
             stats_payload = {
                 "Condition": f"Id = {match.sstats_id}",
                 "Format": "json",
                 "Fields": [
-                    "BallPossessionHome", "BallPossessionAway", "TotalShotsHome", "TotalShotsAway",
-                    "ShotsOnGoalHome", "ShotsOnGoalAway", "ShotsOffGoalHome", "ShotsOffGoalAway",
-                    "BlockedShotsHome", "BlockedShotsAway", "ShotsInsideBoxHome", "ShotsInsideBoxAway",
-                    "ShotsOutsideBoxHome", "ShotsOutsideBoxAway", "CornerKicksHome", "CornerKicksAway",
-                    "OffsidesHome", "OffsidesAway", "FoulsHome", "FoulsAway",
-                    "YellowCardsHome", "YellowCardsAway", "RedCardsHome", "RedCardsAway",
-                    "GoalkeeperSavesHome", "GoalkeeperSavesAway", "TotalPassesHome", "TotalPassesAway",
-                    "PassesAccurateHome", "PassesAccurateAway", "ExpectedGoalsHome", "ExpectedGoalsAway",
-                    "ExpectedAssistsHome", "ExpectedAssistsAway", "BigChancesHome", "BigChancesAway",
-                    "XgOnTargetHome", "XgOnTargetAway", "HitTheWoodworkHome", "HitTheWoodworkAway",
-                    "HeadedGoalsHome", "HeadedGoalsAway", "FreeKicksHome", "FreeKicksAway",
-                    "ThrowinsHome", "ThrowinsAway", "GoalsPreventedHome", "GoalsPreventedAway",
+                    "BallPossessionHome", "BallPossessionAway", "ExpectedGoalsHome", "ExpectedGoalsAway",
+                    "TotalShotsHome", "TotalShotsAway", "ShotsOnGoalHome", "ShotsOnGoalAway",
+                    "CornerKicksHome", "CornerKicksAway", "OffsidesHome", "OffsidesAway",
+                    "FoulsHome", "FoulsAway", "YellowCardsHome", "YellowCardsAway",
+                    "RedCardsHome", "RedCardsAway", "GoalkeeperSavesHome", "GoalkeeperSavesAway",
+                    "TotalPassesHome", "TotalPassesAway", "PassesAccurateHome", "PassesAccurateAway",
                     "LongPassesHome", "LongPassesAway", "CrossesHome", "CrossesAway",
                     "TotalTacklesHome", "TotalTacklesAway", "InterceptionsHome", "InterceptionsAway",
                     "ClearancesHome", "ClearancesAway", "DuelsWonHome", "DuelsWonAway"
@@ -1561,7 +1560,6 @@ def match_details(match_id_db):
                            away_form=away_form,
                            chat_messages=chat_messages,
                            clubs=CLUBS_DATA,
-                           # ПЕРЕДАЕМ ID КОМАНД ЯВНО
                            home_team_id=home_team_id,
                            away_team_id=away_team_id)
 
