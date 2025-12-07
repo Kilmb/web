@@ -77,7 +77,7 @@
 
 /* --- ЛОГОТИПЫ (Скругленный квадрат) --- */
 .match-team-logo {
-    width: 90px;
+    width: 130px;
     height: 90px;
 
     /* Скругленный квадрат, чтобы ромбик Спартака не резался */
@@ -320,3 +320,40 @@
 @media (min-width: 480px) and (max-width: 768px) {
     .team-info-side { display: flex; font-size: 0.8em; } /* На планшетах возвращаем названия */
 }
+
+.events-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.event-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 5px;
+    border-bottom: 1px solid rgba(128,128,128, 0.1);
+}
+
+.event-item:last-child {
+    border-bottom: none;
+}
+
+.event-time {
+    font-weight: bold;
+    min-width: 40px;
+    color: var(--text-color);
+}
+
+.event-icon {
+    font-size: 1.2em;
+    margin: 0 15px;
+    width: 25px;
+    text-align: center;
+}
+
+.event-player {
+    flex: 1;
+}
+
+/* Выравнивание событий: Хозяева слева, Гости справа (опционально, или просто списком) */
+.event-team-home { justify-content: flex-start; }

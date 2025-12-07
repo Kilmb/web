@@ -36,6 +36,8 @@ body {
     padding: 20px;
 }
 
+
+
 h1 {
     color: var(--heading-color);
     /* Новые стили вместо простой линии */
@@ -46,6 +48,16 @@ h1 {
     margin-bottom: 25px;
     text-align: center;
     border-bottom: none;
+}
+
+.admin-container > h2 {
+    background: var(--card-bg); /* В светлой теме это белый цвет */
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    color: var(--heading-color);
+    margin-top: 40px; /* Отступ от формы сверху */
+    margin-bottom: 20px;
 }
 
 .btn-back {
