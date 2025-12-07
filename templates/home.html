@@ -190,7 +190,7 @@
 
                                     {% if current_user.is_authenticated and not match.is_played and not match.is_started %}
                                     <div class="bet-form">
-                                        <h4>Сделать ставку</h4>
+                                        <h4>Сделать ставку (при выигрыше X2)</h4>
                                         <form action="{{ url_for('place_bet', match_id=match.id) }}" method="POST">
                                             <select name="bet_type" required>
                                                 <option value="">Выберите исход</option>

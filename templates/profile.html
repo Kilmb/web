@@ -61,10 +61,10 @@
 
                     <div class="stats-grid">
 
-                        <div class="stat-item">
-                            <span class="stat-label">Email</span>
-                            <span class="stat-value">{{ current_user.email }}</span>
-                        </div>
+                        <div class="stat-item wide-item">
+    <span class="stat-label">Email</span>
+    <span class="stat-value email-text">{{ current_user.email }}</span>
+</div>
 
                         <div class="stat-item">
                             <span class="stat-label">Баланс</span>
@@ -131,7 +131,6 @@
                             <input type="radio" name="theme" value="default" {% if current_user.theme =='default' %}checked{% endif %}>
                             <div class="theme-preview preview-default"></div>
                             <span class="theme-label">По умолчанию (Синий)</span>
-                            <span class="theme-cost free">Бесплатно</span>
                         </label>
 
                         <label class="theme-option owned">

@@ -208,9 +208,9 @@ class Bet(db.Model):
 class Player(db.Model):
     __tablename__ = 'players'
 
-    id = db.Column(db.Integer, primary_key=True) # ID из SStats API
-    name = db.Column(db.String(100), nullable=False) # Русское имя
-    team_id = db.Column(db.Integer, nullable=True)   # ID команды (необязательно, но полезно)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    team_id = db.Column(db.Integer, nullable=True)
 
     def __repr__(self):
         return f"Player({self.id}, '{self.name}')"
@@ -221,11 +221,11 @@ class MatchEvent(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     match_id = db.Column(db.Integer, db.ForeignKey('matches.id'), nullable=False)
-    team_id = db.Column(db.Integer)  # ID команды
-    minute = db.Column(db.Integer)   # Минута
-    type = db.Column(db.Integer)     # 1=Гол, 2=ЖК, 3=Замена
-    player_name = db.Column(db.String(100)) # Имя игрока (уже русское)
-    extra_info = db.Column(db.String(100))  # Ассистент или ушедший игрок
+    team_id = db.Column(db.Integer)
+    minute = db.Column(db.Integer)
+    type = db.Column(db.Integer)
+    player_name = db.Column(db.String(100))
+    extra_info = db.Column(db.String(100))
 
     def __repr__(self):
         return f"Event({self.minute}', {self.player_name})"
@@ -400,9 +400,9 @@ def update_rpl_table_from_sstats():
         url = "https://api.sstats.net/games/list"
         params = {
             'leagueId': 235,
-            'year': 2025,  # Текущий сезон
+            'year': 2025,
             'format': 'json',
-            'limit': 300  # Берем с запасом, чтобы получить все туры
+            'limit': 300
         }
         headers = {'apikey': '8ftkpzresyxo7dqz'}
 
@@ -489,38 +489,26 @@ def update_rpl_table_from_sstats():
 # Главная страница
 @app.route('/')
 def home():
-    # 1. Загружаем таблицу
     table = db.session.query(RPLTable).order_by(RPLTable.position).all()
-
-    # 2. Определяем текущий тур (как раньше)
     current_tour = load_current_tour()
-
-    # 3. Загружаем ВСЕ матчи сезона
     all_matches = db.session.query(Match).order_by(Match.match_date).all()
-
-    # 4. Группируем матчи по номерам туров
-    # Результат будет словарем: {1: [матч, матч...], 2: [матч...], ...}
     matches_by_tour = {}
 
-    # Определяем максимальный возможный тур (для РПЛ это 30)
     max_tour = 30
 
-    # Заполняем словарь пустыми списками, чтобы туры шли по порядку
     for i in range(1, max_tour + 1):
         matches_by_tour[i] = []
 
     for match in all_matches:
-        # Если у матча прописан тур (и он > 0), кладем в нужную ячейку
         t_num = match.tour_number
         if t_num and t_num in matches_by_tour:
             matches_by_tour[t_num].append(match)
         elif t_num == 0:
-            # Если тур 0 (не определен), можно временно кинуть в конец или игнорировать
             pass
 
     context = {
         'rpl_table': table,
-        'matches_by_tour': matches_by_tour,  # Передаем весь словарь
+        'matches_by_tour': matches_by_tour,
         'current_tour': current_tour,
         'max_tour': max_tour,
         'clubs': CLUBS_DATA
@@ -913,8 +901,6 @@ def update_matches_for_tour(tour_number):
 
                 is_played = status in [8, 9, 10]
                 is_started = status in [3, 4, 5, 6, 7, 11]
-
-                # === ИЗМЕНЕНИЕ 2: Получаем ID матча из API ===
                 sstats_id = match_data.get('id')
 
                 existing_match = db.session.query(Match).filter(
@@ -932,8 +918,6 @@ def update_matches_for_tour(tour_number):
                     existing_match.is_played = is_played
                     existing_match.is_started = is_started
                     existing_match.match_date = match_date_msk
-
-                    # === ИЗМЕНЕНИЕ 2: Сохраняем ID матча ===
                     existing_match.sstats_id = sstats_id
 
                     matches_updated += 1
@@ -953,8 +937,6 @@ def update_matches_for_tour(tour_number):
                         is_played=is_played,
                         is_started=is_started,
                         tour_number=tour_number,
-
-                        # === ИЗМЕНЕНИЕ 2: Сохраняем ID матча ===
                         sstats_id=sstats_id
                     )
                     db.session.add(new_match)
