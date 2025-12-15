@@ -83,7 +83,9 @@
                 </p>
                 <div class="balance-section">
                     <p><strong>Баланс:</strong>
-                        <span class="current-balance">{{ user_balance }} </span>
+                        <span class="current-balance">
+    {{ user_balance }} <span class="coin-icon"></span>
+</span>
                     </p>
 
                     {% if current_user.is_admin %}

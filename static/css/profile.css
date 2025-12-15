@@ -166,6 +166,15 @@ body:not(.theme-dark) .stat-item {
 
 .stat-value.coins {
     color: #E6C200;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.stat-value.coins .coin-icon {
+    width: 25px;
+    height: 25px;
+    margin-left: 2px;
 }
 
 .stat-value.club {

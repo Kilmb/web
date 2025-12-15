@@ -68,7 +68,9 @@
 
                         <div class="stat-item">
                             <span class="stat-label">Баланс</span>
-                            <span class="stat-value coins">{{ user_balance }} 🪙</span>
+                            <span class="stat-value coins">
+    {{ user_balance }} <span class="coin-icon"></span>
+</span>
                         </div>
 
                         <div class="stat-item">
@@ -155,7 +157,7 @@
                                     <span class="theme-cost purchased">Куплено</span>
                                 {% endif %}
                             {% else %}
-                                <span class="theme-cost">100 🪙</span>
+                                <span class="theme-cost premium">100 <span class="coin-icon"></span></span>
                                 {% endif %}
                         </label>
 
@@ -171,7 +173,7 @@
                                     <span class="theme-cost purchased">Куплено</span>
                                 {% endif %}
                             {% else %}
-                                <span class="theme-cost">100 🪙</span>
+                                <span class="theme-cost premium">100 <span class="coin-icon"></span></span>
                                 {% endif %}
                         </label>
 
@@ -187,7 +189,7 @@
                                     <span class="theme-cost purchased">Куплено</span>
                                 {% endif %}
                             {% else %}
-                                <span class="theme-cost">100 🪙</span>
+                                <span class="theme-cost premium">100 <span class="coin-icon"></span></span>
                                 {% endif %}
                         </label>
 
@@ -203,7 +205,7 @@
                                     <span class="theme-cost purchased">Куплено</span>
                                 {% endif %}
                             {% else %}
-                                <span class="theme-cost">100 🪙</span>
+                                <span class="theme-cost premium">100 <span class="coin-icon"></span></span>
                                 {% endif %}
                         </label>
 
@@ -219,7 +221,7 @@
                                     <span class="theme-cost purchased">Куплено</span>
                                 {% endif %}
                             {% else %}
-                                <span class="theme-cost">100 🪙</span>
+                                <span class="theme-cost premium">100 <span class="coin-icon"></span></span>
                                 {% endif %}
                         </label>
 
@@ -244,7 +246,7 @@
             <span class="theme-cost purchased">Куплено</span>
         {% endif %}
     {% else %}
-        <span class="theme-cost premium">150 🪙</span>
+        <span class="theme-cost premium">150 <span class="coin-icon"></span></span>
     {% endif %}
 </label>
 

@@ -47,6 +47,61 @@
             text-align: center;
             width: 40px;
         }
+
+        /* Стиль для изображения монеты в тексте */
+        .coin-in-text {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            background-image: url('/static/img/coin.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+
+        /* Fallback для изображения */
+        .coin-fallback {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            background: radial-gradient(circle at 30% 30%, #FFD700, #E6C200 70%, #B8860B);
+            border-radius: 50%;
+            border: 1px solid #B8860B;
+            position: relative;
+            box-shadow: 0 0 3px rgba(230, 194, 0, 0.5);
+            vertical-align: middle;
+            margin-left: 2px;
+        }
+
+        .coin-fallback::after {
+            content: "₽";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 7px;
+            font-weight: bold;
+            color: #8B7500;
+        }
+
+        /* Для результатов */
+        .wheel-result .coin-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background-image: url('/static/img/coin.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            vertical-align: middle;
+            margin: 0 3px;
+        }
+
+        .wheel-result .coin-fallback {
+            width: 16px;
+            height: 16px;
+            margin: 0 3px;
+        }
     </style>
 </head>
 <body class="theme-{{ current_user.theme or 'default' }} themed-body"
@@ -118,14 +173,27 @@
     let isSpinning = false;
     let canSpin = true;
 
+    // Проверяем загрузку изображения монеты
+    let useCoinImage = true;
+    const testImage = new Image();
+    testImage.src = '/static/img/coin.png';
+    testImage.onload = function() {
+        useCoinImage = true;
+        console.log('Изображение монеты загружено');
+    };
+    testImage.onerror = function() {
+        useCoinImage = false;
+        console.log('Изображение монеты не загружено, используем fallback');
+    };
+
     // Призы в правильном порядке (по часовой стрелке)
     const prizes = [
-        { text: '+50', type: 'add', amount: 50, display: '+50 🪙', color: '#FF6B6B' },
-        { text: '+100', type: 'add', amount: 100, display: '+100 🪙', color: '#4ECDC4' },
-        { text: '+250', type: 'add', amount: 250, display: '+250 🪙', color: '#45B7D1' },
-        { text: '-50', type: 'subtract', amount: 50, display: '-50 🪙', color: '#96CEB4' },
-        { text: '-100', type: 'subtract', amount: 100, display: '-100 🪙', color: '#FFEAA7' },
-        { text: '-250', type: 'subtract', amount: 250, display: '-250 🪙', color: '#DDA0DD' },
+        { text: '+50', type: 'add', amount: 50, display: '+50 <span class="coin-in-text"></span>', color: '#FF6B6B' },
+        { text: '+100', type: 'add', amount: 100, display: '+100 <span class="coin-in-text"></span>', color: '#4ECDC4' },
+        { text: '+250', type: 'add', amount: 250, display: '+250 <span class="coin-in-text"></span>', color: '#45B7D1' },
+        { text: '-50', type: 'subtract', amount: 50, display: '-50 <span class="coin-in-text"></span>', color: '#96CEB4' },
+        { text: '-100', type: 'subtract', amount: 100, display: '-100 <span class="coin-in-text"></span>', color: '#FFEAA7' },
+        { text: '-250', type: 'subtract', amount: 250, display: '-250 <span class="coin-in-text"></span>', color: '#DDA0DD' },
         { text: 'x2', type: 'multiply', multiplier: 2, display: 'x2 БАЛАНС', color: '#98D8C8' },
         { text: 'x3', type: 'multiply', multiplier: 3, display: 'x3 БАЛАНС', color: '#F7DC6F' },
         { text: '÷2', type: 'divide', divider: 2, display: '÷2 БАЛАНС', color: '#BB8FCE' },
@@ -158,7 +226,14 @@
 
             const text = document.createElement('div');
             text.className = 'wheel-text';
-            text.textContent = prize.text;
+
+            // Создаем HTML для отображения
+            if (useCoinImage) {
+                text.innerHTML = `${prize.text} <span class="coin-in-text"></span>`;
+            } else {
+                text.innerHTML = `${prize.text} <span class="coin-fallback"></span>`;
+            }
+
             text.style.color = '#333';
             text.style.fontWeight = 'bold';
             text.style.textShadow = '1px 1px 2px rgba(255,255,255,0.8)';
@@ -171,10 +246,7 @@
             wheel.appendChild(section);
         });
 
-        console.log('Колесо создано. Порядок секторов:');
-        prizes.forEach((p, i) => {
-            console.log(`Сектор ${i}: ${p.text} (цвет: ${p.color})`);
-        });
+        console.log('Колесо создано. Используется изображение монеты:', useCoinImage);
     }
 
     // Функция для вычисления угла остановки для сектора
@@ -213,7 +285,7 @@
 
     // Функция для создания конфетти
     function createConfetti() {
-        const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff'];
+        const colors = ['#FFD700', '#E6C200', '#FFA500', '#FF8C00', '#B8860B']; // Золотые цвета
         const container = document.querySelector('.wheel-container');
 
         const oldConfetti = container.querySelectorAll('.confetti');
@@ -251,6 +323,11 @@
         } else {
             wheelInner.className = 'wheel-inner winner-animation';
         }
+
+        // Форматируем отображение
+        const coinElement = useCoinImage ?
+            '<span class="coin-in-text"></span>' :
+            '<span class="coin-fallback"></span>';
 
         wheelResultInner.innerHTML = `
             <span class="wheel-result-large">${prize.display}</span>
@@ -378,9 +455,14 @@
                         highlightSection(sector);
                         showInnerResult(prizes[sector], isJackpot);
 
+                        // Форматируем результат
+                        const coinElement = useCoinImage ?
+                            '<span class="coin-icon"></span>' :
+                            '<span class="coin-fallback"></span>';
+
                         wheelResult.innerHTML = `
                             <strong>🎊 Результат:</strong> ${data.message}<br>
-                            <strong>💰 Баланс:</strong> ${data.old_balance} → ${data.new_balance} 🪙<br>
+                            <strong>${coinElement} Баланс:</strong> ${data.old_balance} → ${data.new_balance} ${coinElement}<br>
                         `;
 
                         isSpinning = false;

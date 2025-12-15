@@ -224,3 +224,32 @@ body:not(.themed-body) p {
     border-color: #ffeeba;
 }
 
+/* Изображение монеты */
+.coin-icon {
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    background-image: url('/static/img/coin.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    vertical-align: middle;
+    margin-left: 3px;
+}
+
+/* Fallback если изображение не загрузится */
+.no-coin-image .coin-icon {
+    background-image: none;
+}
+
+.no-coin-image .coin-icon::after {
+    content: '🪙';
+    font-family: "Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+    font-size: 14px;
+    color: #E6C200;
+    display: inline-block;
+}
+
+/* Для темной темы */
+.theme-dark .coin-icon {
+    filter: brightness(1.2);
+}
