@@ -158,18 +158,11 @@
                         {% if matches_by_tour[tour_num] %}
                             <div class="matches-grid center-small-grid">
                                 {% for match in matches_by_tour[tour_num] %}
-                                <div class="match-card"
-                                    {% if user_club_data and (match.home_team == current_user.club or match.away_team == current_user.club) %}
-                                        style="
-                                            border: 3px solid {{ user_club_data.color1 }};
-                                            background: linear-gradient(to bottom right, #ffffff, rgba(255,255,255,0.8)), linear-gradient(to right, {{ user_club_data.color1 }}, {{ user_club_data.color2 }});
-                                            background-origin: border-box;
-                                            background-clip: padding-box, border-box;
-                                            box-shadow: 0 0 15px {{ user_club_data.color1 }}60;
-                                            transform: scale(1.02);
-                                        "
-                                    {% endif %}
-                                >
+                                <div class="match-card {% if user_club_data and (match.home_team == current_user.club or match.away_team == current_user.club) %}favorite-match{% endif %}"
+    {% if user_club_data and (match.home_team == current_user.club or match.away_team == current_user.club) %}
+        style="--fav-color1: {{ user_club_data.color1 }}; --fav-color2: {{ user_club_data.color2 }};"
+    {% endif %}
+>
                                     <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
                                         {{ match.home_team }} vs {{ match.away_team }}
                                     </div>

@@ -1,9 +1,7 @@
-/* ===============================================
-            ОПРЕДЕЛЕНИЕ ТЕМ (ОБЩЕЕ)
-===============================================
+/*
+ОПРЕДЕЛЕНИЕ ТЕМ (ОБЩЕЕ)
 */
 
-/* 1. Тема по умолчанию (Синяя) */
 body.theme-default {
     --grad-start: #00529B;
     --grad-end: #00529B;
@@ -16,7 +14,6 @@ body.theme-default {
     --link-color-dark: #FFFFFF;
 }
 
-/* 2. Тема "Индиго" */
 body.theme-indigo {
     --grad-start: #667eea;
     --grad-end: #764ba2;
@@ -29,7 +26,6 @@ body.theme-indigo {
     --link-color-dark: #764ba2;
 }
 
-/* 3. Тема "Закат" */
 body.theme-sunset {
     --grad-start: #ff7e5f;
     --grad-end: #feb47b;
@@ -42,7 +38,6 @@ body.theme-sunset {
     --link-color-dark: #b22222;
 }
 
-/* 4. Тема "Лес" */
 body.theme-forest {
     --grad-start: #4CAF50;
     --grad-end: #2E8B57;
@@ -55,7 +50,6 @@ body.theme-forest {
     --link-color-dark: #006400;
 }
 
-/* 5. Тема "Багровый" */
 body.theme-crimson {
     --grad-start: #DC143C;
     --grad-end: #8B0000;
@@ -68,7 +62,6 @@ body.theme-crimson {
     --link-color-dark: #8B0000;
 }
 
-/* 6. Тема "Клубная" */
 body.theme-club {
     --grad-start: var(--club-color-1, transparent);
     --grad-end: var(--club-color-2, transparent);
@@ -81,7 +74,6 @@ body.theme-club {
     --link-color-dark: var(--club-color-2, #333);
 }
 
-/* 7. Тёмная тема */
 body.theme-dark {
     --grad-start: #232526;
     --grad-end: #414345;
@@ -94,10 +86,9 @@ body.theme-dark {
     --link-color-dark: #bbbbbb;
 }
 
-/* 8. Золотая тема */
 body.theme-gold {
-    --grad-start: #FFD700; /* Gold */
-    --grad-end: #B8860B;   /* DarkGoldenRod */
+    --grad-start: #FFD700;
+    --grad-end: #B8860B;
     --shadow-color: rgba(255, 215, 0, 0.4);
     --border-color: #FFD700;
     --link-color: #B8860B;
@@ -108,9 +99,8 @@ body.theme-gold {
 }
 
 
-/* ===============================================
-            АНИМАЦИЯ ФОНА (ОБЩАЯ)
-===============================================
+/*
+АНИМАЦИЯ ФОНА (ОБЩАЯ)
 */
 
 @keyframes gradientFlow {
@@ -119,22 +109,20 @@ body.theme-gold {
     100% { background-position: 0% 50%; }
 }
 
-/* ===============================================
-            ОСНОВНЫЕ СТИЛИ (ОБЩИЕ)
-===============================================
+/*
+ОСНОВНЫЕ СТИЛИ (ОБЩИЕ)
 */
 
 body {
     margin: 0;
     padding: 60px 20px 20px 20px;
     font-family: 'Arial', sans-serif;
-    background: #f4f6f8; /* Фон по умолчанию (для welcome-page) */
+    background: #f4f6f8;
     min-height: 100vh;
     color: #333;
     transition: background 0.5s ease;
 }
 
-/* Градиент и анимация для авторизованных */
 body.themed-body {
     background: linear-gradient(90deg, var(--grad-start) 0%, var(--grad-end) 100%);
     color: var(--text-color);
@@ -142,17 +130,11 @@ body.themed-body {
     animation: gradientFlow 15s ease infinite;
 }
 
-/* ==== НОВОЕ ПРАВИЛО ==== */
-/* Отключение анимации градиента для тёмной темы */
 body.themed-body.theme-dark {
-    /* Средний статический оттенок между #232526 и #414345 */
     background: #323435;
-    animation: none; /* Отменяем анимацию */
+    animation: none;
 }
-/* ==== КОНЕЦ НОВОГО ПРАВИЛА ==== */
 
-
-/* Стили для кнопки "Выйти" */
 .logout-link-fixed {
     position: fixed;
     top: 15px;
@@ -173,7 +155,6 @@ body.themed-body.theme-dark {
     box-shadow: 0 6px 20px rgba(220, 53, 69, 0.5);
 }
 
-/* Общие стили заголовков и карточек, чтобы они тоже реагировали на тему */
 h1, h2, h3, h4 {
     color: var(--heading-color);
 }
@@ -198,33 +179,29 @@ body:not(.themed-body) p {
     font-size: 1.1em;
     font-weight: bold;
     border: 1px solid transparent;
-    color: var(--text-color); /* Цвет текста по умолчанию */
-    background-color: var(--card-bg); /* Фон по умолчанию */
-    border-color: var(--border-color); /* Рамка по умолчанию */
+    color: var(--text-color);
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
 }
 
-/* Категория: danger (красный) */
 .flash-message.danger {
     color: #721c24;
     background-color: #f8d7da;
     border-color: #f5c6cb;
 }
 
-/* Категория: success (зеленый) */
 .flash-message.success {
     color: #155724;
     background-color: #d4edda;
     border-color: #c3e6cb;
 }
 
-/* Категория: warning (желтый) */
 .flash-message.warning {
     color: #856404;
     background-color: #fff3cd;
     border-color: #ffeeba;
 }
 
-/* Изображение монеты */
 .coin-icon {
     display: inline-block;
     width: 25px;
@@ -236,7 +213,6 @@ body:not(.themed-body) p {
     margin-left: 3px;
 }
 
-/* Fallback если изображение не загрузится */
 .no-coin-image .coin-icon {
     background-image: none;
 }
@@ -249,7 +225,6 @@ body:not(.themed-body) p {
     display: inline-block;
 }
 
-/* Для темной темы */
 .theme-dark .coin-icon {
     filter: brightness(1.2);
 }

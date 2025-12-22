@@ -117,7 +117,6 @@
     font-size: 1.8em;
 }
 
-/* Стили для "О себе" */
 .user-about {
     font-size: 1.1em;
     font-style: italic;
@@ -143,7 +142,7 @@
     border-radius: 10px;
     border-left: 4px solid var(--border-color);
 }
-/* Специфично для светлой темы */
+
 body:not(.theme-dark) .stat-item {
     background: linear-gradient(135deg, #f8f9fa, #e9ecef);
 }
@@ -185,9 +184,8 @@ body:not(.theme-dark) .stat-item {
     color: var(--link-color);
 }
 
-/* ===============================================
-        КАРТОЧКИ (ВЫБОР КЛУБА, ТЕМЫ, РЕДАКТИРОВАНИЕ)
-===============================================
+/*
+КАРТОЧКИ (ВЫБОР КЛУБА, ТЕМЫ, РЕДАКТИРОВАНИЕ)
 */
 
 .edit-profile,
@@ -216,7 +214,6 @@ body:not(.theme-dark) .stat-item {
     flex-wrap: wrap;
 }
 
-/* Стили для формы редактирования */
 .form-group {
     display: flex;
     flex-direction: column;
@@ -245,7 +242,6 @@ body:not(.theme-dark) .stat-item {
     min-height: 80px;
 }
 
-/* Стили для выбора темы */
 .theme-selection form {
     display: flex;
     flex-direction: column;
@@ -267,7 +263,7 @@ body:not(.theme-dark) .stat-item {
     transition: all 0.3s ease;
     background: rgba(128, 128, 128, 0.05);
 }
-/* Специфично для светлой темы */
+
 body:not(.theme-dark) .theme-option {
     border: 2px solid #eee;
     background: #fdfdfd;
@@ -320,7 +316,6 @@ body:not(.theme-dark) .theme-option:hover {
     color: #E6C200;
 }
 
-/* НОВЫЙ СТИЛЬ: для купленной (активной) темы */
 .theme-cost.purchased {
     color: #007bff;
     font-weight: bold;
@@ -337,7 +332,6 @@ body:not(.theme-dark) .theme-option:hover {
     flex-shrink: 0;
 }
 
-/* Цвета превью */
 .preview-default { background: #00529B; }
 .preview-indigo { background: linear-gradient(45deg, #667eea, #764ba2); }
 .preview-sunset { background: linear-gradient(45deg, #ff7e5f, #feb47b); }
@@ -359,7 +353,6 @@ body:not(.theme-dark) .theme-option:hover {
     min-width: 200px;
 }
 
-/* Кнопка .btn-save (в цвет темы) */
 .btn-save {
     padding: 12px 25px;
     background: linear-gradient(45deg, var(--grad-start), var(--grad-end));
@@ -379,9 +372,8 @@ body:not(.theme-dark) .theme-option:hover {
     box-shadow: 0 6px 15px var(--shadow-color);
 }
 
-/* ===============================================
-            ИСТОРИЯ СТАВОК (НОВЫЙ ДИЗАЙН)
-===============================================
+/*
+ИСТОРИЯ СТАВОК
 */
 .bets-history {
     background: var(--card-bg);
@@ -413,9 +405,9 @@ body:not(.theme-dark) .theme-option:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;
     overflow: hidden;
-    border-left: 5px solid #6c757d; /* pending */
+    border-left: 5px solid #6c757d;
 }
-/* Специфично для светлой темы */
+
 body:not(.theme-dark) .bet-item-profile {
     background: #ffffff;
     border: 1px solid #dee2e6;
@@ -502,23 +494,16 @@ body:not(.theme-dark) .no-bets {
     border: 2px dashed #dee2e6;
 }
 
-/* ===============================================
-            АДАПТИВНОСТЬ
-===============================================
-*/
-/* ===============================================
-            ПРЕДПРОСМОТР ТЕМ (ВКЛЮЧАЯ НЕДОСТУПНЫЕ)
-===============================================
+/*
+ПРЕДПРОСМОТР ТЕМ (ВКЛЮЧАЯ НЕДОСТУПНЫЕ)
 */
 
-/* Общие стили для всех тем в предпросмотре */
 .theme-option {
     position: relative;
     cursor: pointer;
     transition: all 0.3s ease;
 }
 
-/* Индикатор предпросмотра для ВСЕХ тем */
 .theme-option::before {
     content: '👀 Наведите для предпросмотра';
     position: absolute;
@@ -544,7 +529,6 @@ body:not(.theme-dark) .no-bets {
     transform: translateX(-50%) translateY(0);
 }
 
-/* Стили при наведении для ВСЕХ тем */
 .theme-option:hover {
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0,0,0,0.15);
@@ -556,19 +540,16 @@ body:not(.theme-dark) .no-bets {
     box-shadow: 0 4px 15px rgba(0,0,0,0.25);
 }
 
-/* Усиленная подсветка для купленных тем при наведении */
 .theme-option.owned:hover {
     border-color: #4CAF50 !important;
     background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(76, 175, 80, 0.05));
 }
 
-/* Стили для непокупных тем при наведении */
 .theme-option.not-owned:hover {
     border-color: #ff6b6b !important;
     background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 107, 0.05));
 }
 
-/* Индикатор статуса для непокупных тем */
 .theme-option.not-owned::after {
     content: '🔒 Требует покупки';
     position: absolute;
@@ -592,7 +573,6 @@ body:not(.theme-dark) .no-bets {
     transform: translateX(-50%) translateY(0);
 }
 
-/* Стили для превью тем */
 .theme-preview {
     width: 45px;
     height: 30px;
@@ -603,7 +583,6 @@ body:not(.theme-dark) .no-bets {
     position: relative;
 }
 
-/* Эффект блокировки для непокупных тем */
 .theme-option.not-owned .theme-preview::before {
     content: '';
     position: absolute;
@@ -627,14 +606,12 @@ body:not(.theme-dark) .no-bets {
     z-index: 2;
 }
 
-/* Улучшенные стили для выбранной темы */
 .theme-option input[type="radio"]:checked + .theme-preview {
     border: 3px solid #2196F3;
     box-shadow: 0 0 15px rgba(33, 150, 243, 0.6);
     transform: scale(1.1);
 }
 
-/* Стили для текстовых меток */
 .theme-label {
     position: relative;
     font-size: 1.1em;
@@ -648,7 +625,6 @@ body:not(.theme-dark) .no-bets {
     color: var(--link-color);
 }
 
-/* Стили для стоимости */
 .theme-cost {
     transition: all 0.3s ease;
 }
@@ -669,7 +645,6 @@ body:not(.theme-dark) .no-bets {
     transform: scale(1.1);
 }
 
-/* Стили для статусов тем */
 .theme-option.owned {
     border-color: #4CAF50 !important;
     background-color: rgba(76, 175, 80, 0.05);
@@ -714,13 +689,11 @@ body:not(.theme-dark) .no-bets {
     font-weight: bold;
 }
 
-/* Подсветка активной темы */
 .theme-option input[type="radio"]:checked + .theme-preview {
     border: 3px solid #2196F3;
     box-shadow: 0 0 10px rgba(33, 150, 243, 0.5);
 }
 
-/* Стили для непокупных тем */
 .theme-option.not-owned .theme-preview {
     opacity: 0.6;
     filter: grayscale(30%);
@@ -730,7 +703,10 @@ body:not(.theme-dark) .no-bets {
     cursor: not-allowed;
 }
 
-/* Адаптивность для мобильных устройств */
+/*
+АДАПТИВНОСТЬ
+*/
+
 @media (max-width: 768px) {
     .theme-option::before {
         top: -35px;
@@ -749,10 +725,6 @@ body:not(.theme-dark) .no-bets {
     }
 }
 
-/* ===============================================
-            АДАПТИВНОСТЬ
-===============================================
-*/
 @media (max-width: 768px) {
     body {
         padding: 50px 10px 10px 10px;
@@ -837,13 +809,11 @@ body:not(.theme-dark) .no-bets {
     }
 }}
 
-/* Растягиваем блок с почтой на всю ширину сетки */
 .stat-item.wide-item {
     grid-column: 1 / -1;
 }
 
-/* Дополнительная страховка для очень длинных email */
 .stat-value.email-text {
-    word-break: break-all; /* Разрывать длинные слова, если они все равно не влезают */
-    font-size: 1.1em;      /* Чуть уменьшить шрифт для почты, если нужно */
+    word-break: break-all;
+    font-size: 1.1em;
 }

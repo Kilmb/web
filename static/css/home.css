@@ -1,6 +1,5 @@
-/* ===============================================
-        ОБЩИЕ КОМПОНЕНТЫ (Карточки, Заголовки)
-===============================================
+/*
+ОБЩИЕ КОМПОНЕНТЫ (Карточки, Заголовки)
 */
 
 .home-container {
@@ -38,9 +37,8 @@
     margin-top: 0;
 }
 
-/* ===============================================
-        СТИЛИ HOME (home.html)
-===============================================
+/*
+СТИЛИ HOME (home.html)
 */
 
 .page-header {
@@ -128,7 +126,6 @@ body:not(.theme-dark) .menu a:hover {
     box-shadow: 0 6px 15px rgba(40, 167, 69, 0.4);
 }
 
-/* Таблица */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -183,9 +180,8 @@ body:not(.theme-dark) tr:hover {
     opacity: 0.8;
 }
 
-/* ===============================================
-            СТИЛИ МАТЧЕЙ И ТУРОВ
-===============================================
+/*
+СТИЛИ МАТЧЕЙ И ТУРОВ
 */
 
 .matches-container {
@@ -194,7 +190,6 @@ body:not(.theme-dark) tr:hover {
     background: none;
 }
 
-/* НОВАЯ НАВИГАЦИЯ (СТРЕЛКИ) */
 .tour-navigation-controls {
     display: flex;
     justify-content: center;
@@ -244,7 +239,6 @@ body:not(.theme-dark) tr:hover {
     letter-spacing: 1px;
 }
 
-/* Скрываем неактивные туры */
 .tour-content {
     display: none;
     animation: fadeIn 0.3s ease;
@@ -258,13 +252,12 @@ body:not(.theme-dark) tr:hover {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* СЕТКА МАТЧЕЙ */
 .matches-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 15px;
 }
-/* Центрирование малого количества матчей */
+
 .matches-grid.center-small-grid {
     display: flex;
     flex-wrap: wrap;
@@ -288,6 +281,32 @@ body:not(.theme-dark) tr:hover {
 body:not(.theme-dark) .match-card {
     background-color: #f8f9fa;
     border: 1px solid #eee;
+}
+
+.match-card.favorite-match {
+    position: relative;
+    border: 3px solid transparent;
+    border-radius: 8px;
+    background:
+        linear-gradient(to bottom right, #ffffff, #f8f9fa),
+        linear-gradient(to right, var(--fav-color1), var(--fav-color2));
+
+    background-origin: border-box;
+    background-clip: padding-box, border-box;
+
+    box-shadow: 0 0 15px var(--fav-color1);
+    transform: scale(1.02);
+    z-index: 2;
+}
+
+body.theme-dark .match-card.favorite-match {
+    background:
+        linear-gradient(to bottom right, #2d2d2d, #383838),
+        linear-gradient(to right, var(--fav-color1), var(--fav-color2));
+
+    background-clip: padding-box, border-box;
+    box-shadow: 0 0 12px var(--fav-color1);
+    border-color: transparent;
 }
 
 .match-teams {
@@ -320,7 +339,6 @@ body:not(.theme-dark) .match-card {
     border-radius: 5px;
 }
 
-/* Кнопка подробнее */
 .btn-details {
     display: block;
     text-align: center;
@@ -344,7 +362,6 @@ body:not(.theme-dark) .match-card {
     box-shadow: 0 4px 10px var(--shadow-color, rgba(0,0,0,0.2));
 }
 
-/* Форма ставок */
 .bet-form {
     margin-top: 5px;
     padding-top: 10px;
@@ -387,9 +404,8 @@ body:not(.theme-dark) .match-card {
     box-shadow: 0 4px 10px rgba(40, 167, 69, 0.3);
 }
 
-/* ===============================================
-            ИНФОРМАЦИЯ О КЛУБАХ
-===============================================
+/*
+ИНФОРМАЦИЯ О КЛУБАХ
 */
 .club-info {
     background: linear-gradient(var(--color1), var(--color2));
@@ -445,7 +461,6 @@ body:not(.theme-dark) .match-card {
 .kit-label.left { text-align: left; padding-left: 3%; }
 .kit-label.center { text-align: center; }
 .kit-label.right { text-align: right; padding-right: 4%; }
-/* Контейнер кнопок */
 .club-links {
     display: flex;
     justify-content: center;
@@ -454,26 +469,21 @@ body:not(.theme-dark) .match-card {
     flex-wrap: wrap;
 }
 
-/* Сами кнопки */
 .club-link {
     display: inline-block;
     padding: 10px 20px;
-    /* Фон делаем чисто белым */
     background-color: #ffffff;
-    /* Текст делаем темным цветом клуба (переменная определена в HTML) */
     color: var(--color1, #333);
     text-decoration: none;
-    border-radius: 25px; /* Закругленные края */
+    border-radius: 25px;
     font-size: clamp(14px, 3vw, 16px);
     font-weight: bold;
     transition: all 0.3s ease;
     border: 2px solid white;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Тень для контраста */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Эффект при наведении */
 .club-link:hover {
-    /* Меняем местами: фон становится цветным, текст белым */
     background-color: var(--color1, #333);
     color: white;
     transform: translateY(-3px);
@@ -481,7 +491,6 @@ body:not(.theme-dark) .match-card {
     border-color: var(--color1, #333);
 }
 
-/* Стили для карт */
 .stadium-map-container {
     margin: 20px 0;
     border-radius: 8px;
@@ -506,9 +515,8 @@ body:not(.theme-dark) .match-card {
     background: white;
 }
 
-/* ===============================================
-            БЛОК ПРИВЕТСТВИЯ
-===============================================
+/*
+БЛОК ПРИВЕТСТВИЯ
 */
 .welcome-page .welcome-container {
     max-width: 1200px;

@@ -5,3 +5,5 @@ Flask-Migrate==4.0.4
 Werkzeug==2.3.6
 SQLAlchemy==2.0.19
 SQLAlchemy-serializer==1.4.1
+requests==2.31.0
+translators==5.8.3

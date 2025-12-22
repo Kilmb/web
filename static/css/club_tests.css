@@ -1,15 +1,13 @@
-/* ===============================================
-    ОСНОВНЫЕ СТИЛИ (для club_tests.html и edit_test.html)
-===============================================
+/*
+ОСНОВНЫЕ СТИЛИ (для club_tests.html и edit_test.html)
 */
 body {
     background: transparent;
     font-family: Arial, sans-serif;
     color: var(--text-color);
-    padding-top: 60px; /* Отступ для кнопки "Выйти" */
+    padding-top: 60px;
 }
 
-/* Стили для кнопки "Выйти" */
 .logout-link-fixed {
     position: fixed;
     top: 15px;
@@ -40,7 +38,6 @@ body {
 
 h1 {
     color: var(--heading-color);
-    /* Новые стили вместо простой линии */
     background: var(--card-bg);
     padding: 20px;
     border-radius: 15px;
@@ -51,12 +48,12 @@ h1 {
 }
 
 .admin-container > h2 {
-    background: var(--card-bg); /* В светлой теме это белый цвет */
+    background: var(--card-bg);
     padding: 20px;
     border-radius: 15px;
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
     color: var(--heading-color);
-    margin-top: 40px; /* Отступ от формы сверху */
+    margin-top: 40px;
     margin-bottom: 20px;
 }
 
@@ -87,8 +84,6 @@ body:not(.theme-dark) .btn-back:hover {
     color: #000;
 }
 
-
-/* Форма добавления/редактирования */
 .test-form {
     background: var(--card-bg);
     padding: 25px;
@@ -115,7 +110,7 @@ body:not(.theme-dark) .btn-back:hover {
     padding: 10px;
     border: 1px solid var(--border-color);
     border-radius: 4px;
-    background: #fff; /* Оставляем белым для читаемости */
+    background: #fff;
     color: #333;
     box-sizing: border-box;
 }
@@ -131,7 +126,7 @@ body:not(.theme-dark) .btn-back:hover {
 }
 
 .btn-add {
-    background: linear-gradient(45deg, #28a745, #20c997); /* Зеленый */
+    background: linear-gradient(45deg, #28a745, #20c997);
 }
 .btn-add:hover {
     box-shadow: 0 4px 15px rgba(40, 167, 69, 0.4);
@@ -139,15 +134,13 @@ body:not(.theme-dark) .btn-back:hover {
 }
 
 .btn-cancel {
-    background: linear-gradient(45deg, #6c757d, #5a6268); /* Серый */
+    background: linear-gradient(45deg, #6c757d, #5a6268);
 }
 .btn-cancel:hover {
     box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     transform: translateY(-2px);
 }
 
-
-/* Список тестов */
 .tests-list {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -202,7 +195,7 @@ body:not(.theme-dark) .btn-back:hover {
 }
 
 .btn-edit {
-    background: linear-gradient(45deg, var(--grad-start), var(--grad-end)); /* Цвет темы */
+    background: linear-gradient(45deg, var(--grad-start), var(--grad-end));
 }
 .btn-edit:hover {
     box-shadow: 0 4px 10px var(--shadow-color);
@@ -210,7 +203,7 @@ body:not(.theme-dark) .btn-back:hover {
 }
 
 .btn-delete {
-    background: #dc3545; /* Красный */
+    background: #dc3545;
 }
 .btn-delete:hover {
     background: #c82333;

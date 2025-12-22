@@ -1,6 +1,5 @@
-/* ===============================================
-    СТИЛИ СТРАНИЦЫ МАТЧА (match_details.css)
-===============================================
+/*
+СТИЛИ СТРАНИЦЫ МАТЧА
 */
 
 .home-container {
@@ -9,7 +8,6 @@
     padding-bottom: 50px;
 }
 
-/* --- Кнопка Назад --- */
 .btn-back {
     display: inline-block;
     padding: 10px 25px;
@@ -27,7 +25,6 @@
     color: white;
 }
 
-/* --- Шапка матча (ОСНОВНОЙ КОНТЕЙНЕР) --- */
 .match-header-card {
     background: var(--card-bg);
     padding: 30px;
@@ -38,7 +35,6 @@
     position: relative;
 }
 
-/* Сетка шапки: Текст - Лого - Счет - Лого - Текст */
 .match-score-board-row {
     display: flex;
     justify-content: center;
@@ -48,7 +44,6 @@
     flex-wrap: wrap;
 }
 
-/* Боковые блоки с названиями */
 .team-info-side {
     flex: 1;
     display: flex;
@@ -58,12 +53,12 @@
 }
 
 .team-info-side.left-side {
-    align-items: flex-end; /* Текст прижат вправо (к логотипу) */
+    align-items: flex-end;
     text-align: right;
 }
 
 .team-info-side.right-side {
-    align-items: flex-start; /* Текст прижат влево (к логотипу) */
+    align-items: flex-start;
     text-align: left;
 }
 
@@ -75,15 +70,10 @@
     font-size: 1.6em;
 }
 
-/* --- ЛОГОТИПЫ (Скругленный квадрат) --- */
 .match-team-logo {
     width: 130px;
     height: 90px;
-
-    /* Скругленный квадрат, чтобы ромбик Спартака не резался */
     border-radius: 20px;
-
-    /* Обрезка широкой картинки по центру */
     object-fit: cover;
     object-position: center center;
 
@@ -98,7 +88,6 @@
     transform: scale(1.05);
 }
 
-/* --- Центральный блок счета --- */
 .score-container {
     text-align: center;
     min-width: 120px;
@@ -118,7 +107,6 @@
     text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
 }
 
-/* Статусы матча */
 .match-status-badge {
     display: inline-block;
     padding: 4px 12px;
@@ -134,7 +122,6 @@
 
 @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
 
-/* Форма (кружочки) */
 .form-badges {
     display: flex;
     flex-direction: row;
@@ -143,7 +130,9 @@
 .form-badge { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.8em; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
 .form-win { background: #28a745; } .form-loss { background: #dc3545; } .form-draw { background: #6c757d; }
 
-/* --- СЕТКА КОНТЕНТА --- */
+/*
+СЕТКА КОНТЕНТА
+*/
 .details-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -169,7 +158,6 @@
     margin-top: 0;
 }
 
-/* --- СТАТИСТИКА (По центру) --- */
 .stats-centered {
     grid-column: 1 / -1;
     max-width: 800px;
@@ -185,7 +173,6 @@
     padding: 8px 0;
 }
 
-/* --- ЧАТ (С аватарками) --- */
 .chat-window {
     height: 400px;
     overflow-y: auto;
@@ -257,8 +244,6 @@
 }
 .chat-row.mine .chat-username { text-align: right; margin-right: 5px; }
 .chat-row.others .chat-username { margin-left: 5px; }
-
-/* Форма чата */
 .chat-form-container {
     position: relative;
     margin-top: 10px;
@@ -290,7 +275,6 @@
     font-weight: bold;
 }
 
-/* --- Таблицы игроков (для составов) --- */
 .player-stats-wrapper { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
 .team-stats-block { overflow-x: auto; }
 .team-header-banner { padding: 15px; border-radius: 10px; color: white; text-align: center; font-size: 1.4em; font-weight: bold; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); text-shadow: 1px 1px 2px rgba(0,0,0,0.4); }
@@ -308,17 +292,19 @@
 .rating-badge { padding: 3px 6px; border-radius: 6px; color: white; font-weight: bold; font-size: 0.9em; }
 .rating-high { background: #28a745; } .rating-mid { background: #ffc107; color: #333; } .rating-low { background: #dc3545; }
 
-/* Адаптивность */
+/*
+АДАПТИВНОСТЬ
+*/
 @media (max-width: 768px) {
     .match-score-board-row { gap: 10px; }
-    .team-info-side { display: none; } /* На мобилках скрываем боковые названия */
+    .team-info-side { display: none; }
     .match-team-logo { width: 70px; height: 70px; }
     .match-score { font-size: 2.5em; }
     .details-grid, .player-stats-wrapper { grid-template-columns: 1fr; }
     .stat-table { min-width: 500px; }
 }
 @media (min-width: 480px) and (max-width: 768px) {
-    .team-info-side { display: flex; font-size: 0.8em; } /* На планшетах возвращаем названия */
+    .team-info-side { display: flex; font-size: 0.8em; }
 }
 
 .events-list {
@@ -355,5 +341,4 @@
     flex: 1;
 }
 
-/* Выравнивание событий: Хозяева слева, Гости справа (опционально, или просто списком) */
 .event-team-home { justify-content: flex-start; }
