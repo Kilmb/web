@@ -62,7 +62,7 @@
                     <td>{{ user.name }}</td>
                     <td>{{ user.email }}</td>
                     <td>{{ user.club }}</td>
-                    <td>{{ user_balances.get(user.id, 100) }} 🪙</td>
+                    <td>{{ user_balances.get(user.id, 100) }} <img src="{{ url_for('static', filename='img/coin.png') }}" class="coin-icon-inline" alt="монет"></td>
                     <td>
                         <a href="{{ url_for('view_user', user_id=user.id) }}" class="profile-link">Профиль</a>
                         {% if current_user.is_admin and user.id != current_user.id %}
