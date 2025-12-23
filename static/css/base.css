@@ -227,4 +227,11 @@ body:not(.themed-body) p {
 
 .theme-dark .coin-icon {
     filter: brightness(1.2);
+
+}
+.coin-icon-inline {
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+    margin-left: 3px;
 }
