@@ -292,12 +292,12 @@
                                     </div>
                                     <div>
                                         <span class="bet-label">Сумма</span>
-                                        <span class="bet-value">{{ bet.amount }} 🪙</span>
+                                        <span class="bet-value">{{ bet.amount }} <img src="{{ url_for('static', filename='img/coin.png') }}" class="coin-icon-inline" alt="монет"></span>
                                     </div>
                                     <div class="bet-status {{ status }}">
                                         {{ status_text }}
                                         {% if bet.is_settled and bet.won %}
-                                            (+{{ bet.amount * 2 }} 🪙)
+                                            (+{{ bet.amount * 2 }} <img src="{{ url_for('static', filename='img/coin.png') }}" class="coin-icon-inline" alt="монет">)
                                         {% endif %}
                                     </div>
                                 </div>
