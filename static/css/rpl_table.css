@@ -2,13 +2,12 @@ body {
     background: transparent;
     font-family: Arial, sans-serif;
     color: var(--text-color);
-    padding-top: 60px; /* Отступ для кнопки "Выйти" */
+    padding-top: 60px; 
     max-width: 1200px;
     margin: 0 auto;
     padding: 60px 20px 20px 20px;
 }
 
-/* Стили для кнопки "Выйти" */
 .logout-link-fixed {
     position: fixed;
     top: 15px;
@@ -59,7 +58,7 @@ h1 {
     border: 1px solid var(--border-color);
     background: transparent;
     cursor: pointer;
-    font-family: Arial, sans-serif; /* Добавлено для консистентности шрифта */
+    font-family: Arial, sans-serif; 
 }
 .menu a:hover, .menu button:hover {
     background: var(--border-color);
@@ -98,7 +97,6 @@ tr:hover {
     background: rgba(128, 128, 128, 0.15);
 }
 
-/* Специфично для светлой темы */
 body:not(.theme-dark) th {
     background-color: #f2f2f2;
 }
@@ -122,9 +120,9 @@ input {
     width: 150px;
 }
 
-/* ===============================================
-   ДОБАВЛЕННЫЙ СТИЛЬ ДЛЯ КНОПКИ СОХРАНЕНИЯ
-=============================================== */
+/*
+ДОБАВЛЕННЫЙ СТИЛЬ ДЛЯ КНОПКИ СОХРАНЕНИЯ
+*/
 .btn-save {
     padding: 12px 25px;
     background: linear-gradient(45deg, var(--grad-start), var(--grad-end));
@@ -161,7 +159,6 @@ input {
     box-shadow: 0 4px 10px var(--shadow-color);
     transform: translateY(-2px);
 }
-/* Адаптация для светлой темы (если нужно жестко задать цвета) */
 body:not(.theme-dark) .btn-back {
     background: #f1f1f1;
     color: #333;
@@ -169,4 +166,5 @@ body:not(.theme-dark) .btn-back {
 }
 body:not(.theme-dark) .btn-back:hover {
     background: #e0e0e0;
+
 }
