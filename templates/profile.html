@@ -323,17 +323,14 @@ document.addEventListener('DOMContentLoaded', function() {
         const radio = option.querySelector('input[type="radio"]');
         const themeName = radio.value;
 
-        // Предпросмотр при наведении (с задержкой)
         option.addEventListener('mouseenter', function() {
             clearTimeout(previewTimeout);
             previewTimeout = setTimeout(() => {
                 if (!radio.checked) {
-                    // Сохраняем оригинальную тему
                     if (!document.body.hasAttribute('data-original-theme')) {
                         document.body.setAttribute('data-original-theme', originalTheme);
                     }
 
-                    // Для клубной темы нужно передать цвета клуба
                     if (themeName === 'club') {
                         const userClub = {{ user_club|tojson|safe if user_club else 'null' }};
                         if (userClub) {
@@ -343,13 +340,11 @@ document.addEventListener('DOMContentLoaded', function() {
                         }
                     }
 
-                    // Применяем тему предпросмотра
                     document.body.className = 'themed-body theme-' + themeName;
                 }
             }, 100);
         });
 
-        // Восстановление темы при уходе мыши
         option.addEventListener('mouseleave', function() {
             clearTimeout(previewTimeout);
             setTimeout(() => {
@@ -357,7 +352,6 @@ document.addEventListener('DOMContentLoaded', function() {
                     const original = document.body.getAttribute('data-original-theme');
                     if (original) {
                         document.body.className = original;
-                        // Сбрасываем стили для клубной темы
                         document.body.style.removeProperty('--club-color-1');
                         document.body.style.removeProperty('--club-color-2');
                         document.body.style.removeProperty('--club-shadow-color');
@@ -366,12 +360,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 50);
         });
 
-        // При выборе темы обновляем оригинальную
         radio.addEventListener('change', function() {
             if (this.checked) {
                 document.body.setAttribute('data-original-theme', 'themed-body theme-' + themeName);
 
-                // Для клубной темы устанавливаем цвета
                 if (themeName === 'club') {
                     const userClub = {{ user_club|tojson|safe if user_club else 'null' }};
                     if (userClub) {
@@ -380,7 +372,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.body.style.setProperty('--club-shadow-color', userClub.color1 + '80');
                     }
                 } else {
-                    // Сбрасываем стили для других тем
                     document.body.style.removeProperty('--club-color-1');
                     document.body.style.removeProperty('--club-color-2');
                     document.body.style.removeProperty('--club-shadow-color');
@@ -389,14 +380,12 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Восстановление темы при уходе с блока выбора тем
     const themeSelection = document.querySelector('.theme-selection');
     if (themeSelection) {
         themeSelection.addEventListener('mouseleave', function() {
             const original = document.body.getAttribute('data-original-theme');
             if (original) {
                 document.body.className = original;
-                // Сбрасываем стили для клубной темы
                 document.body.style.removeProperty('--club-color-1');
                 document.body.style.removeProperty('--club-color-2');
                 document.body.style.removeProperty('--club-shadow-color');
@@ -407,3 +396,4 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 </body>
 </html>
+
