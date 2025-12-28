@@ -20,7 +20,6 @@
     font-size: 2.2em;
 }
 
-/* Кнопка .back-btn (в цвет темы) */
 .back-btn {
     padding: 12px 25px;
     background: linear-gradient(45deg, var(--grad-start), var(--grad-end));
@@ -42,9 +41,8 @@
     gap: 25px;
 }
 
-/* ===============================================
-            КАРТОЧКА ПРОФИЛЯ (АВАТАР + СТАТИСТИКА)
-===============================================
+/*
+КАРТОЧКА ПРОФИЛЯ (АВАТАР + СТАТИСТИКА)
 */
 .profile-card {
     background: var(--card-bg);
@@ -89,7 +87,6 @@
     box-sizing: border-box;
 }
 
-/* Кнопка (upload) (зеленая) */
 .btn-upload {
     padding: 10px 20px;
     background: linear-gradient(45deg, #28a745, #20c997);
@@ -338,7 +335,7 @@ body:not(.theme-dark) .theme-option:hover {
 .preview-forest { background: linear-gradient(45deg, #4CAF50, #2E8B57); }
 .preview-crimson { background: linear-gradient(45deg, #DC143C, #8B0000); }
 .preview-dark { background: linear-gradient(45deg, #232526, #414345); }
-.preview-gold { background: linear-gradient(45deg, #FFD700, #B8860B); } /* НОВЫЙ */
+.preview-gold { background: linear-gradient(45deg, #FFD700, #B8860B); }
 .preview-club { background: linear-gradient(45deg, var(--club-color-1, #ccc), var(--club-color-2, #aaa)); }
 
 
@@ -816,4 +813,5 @@ body:not(.theme-dark) .no-bets {
 .stat-value.email-text {
     word-break: break-all;
     font-size: 1.1em;
+
 }
