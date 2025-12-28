@@ -1,6 +1,5 @@
-/* ===============================================
-    ОСНОВНЫЕ СТИЛИ (для quiz.html и quiz_results.html)
-===============================================
+/*
+ОСНОВНЫЕ СТИЛИ
 */
 body {
     font-family: 'Arial', sans-serif;
@@ -9,10 +8,9 @@ body {
     background: transparent;
     margin: 0;
     padding: 20px;
-    padding-top: 80px; /* Отступ для кнопки "Выйти" */
+    padding-top: 80px; 
 }
 
-/* Стили для кнопки "Выйти" */
 .logout-link-fixed {
     position: fixed;
     top: 15px;
@@ -48,9 +46,8 @@ h1 {
     margin-bottom: 30px;
 }
 
-/* ===============================================
-    СТРАНИЦА ТЕСТА (quiz.html)
-===============================================
+/*
+СТРАНИЦА ТЕСТА
 */
 
 .quiz-menu {
@@ -65,7 +62,6 @@ h1 {
     margin-bottom: 30px;
 }
 
-/* Стили вопросов */
 .question-block {
     margin-bottom: 30px;
     padding: 20px;
@@ -108,7 +104,6 @@ body:not(.theme-dark) .question-block {
     color: var(--heading-color);
 }
 
-/* Варианты ответов */
 .options {
     display: grid;
     grid-template-columns: 1fr;
@@ -149,7 +144,6 @@ body:not(.theme-dark) .option:hover {
     flex-grow: 1;
 }
 
-/* Кнопки */
 .submit-container, .actions {
     text-align: center;
     margin-top: 30px;
@@ -174,9 +168,8 @@ body:not(.theme-dark) .option:hover {
     box-shadow: 0 6px 15px var(--shadow-color);
 }
 
-/* ===============================================
-    РЕЗУЛЬТАТЫ (quiz_results.html)
-===============================================
+/*
+РЕЗУЛЬТАТЫ
 */
 .score-summary {
     text-align: center;
@@ -212,7 +205,6 @@ body:not(.theme-dark) .score-summary {
     color: var(--heading-color);
 }
 
-/* Детальные результаты */
 .result-item {
     padding: 20px;
     margin-bottom: 20px;
@@ -291,8 +283,6 @@ body:not(.theme-dark) .user-answer {
 .correct-icon { color: #2ecc71; font-weight: bold; font-size: 1.2em; }
 .incorrect-icon { color: #e74c3c; font-weight: bold; font-size: 1.2em; }
 
-/* ... (пропущены неиспользуемые .mixed-stats, .tab-link, .tab-content) ... */
-
 @media (max-width: 600px) {
     body {
         padding: 80px 10px 10px 10px;
@@ -307,4 +297,5 @@ body:not(.theme-dark) .user-answer {
         width: 100%;
         box-sizing: border-box;
     }
+
 }
