@@ -346,12 +346,10 @@
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // Функция для инициализации карт
         function initializeMaps() {
             const mapElements = document.querySelectorAll('.stadium-map');
 
             mapElements.forEach(mapElement => {
-                // Проверяем, была ли карта уже инициализирована
                 if (mapElement._leaflet_id) {
                     return;
                 }
@@ -362,16 +360,13 @@
                 const city = mapElement.dataset.city;
 
                 if (lat && lng) {
-                    // Создаем карту с правильными координатами
                     const map = L.map(mapElement).setView([lat, lng], 14);
 
-                    // Используем OpenStreetMap
                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                         attribution: '© OpenStreetMap contributors',
                         maxZoom: 19
                     }).addTo(map);
 
-                    // Создаем кастомную иконку
                     const stadiumIcon = L.divIcon({
                         className: 'stadium-marker',
                         html: '🏟️',
@@ -379,13 +374,11 @@
                         iconAnchor: [15, 30]
                     });
 
-                    // Добавляем маркер
                     L.marker([lat, lng], {icon: stadiumIcon})
                         .addTo(map)
                         .bindPopup(`<b>${stadium}</b><br>${city}`)
                         .openPopup();
 
-                    // Добавляем круг для лучшей видимости
                     L.circle([lat, lng], {
                         color: 'blue',
                         fillColor: '#007bff',
@@ -396,49 +389,40 @@
             });
         }
 
-        // Инициализируем карты после загрузки страницы
         document.addEventListener('DOMContentLoaded', function() {
             initializeMaps();
         });
 
         function showTour(tourType) {
-            // Скрыть все блоки с матчами
             document.querySelectorAll('.tour-content').forEach(content => {
                 content.classList.remove('active');
             });
 
-            // Убрать активный класс со всех кнопок
             document.querySelectorAll('.tour-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
 
-            // Показать выбранный блок и активировать кнопку
             document.getElementById(tourType + '-tour').classList.add('active');
 
-            // Находим кнопку по типу
             document.querySelector(`.tour-btn[onclick="showTour('${tourType}')"]`).classList.add('active');
         }
-
-        // Скрипт переключения туров
         const maxTour = {{ max_tour }};
         let currentTourDisplay = {{ current_tour }};
 
         function changeTour(delta) {
             const nextTour = currentTourDisplay + delta;
             if (nextTour >= 1 && nextTour <= maxTour) {
-                // Скрываем текущий
                 const currentBlock = document.getElementById('tour-' + currentTourDisplay);
                 if (currentBlock) currentBlock.classList.remove('active');
 
-                // Показываем новый
                 currentTourDisplay = nextTour;
                 const nextBlock = document.getElementById('tour-' + currentTourDisplay);
                 if (nextBlock) nextBlock.classList.add('active');
 
-                // Обновляем цифру
                 document.getElementById('tour-number-display').textContent = currentTourDisplay;
             }
         }
     </script>
 </body>
+
 </html>
