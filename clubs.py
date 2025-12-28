@@ -1,4 +1,3 @@
-# Список названий клубов для форм регистрации
 RPL_CLUBS = [
     "Акрон",
     "Ахмат",
@@ -18,7 +17,6 @@ RPL_CLUBS = [
     "ЦСКА"
 ]
 
-# Полные данные о клубах (раньше были в home.html)
 CLUBS_DATA = [
     {'name': 'Акрон', 'city': 'Тольятти', 'stadium': 'Солидарность Самара Арена', 'places': '45 000', 'year': '2018',
      'founded': '21.04.2018', 'first_name': 'Акрон', 'logo': 'Акрон.png', 'color1': '#D00027', 'color2': '#000000',
@@ -118,7 +116,7 @@ CLUBS_DATA = [
      'latitude': 55.8178, 'longitude': 37.4403},
 
     {'name': 'Балтика', 'city': 'Калининград', 'stadium': 'Ростех Арена', 'places': '30 600', 'year': '2018',
-     'founded': '23.08.1954', 'first_name': 'Пищевик', 'logo': 'Baltica.png', 'color1': '#0000FF', 'color2': '#E0FFFF',
+     'founded': '23.08.1954', 'first_name': 'Пищевик', 'logo': 'Балтика.png', 'color1': '#0000FF', 'color2': '#E0FFFF',
      'best_bombardier': 'Юрий Бондарев', 'goals': '185', 'best_assistant': 'Максим Кузьмин', 'assists': '29',
      'official_site': 'https://fc-baltika.ru',
      'wikipedia': 'https://ru.wikipedia.org/wiki/Балтика_(футбольный_клуб,_Воронеж)',
@@ -139,4 +137,5 @@ CLUBS_DATA = [
      'official_site': 'https://pfc-cska.com', 'wikipedia': 'https://ru.wikipedia.org/wiki/ЦСКА_(футбольный_клуб,_Москва)',
      'transfermarkt': 'https://www.transfermarkt.world/zska-moskau/startseite/verein/2410',
      'latitude': 55.7919, 'longitude': 37.516197}
+
 ]
