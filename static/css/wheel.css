@@ -1,9 +1,7 @@
-/* ===============================================
-            СТИЛИ КОЛЕСА УДАЧИ (WHEEL.CSS)
-===============================================
+/*
+СТИЛИ КОЛЕСА УДАЧИ (WHEEL.CSS)
 */
 
-/* --- Фиксированная кнопка навигации --- */
 .wheel-link-fixed {
     position: fixed;
     top: 15px;
@@ -34,7 +32,6 @@
     box-shadow: none;
 }
 
-/* --- Контейнеры и разметка --- */
 .wheel-container {
     position: relative;
     width: 300px;
@@ -42,7 +39,6 @@
     margin: 40px auto;
 }
 
-/* Список призов (легенда) */
 .wheel-prizes {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -58,7 +54,6 @@
     font-size: 12px;
 }
 
-/* --- Само Колесо --- */
 .wheel {
     width: 100%;
     height: 100%;
@@ -71,7 +66,6 @@
     background: #ccc;
 }
 
-/* Сектора колеса (перенесено из inline-style html для чистоты) */
 .wheel-section {
     position: absolute;
     width: 50%;
@@ -84,7 +78,6 @@
     justify-content: flex-start;
 }
 
-/* Текст на секторах */
 .wheel-text {
     position: absolute;
     left: 70px;
@@ -100,7 +93,6 @@
     width: 40px;
 }
 
-/* Стрелка-указатель */
 .wheel-pointer {
     position: absolute;
     top: -20px;
@@ -115,7 +107,6 @@
     filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
 
-/* --- Центр колеса (Результат) --- */
 .wheel-inner {
     position: absolute;
     top: 50%;
@@ -154,7 +145,6 @@
     display: block;
 }
 
-/* --- Кнопка вращения --- */
 .spin-button {
     background: linear-gradient(45deg, #FFD700, #FFA500);
     color: #333;
@@ -181,7 +171,6 @@
     box-shadow: none;
 }
 
-/* --- Текстовые результаты под колесом --- */
 .wheel-result {
     margin-top: 20px;
     padding: 15px;
@@ -199,7 +188,6 @@
     text-align: center;
 }
 
-/* --- Отладка --- */
 .debug-info {
     position: fixed;
     top: 10px;
@@ -213,12 +201,10 @@
     display: none; /* Скрыто по умолчанию */
 }
 
-/* ===============================================
-            АНИМАЦИИ И ЭФФЕКТЫ
-===============================================
+/*
+АНИМАЦИИ И ЭФФЕКТЫ
 */
 
-/* Подсветка выигравшего сектора */
 .wheel-section.highlight {
     animation: pulseHighlight 2s ease-in-out;
     z-index: 5;
@@ -236,7 +222,6 @@
     }
 }
 
-/* Искры на секторе */
 .wheel-sparkle {
     position: absolute;
     width: 100%;
@@ -253,7 +238,6 @@
     50% { opacity: 1; }
 }
 
-/* Появление результата в центре */
 @keyframes resultAppear {
     0% {
         opacity: 0;
@@ -269,7 +253,6 @@
     animation: resultAppear 0.5s ease-out forwards;
 }
 
-/* Эффект Джекпота (текст) */
 .jackpot-effect {
     position: absolute;
     top: 50%;
@@ -288,7 +271,6 @@
     50% { transform: translate(-50%, -50%) scale(1.2); }
 }
 
-/* Конфетти */
 .confetti {
     position: absolute;
     width: 10px;
@@ -311,7 +293,6 @@
     }
 }
 
-/* --- Стили для разных типов выигрыша (в центре) --- */
 .jackpot-inner {
     background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
     color: #333;
@@ -328,11 +309,10 @@
     border: 4px solid #8B0000;
 }
 
-/* ===============================================
-    ОПЦИОНАЛЬНО: СТИЛИ ДЛЯ МОДАЛЬНОГО ОКНА
-    (Если вы захотите сделать колесо в pop-up)
-===============================================
+/*
+СТИЛИ ДЛЯ МОДАЛЬНОГО ОКНА
 */
+
 .wheel-modal {
     display: none;
     position: fixed;
@@ -369,4 +349,5 @@
 
 .wheel-close:hover {
     color: #FFD700;
+
 }
