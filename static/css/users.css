@@ -1,6 +1,5 @@
-/* ===============================================
-    ОСНОВНЫЕ СТИЛИ (для users.html и user_profile.html)
-===============================================
+/*
+ОСНОВНЫЕ СТИЛИ
 */
 body {
     background: transparent;
@@ -15,7 +14,6 @@ h1, h3 {
     color: var(--heading-color);
 }
 
-/* Стили для кнопки "Выйти" */
 .logout-link-fixed {
     position: fixed;
     top: 15px;
@@ -41,10 +39,6 @@ h1, h3 {
     margin: 0 auto;
 }
 
-/* ===============================================
-    НОВЫЙ ХЕДЕР (из profile.css)
-===============================================
-*/
 .profile-header {
     display: flex;
     justify-content: space-between;
@@ -62,7 +56,6 @@ h1, h3 {
     font-size: 2.2em;
 }
 
-/* Кнопка .back-btn (в цвет темы) */
 .back-btn {
     padding: 12px 25px;
     background: linear-gradient(45deg, var(--grad-start), var(--grad-end));
@@ -71,7 +64,7 @@ h1, h3 {
     border-radius: 25px;
     font-weight: bold;
     transition: all 0.3s ease;
-    white-space: nowrap; /* Добавлено, чтобы кнопки не переносились */
+    white-space: nowrap;
 }
 
 .back-btn:hover {
@@ -88,9 +81,8 @@ h1, h3 {
     margin: 10px 0;
 }
 
-/* ===============================================
-    СПИСОК ПОЛЬЗОВАТЕЛЕЙ (users.html)
-===============================================
+/*
+СПИСОК ПОЛЬЗОВАТЕЛЕЙ
 */
 
 .table-container {
@@ -127,7 +119,6 @@ tr:hover {
     background: rgba(128, 128, 128, 0.15);
 }
 
-/* Специфично для светлой темы */
 body:not(.theme-dark) th {
     background-color: #f2f2f2;
 }
@@ -186,9 +177,8 @@ body:not(.theme-dark) tr:hover {
 }
 
 
-/* ===============================================
-    ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ (user_profile.html)
-===============================================
+/*
+ПРОФИЛЬ ПОЛЬЗОВАТЕЛЯ
 */
 
 .card-style {
@@ -214,7 +204,7 @@ body:not(.theme-dark) tr:hover {
     height: 150px;
     border-radius: 50%;
     object-fit: cover;
-    border: 5px solid var(--user-theme-border-color, var(--border-color)); /* Fallback на var(--border-color) */
+    border: 5px solid var(--user-theme-border-color, var(--border-color));
 }
 
 .user-info {
@@ -231,8 +221,6 @@ body:not(.theme-dark) tr:hover {
     padding: 15px;
     background: rgba(128, 128, 128, 0.1);
     border-radius: 5px;
-    /* ==== ИЗМЕНЕНИЕ ЗДЕСЬ ==== */
-    /* Используем ту же переменную, что и для аватарки */
     border-left: 4px solid var(--user-theme-border-color, var(--border-color));
 }
 body:not(.theme-dark) .balance-section {
@@ -324,7 +312,6 @@ body:not(.theme-dark) .about-section {
         width: 120px;
         height: 120px;
     }
-    /* Адаптация хедера */
     .profile-header {
         flex-direction: column;
         gap: 15px;
@@ -334,35 +321,30 @@ body:not(.theme-dark) .about-section {
     }
 }
 
-/* ===============================================
-   ✅ НОВЫЕ СТИЛИ ДЛЯ ВЫДЕЛЕНИЯ АДМИНА
-=============================================== */
+/*
+СТИЛИ ДЛЯ АДМИНА
+*/
 
-/* Стиль для выделения АДМИНА */
 .admin-row {
-    /* !important нужен, чтобы перебить стиль tr:nth-child(even) */
     background: rgba(230, 194, 0, 0.1) !important;
     font-weight: bold;
-    border-left: 4px solid #E6C200; /* Золотая левая граница */
+    border-left: 4px solid #E6C200;
 }
 
-/* Коррекция для темной темы */
 body.theme-dark .admin-row {
     background: rgba(230, 194, 0, 0.2) !important;
     border-left-color: #FFD700;
 }
 
-/* Стиль для выделения ТЕКУЩЕГО пользователя (вас) */
 .current-user-row {
-    /* Правая граница в цвет темы */
     border-right: 4px solid var(--grad-end, #007bff);
 }
 
-/* При наведении на строку админа, делаем фон чуть ярче */
 .admin-row:hover {
     background: rgba(230, 194, 0, 0.15) !important;
 }
 
 body.theme-dark .admin-row:hover {
     background: rgba(230, 194, 0, 0.3) !important;
+
 }
