@@ -1430,7 +1430,7 @@ if __name__ == '__main__':
                 name='Admin',
                 email=ADMIN_EMAIL,
                 club='Краснодар',
-                password=pw_secure.encrypt_password('admin123'),
+                password=pw_secure.encrypt_password('Admin_RPL_404?!'),
                 is_admin=True
             )
             db.session.add(admin)
