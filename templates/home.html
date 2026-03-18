@@ -159,47 +159,53 @@
                             <div class="matches-grid center-small-grid">
                                 {% for match in matches_by_tour[tour_num] %}
                                 <div class="match-card {% if user_club_data and (match.home_team == current_user.club or match.away_team == current_user.club) %}favorite-match{% endif %}"
-    {% if user_club_data and (match.home_team == current_user.club or match.away_team == current_user.club) %}
-        style="--fav-color1: {{ user_club_data.color1 }}; --fav-color2: {{ user_club_data.color2 }};"
-    {% endif %}
->
+                                    {% if user_club_data and (match.home_team == current_user.club or match.away_team == current_user.club) %}
+                                        style="--fav-color1: {{ user_club_data.color1 }}; --fav-color2: {{ user_club_data.color2 }};"
+                                    {% endif %}
+                                >
                                     <div style="font-weight: bold; text-align: center; margin-bottom: 10px;">
                                         {{ match.home_team }} vs {{ match.away_team }}
                                     </div>
-                                    <div style="text-align: center; font-size: 24px; margin: 10px 0;">
+
+                                    <div id="home-score-{{ match.id }}" style="text-align: center; font-size: 24px; margin: 10px 0;">
                                         {% if match.is_played or match.is_started %}
                                             {{ match.home_score }} : {{ match.away_score }}
                                         {% else %}
                                             vs
                                         {% endif %}
                                     </div>
+
                                     <div class="match-date">
                                         {{ match.match_date.strftime('%d.%m.%Y %H:%M') }}
                                     </div>
 
-                                    <a href="{{ url_for('match_details', match_id_db=match.id) }}" class="btn-details">
+                                    <a href="{{ url_for('match_details', match_id_db=match.id) }}" id="home-btn-{{ match.id }}" class="btn-details">
                                         {% if match.is_played %}Обзор и статистика{% else %}Превью и составы{% endif %}
                                     </a>
 
-                                    {% if current_user.is_authenticated and not match.is_played and not match.is_started %}
-                                    <div class="bet-form">
-                                        <h4>Сделать ставку (при выигрыше X2)</h4>
-                                        <form action="{{ url_for('place_bet', match_id=match.id) }}" method="POST">
-                                            <select name="bet_type" required>
-                                                <option value="">Выберите исход</option>
-                                                <option value="home_win">Победа {{ match.home_team }}</option>
-                                                <option value="draw">Ничья</option>
-                                                <option value="away_win">Победа {{ match.away_team }}</option>
-                                            </select>
-                                            <div style="display:flex; gap:5px;">
-                                                <input type="number" name="amount" min="1" placeholder="Сумма" required>
-                                                <button type="submit" class="btn-bet">OK</button>
-                                            </div>
-                                        </form>
+                                    <div id="home-action-{{ match.id }}">
+                                        {% if current_user.is_authenticated and not match.is_played and not match.is_started %}
+                                        <div class="bet-form">
+                                            <h4>Сделать ставку (при выигрыше X2)</h4>
+                                            <form action="{{ url_for('place_bet', match_id=match.id) }}" method="POST">
+                                                <select name="bet_type" required>
+                                                    <option value="">Выберите исход</option>
+                                                    <option value="home_win">Победа {{ match.home_team }}</option>
+                                                    <option value="draw">Ничья</option>
+                                                    <option value="away_win">Победа {{ match.away_team }}</option>
+                                                </select>
+                                                <div style="display:flex; gap:5px;">
+                                                    <input type="number" name="amount" min="1" placeholder="Сумма" required>
+                                                    <button type="submit" class="btn-bet">OK</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                        {% elif match.is_started and not match.is_played %}
+                                        <div class="match-status-live">🔴 LIVE</div>
+                                        {% elif match.is_played %}
+                                        <div style="text-align: center; color: #888; margin-top: 10px; font-size: 14px; font-weight: bold;">Завершен</div>
+                                        {% endif %}
                                     </div>
-                                    {% elif match.is_started %}
-                                    <div class="match-status-live">LIVE</div>
-                                    {% endif %}
                                 </div>
                                 {% endfor %}
                             </div>
@@ -345,6 +351,7 @@
     {% endif %}
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.1/socket.io.js"></script>
     <script>
         function initializeMaps() {
             const mapElements = document.querySelectorAll('.stadium-map');
@@ -391,6 +398,33 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             initializeMaps();
+
+            if (document.querySelector('.matches-container')) {
+                const socket = io();
+
+                socket.on('connect', function() {
+                    socket.emit('join_home');
+                });
+
+                socket.on('match_updated', function(data) {
+                    const scoreDiv = document.getElementById('home-score-' + data.match_id);
+                    const actionDiv = document.getElementById('home-action-' + data.match_id);
+                    const btnDiv = document.getElementById('home-btn-' + data.match_id);
+
+                    if (scoreDiv && (data.is_played || data.is_started)) {
+                        scoreDiv.innerText = data.home_score + ' : ' + data.away_score;
+                    }
+
+                    if (actionDiv) {
+                        if (data.is_started && !data.is_played) {
+                            actionDiv.innerHTML = '<div class="match-status-live">🔴 LIVE</div>';
+                        } else if (data.is_played) {
+                            actionDiv.innerHTML = '<div style="text-align: center; color: #888; margin-top: 10px; font-size: 14px; font-weight: bold;">Завершен</div>';
+                            if (btnDiv) btnDiv.innerText = "Обзор и статистика";
+                        }
+                    }
+                });
+            }
         });
 
         function showTour(tourType) {
@@ -406,6 +440,7 @@
 
             document.querySelector(`.tour-btn[onclick="showTour('${tourType}')"]`).classList.add('active');
         }
+
         const maxTour = {{ max_tour }};
         let currentTourDisplay = {{ current_tour }};
 
@@ -424,5 +459,4 @@
         }
     </script>
 </body>
-
 </html>
