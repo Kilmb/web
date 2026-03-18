@@ -8,6 +8,7 @@ from pathlib import Path
 import requests
 import threading
 import time
+from flask_socketio import SocketIO, emit, join_room
 from clubs import CLUBS_DATA, RPL_CLUBS
 import random
 from data.db_session import global_init, db
@@ -15,15 +16,14 @@ from data.models import (User, RPLTable, WheelSpin, Match, MatchMessage, ClubTes
                          TestResult, UserBalance, Bet,
                          pw_secure, transliterate_name)
 
-# Инициализация Flask-приложения
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///site.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}
+socketio = SocketIO(app)
 
-# Создание папки для загрузок, если её нет
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
 
@@ -40,7 +40,6 @@ def main():
     app.run()
 
 
-# Проверка расширения файла
 def allowed_file(filename):
     return '.' in filename and \
         filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
@@ -80,7 +79,6 @@ def map_team_name(api_name):
 
 def get_current_tour_from_api():
     try:
-        # Получаем все матчи сезона
         url = "https://api.sstats.net/games/list?"
         params = {
             'leagueId': 235,
@@ -256,7 +254,6 @@ def update_rpl_table_from_sstats():
         return False, f"Ошибка: {e}"
 
 
-# Главная страница
 @app.route('/')
 def home():
     table = db.session.query(RPLTable).order_by(RPLTable.position).all()
@@ -290,11 +287,8 @@ def home():
     return render_template('home.html', **context, show_public_content=True)
 
 
-# Регистрация
 @app.route('/register', methods=['GET', 'POST'])
 def register():
-    # GET: Отображает форму регистрации
-    # POST: Обрабатывает данные формы, создает пользователя
     if current_user.is_authenticated:
         return redirect(url_for('home'))
 
@@ -323,11 +317,8 @@ def register():
     return render_template('register.html', clubs=RPL_CLUBS, all_clubs=CLUBS_DATA)
 
 
-# Вход
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # GET: Показывает форму входа
-    # POST: Проверяет учетные данные и авторизует пользователя
     if current_user.is_authenticated:
         return redirect(url_for('home'))
 
@@ -345,7 +336,6 @@ def login():
     return render_template('login.html', clubs=CLUBS_DATA)
 
 
-# Тесты только для пользователей
 @app.route('/club_tests')
 @login_required
 def club_tests():
@@ -356,7 +346,6 @@ def club_tests():
     return render_template('club_tests.html', tests=tests, clubs=CLUBS_DATA)
 
 
-# Удаление тестов
 @app.route('/delete_test/<int:test_id>', methods=['POST'])
 @login_required
 def delete_test(test_id):
@@ -414,7 +403,6 @@ def hard_quiz():
                            clubs=CLUBS_DATA)
 
 
-# Проверка результатов
 @app.route('/check_quiz/<test_type>', methods=['POST'])
 @login_required
 def check_quiz(test_type):
@@ -585,7 +573,6 @@ def edit_rpl_table():
     return render_template('edit_rpl_table.html', table=table, clubs=CLUBS_DATA)
 
 
-# Обновление таблицы и матчей из API
 @app.route('/update_data_from_api', methods=['POST'])
 @login_required
 def update_data_from_api():
@@ -600,6 +587,10 @@ def update_data_from_api():
 
         prev_tour = current_tour - 1
         success_prev, message_prev = update_matches_for_tour(prev_tour)
+
+        played_matches = db.session.query(Match).filter_by(is_played=True).all()
+        for m in played_matches:
+            settle_bets(m.id)
 
         messages = []
         if success_table:
@@ -680,7 +671,6 @@ def update_matches_for_tour(tour_number):
                 ).first()
 
                 if existing_match:
-                    was_played_before = existing_match.is_played
                     was_started_before = existing_match.is_started
 
                     existing_match.home_score = home_score if is_played or is_started else None
@@ -692,7 +682,18 @@ def update_matches_for_tour(tour_number):
 
                     matches_updated += 1
 
-                    if is_played and not was_played_before:
+                    if is_started or is_played:
+                        update_payload = {
+                            'match_id': existing_match.id,
+                            'home_score': existing_match.home_score,
+                            'away_score': existing_match.away_score,
+                            'is_started': existing_match.is_started,
+                            'is_played': existing_match.is_played
+                        }
+                        socketio.emit('match_updated', update_payload, room=str(existing_match.id))
+                        socketio.emit('match_updated', update_payload, room='home_page')
+
+                    if is_played:
                         settle_bets(existing_match.id)
                     elif is_started and not was_started_before:
                         print(f"Матч {home_team} vs {away_team} начался!")
@@ -748,7 +749,6 @@ def wheel_spin():
                     'message': f'Вы можете крутить колесо только раз в 24 часа. Попробуйте через {int(hours_left)} часов.'
                 })
 
-        # Призы в ТОЧНОМ порядке как на клиенте
         prizes = [
             {'type': 'add', 'amount': 50, 'probability': 20, 'text': '+50', 'display': '+50'},
             {'type': 'add', 'amount': 100, 'probability': 15, 'text': '+100', 'display': '+100'},
@@ -854,7 +854,7 @@ def wheel_status():
             'next_spin_time': next_spin_time,
             'spins_count': wheel_spin_record.spins_count if wheel_spin_record else 0
         })
-    except Exception as e:
+    except Exception:
         return jsonify({
             'can_spin': False,
             'next_spin_time': None,
@@ -961,7 +961,6 @@ def profile():
                            purchased_themes=purchased_themes)
 
 
-# Просмотр пользователей
 @app.route('/users')
 @login_required
 def show_users():
@@ -972,7 +971,7 @@ def show_users():
             balances = UserBalance.query.all()
             for balance in balances:
                 user_balances[balance.user_id] = balance.balance
-        except Exception as e:
+        except Exception:
             for user in users:
                 user_balances[user.id] = 100
 
@@ -982,7 +981,7 @@ def show_users():
                 key=lambda u: user_balances.get(u.id, 100),
                 reverse=True
             )
-        except Exception as e:
+        except Exception:
             sorted_users = users
 
         return render_template('users.html', users=sorted_users, user_balances=user_balances, clubs=CLUBS_DATA)
@@ -994,7 +993,6 @@ def show_users():
         return redirect(url_for('home'))
 
 
-# Просмотр профилей
 @app.route('/user/<int:user_id>')
 @login_required
 def view_user(user_id):
@@ -1085,7 +1083,6 @@ def place_bet(match_id):
     return redirect(url_for('home'))
 
 
-# Функция для расчета результатов ставок
 def settle_bets(match_id):
     match = db.session.get(Match, match_id)
     if not match or not match.is_played:
@@ -1193,127 +1190,137 @@ def match_details(match_id_db):
     match = db.session.get(Match, match_id_db)
     if not match: return redirect(url_for('home'))
 
-    home_form = get_team_form(match.home_team)
-    away_form = get_team_form(match.away_team)
-    chat_messages = MatchMessage.query.filter_by(match_id=match_id_db).order_by(MatchMessage.created_at.asc()).all()
+    is_ajax = request.args.get('ajax') == '1'
 
-    api_data = {}
-    home_team_id = None
-    away_team_id = None
+    if not is_ajax:
+        home_form = get_team_form(match.home_team)
+        away_form = get_team_form(match.away_team)
+        chat_messages = MatchMessage.query.filter_by(match_id=match_id_db).order_by(MatchMessage.created_at.asc()).all()
 
-    if match.sstats_id:
-        try:
-            headers = {'apikey': '8ftkpzresyxo7dqz'}
-            url_main = f"https://api.sstats.net/Games/{match.sstats_id}"
-            resp = requests.get(url_main, headers=headers, timeout=15)
+        return render_template('match_details.html',
+                               match=match,
+                               home_form=home_form,
+                               away_form=away_form,
+                               chat_messages=chat_messages,
+                               clubs=CLUBS_DATA,
+                               api_data=None,
+                               is_ajax=False)
+    else:
+        api_data = {}
+        home_team_id = None
+        away_team_id = None
 
-            if resp.ok:
-                json_resp = resp.json()
-                api_data = json_resp.get('data', {}) if isinstance(json_resp, dict) else {}
-
-                if api_data.get('lineups'):
-                    home_team_id = api_data['lineups'].get('homeTeam', {}).get('id')
-                    away_team_id = api_data['lineups'].get('awayTeam', {}).get('id')
-                if not home_team_id: home_team_id = api_data.get('homeTeam', {}).get('id')
-                if not away_team_id: away_team_id = api_data.get('awayTeam', {}).get('id')
-
-                if api_data.get('lineups'):
-                    for side in ['homeCoach', 'awayCoach']:
-                        if api_data['lineups'].get(side):
-                            c_name = api_data['lineups'][side].get('name')
-                            api_data['lineups'][side]['name'] = transliterate_name(c_name)
-
-                player_events_data = {}
-                events = api_data.get('events')
-                if events and isinstance(events, list):
-                    for e in events:
-                        if not isinstance(e, dict): continue
-                        minute = e.get('elapsed', 0)
-                        etype = e.get('type')
-                        if etype == 3:
-                            pid = str(e.get('player', {}).get('id')) if e.get('player') else None
-                            aid = str(e.get('assistPlayer', {}).get('id')) if e.get('assistPlayer') else None
-                            if pid:
-                                if pid not in player_events_data: player_events_data[pid] = []
-                                player_events_data[pid].append({'type': 'sub_out', 'min': minute})
-                            if aid:
-                                if aid not in player_events_data: player_events_data[aid] = []
-                                player_events_data[aid].append({'type': 'sub_in', 'min': minute})
-
-                stats_map = {}
-                p_stats_list = api_data.get('playerStats', [])
-                if p_stats_list and isinstance(p_stats_list, list):
-                    for s in p_stats_list:
-                        s_pid = str(s.get('playerId'))
-                        stats_map[s_pid] = s
-                lineups = api_data.get('lineupPlayers')
-                if lineups and isinstance(lineups, list):
-                    pos_weights = {'G': 1, 'D': 2, 'M': 3, 'F': 4}
-                    for p in lineups:
-                        if isinstance(p, dict):
-                            if p.get('playerName'):
-                                p['playerName'] = transliterate_name(p['playerName'])
-
-                            p_id = str(p.get('playerId'))
-                            p['events_list'] = player_events_data.get(p_id, [])
-
-                            stat = stats_map.get(p_id, {})
-
-                            p['rating'] = stat.get('rating')
-                            p['goals'] = stat.get('goalsTotal')
-                            p['assists'] = stat.get('goalsAssists')
-                            p['shots'] = stat.get('shotsTotal')
-                            p['passes'] = stat.get('passesTotal')
-                            p['tackles'] = stat.get('tacklesTotal')
-                            p['yellowCards'] = stat.get('cardsYellow')
-                            p['redCards'] = stat.get('cardsRed')
-
-                            pos_char = str(p.get('position', 'M'))
-                            p['sort_weight'] = pos_weights.get(pos_char, 3)
-                            p['is_bench'] = 0 if p.get('startXI') else 1
-
-                    lineups.sort(key=lambda x: (x.get('is_bench', 1), x.get('sort_weight', 5)))
-
-            stats_url = "https://api.sstats.net/games/query-games"
-            stats_payload = {
-                "Condition": f"Id = {match.sstats_id}",
-                "Format": "json",
-                "Fields": [
-                    "BallPossessionHome", "BallPossessionAway", "ExpectedGoalsHome", "ExpectedGoalsAway",
-                    "TotalShotsHome", "TotalShotsAway", "ShotsOnGoalHome", "ShotsOnGoalAway",
-                    "CornerKicksHome", "CornerKicksAway", "OffsidesHome", "OffsidesAway",
-                    "FoulsHome", "FoulsAway", "YellowCardsHome", "YellowCardsAway",
-                    "RedCardsHome", "RedCardsAway", "GoalkeeperSavesHome", "GoalkeeperSavesAway",
-                    "TotalPassesHome", "TotalPassesAway", "PassesAccurateHome", "PassesAccurateAway",
-                    "LongPassesHome", "LongPassesAway", "CrossesHome", "CrossesAway",
-                    "TotalTacklesHome", "TotalTacklesAway", "InterceptionsHome", "InterceptionsAway",
-                    "ClearancesHome", "ClearancesAway", "DuelsWonHome", "DuelsWonAway"
-                ]
-            }
+        if match.sstats_id:
             try:
-                stats_resp = requests.post(stats_url, headers=headers, json=stats_payload, timeout=5)
-                if stats_resp.ok:
-                    stats_json = stats_resp.json()
-                    if isinstance(stats_json, dict) and isinstance(stats_json.get('data'), list) and len(
-                            stats_json['data']) > 0:
-                        s_raw = stats_json['data'][0]
-                        if 'statistics' not in api_data: api_data['statistics'] = {}
-                        for key, val in s_raw.items(): api_data['statistics'][key[0].lower() + key[1:]] = val
-            except:
-                pass
+                headers = {'apikey': '8ftkpzresyxo7dqz'}
+                url_main = f"https://api.sstats.net/Games/{match.sstats_id}"
+                resp = requests.get(url_main, headers=headers, timeout=15)
 
-        except Exception as e:
-            print(f"API Error: {e}")
+                if resp.ok:
+                    json_resp = resp.json()
+                    api_data = json_resp.get('data', {}) if isinstance(json_resp, dict) else {}
 
-    return render_template('match_details.html',
-                           match=match,
-                           api_data=api_data,
-                           home_form=home_form,
-                           away_form=away_form,
-                           chat_messages=chat_messages,
-                           clubs=CLUBS_DATA,
-                           home_team_id=home_team_id,
-                           away_team_id=away_team_id)
+                    if api_data.get('lineups'):
+                        home_team_id = api_data['lineups'].get('homeTeam', {}).get('id')
+                        away_team_id = api_data['lineups'].get('awayTeam', {}).get('id')
+                    if not home_team_id: home_team_id = api_data.get('homeTeam', {}).get('id')
+                    if not away_team_id: away_team_id = api_data.get('awayTeam', {}).get('id')
+
+                    if api_data.get('lineups'):
+                        for side in ['homeCoach', 'awayCoach']:
+                            if api_data['lineups'].get(side):
+                                c_name = api_data['lineups'][side].get('name')
+                                api_data['lineups'][side]['name'] = transliterate_name(c_name)
+
+                    player_events_data = {}
+                    events = api_data.get('events')
+                    if events and isinstance(events, list):
+                        for e in events:
+                            if not isinstance(e, dict): continue
+                            minute = e.get('elapsed', 0)
+                            etype = e.get('type')
+                            if etype == 3:
+                                pid = str(e.get('player', {}).get('id')) if e.get('player') else None
+                                aid = str(e.get('assistPlayer', {}).get('id')) if e.get('assistPlayer') else None
+                                if pid:
+                                    if pid not in player_events_data: player_events_data[pid] = []
+                                    player_events_data[pid].append({'type': 'sub_out', 'min': minute})
+                                if aid:
+                                    if aid not in player_events_data: player_events_data[aid] = []
+                                    player_events_data[aid].append({'type': 'sub_in', 'min': minute})
+
+                    stats_map = {}
+                    p_stats_list = api_data.get('playerStats', [])
+                    if p_stats_list and isinstance(p_stats_list, list):
+                        for s in p_stats_list:
+                            s_pid = str(s.get('playerId'))
+                            stats_map[s_pid] = s
+                    lineups = api_data.get('lineupPlayers')
+                    if lineups and isinstance(lineups, list):
+                        pos_weights = {'G': 1, 'D': 2, 'M': 3, 'F': 4}
+                        for p in lineups:
+                            if isinstance(p, dict):
+                                if p.get('playerName'):
+                                    p['playerName'] = transliterate_name(p['playerName'])
+
+                                p_id = str(p.get('playerId'))
+                                p['events_list'] = player_events_data.get(p_id, [])
+
+                                stat = stats_map.get(p_id, {})
+
+                                p['rating'] = stat.get('rating')
+                                p['goals'] = stat.get('goalsTotal')
+                                p['assists'] = stat.get('goalsAssists')
+                                p['shots'] = stat.get('shotsTotal')
+                                p['passes'] = stat.get('passesTotal')
+                                p['tackles'] = stat.get('tacklesTotal')
+                                p['yellowCards'] = stat.get('cardsYellow')
+                                p['redCards'] = stat.get('cardsRed')
+
+                                pos_char = str(p.get('position', 'M'))
+                                p['sort_weight'] = pos_weights.get(pos_char, 3)
+                                p['is_bench'] = 0 if p.get('startXI') else 1
+
+                        lineups.sort(key=lambda x: (x.get('is_bench', 1), x.get('sort_weight', 5)))
+
+                stats_url = "https://api.sstats.net/games/query-games"
+                stats_payload = {
+                    "Condition": f"Id = {match.sstats_id}",
+                    "Format": "json",
+                    "Fields": [
+                        "BallPossessionHome", "BallPossessionAway", "ExpectedGoalsHome", "ExpectedGoalsAway",
+                        "TotalShotsHome", "TotalShotsAway", "ShotsOnGoalHome", "ShotsOnGoalAway",
+                        "CornerKicksHome", "CornerKicksAway", "OffsidesHome", "OffsidesAway",
+                        "FoulsHome", "FoulsAway", "YellowCardsHome", "YellowCardsAway",
+                        "RedCardsHome", "RedCardsAway", "GoalkeeperSavesHome", "GoalkeeperSavesAway",
+                        "TotalPassesHome", "TotalPassesAway", "PassesAccurateHome", "PassesAccurateAway",
+                        "LongPassesHome", "LongPassesAway", "CrossesHome", "CrossesAway",
+                        "TotalTacklesHome", "TotalTacklesAway", "InterceptionsHome", "InterceptionsAway",
+                        "ClearancesHome", "ClearancesAway", "DuelsWonHome", "DuelsWonAway"
+                    ]
+                }
+                try:
+                    stats_resp = requests.post(stats_url, headers=headers, json=stats_payload, timeout=5)
+                    if stats_resp.ok:
+                        stats_json = stats_resp.json()
+                        if isinstance(stats_json, dict) and isinstance(stats_json.get('data'), list) and len(
+                                stats_json['data']) > 0:
+                            s_raw = stats_json['data'][0]
+                            if 'statistics' not in api_data: api_data['statistics'] = {}
+                            for key, val in s_raw.items(): api_data['statistics'][key[0].lower() + key[1:]] = val
+                except:
+                    pass
+
+            except Exception as e:
+                print(f"API Error: {e}")
+
+        return render_template('match_details.html',
+                               match=match,
+                               api_data=api_data,
+                               clubs=CLUBS_DATA,
+                               home_team_id=home_team_id,
+                               away_team_id=away_team_id,
+                               is_ajax=True)
 
 
 @app.route('/admin/sync_season', methods=['POST'])
@@ -1414,6 +1421,44 @@ def send_match_message(match_id):
     return redirect(url_for('match_details', match_id_db=match_id))
 
 
+@socketio.on('join_home')
+def handle_join_home():
+    join_room('home_page')
+
+
+@socketio.on('join_match')
+def handle_join_match(data):
+    room = str(data['match_id'])
+    join_room(room)
+
+@socketio.on('send_message')
+def handle_send_message(data):
+    if not current_user.is_authenticated:
+        return
+
+    match_id = data.get('match_id')
+    text = data.get('text', '').strip()
+
+    if text and len(text) > 0:
+        text = text[:500]
+        new_msg = MatchMessage(
+            match_id=match_id,
+            user_id=current_user.id,
+            text=text
+        )
+        db.session.add(new_msg)
+        db.session.commit()
+
+        avatar_url = url_for('uploaded_file', filename=current_user.avatar) if current_user.avatar else None
+        emit('new_message', {
+            'user_id': current_user.id,
+            'user_name': current_user.name,
+            'avatar_url': avatar_url,
+            'text': text,
+            'time': new_msg.created_at.strftime('%H:%M')
+        }, room=str(match_id))
+
+
 @app.route('/logout')
 @login_required
 def logout():
@@ -1435,8 +1480,6 @@ if __name__ == '__main__':
             )
             db.session.add(admin)
             db.session.commit()
-
-        # Заполнение таблицы клубов, если она пуста
         if db.session.query(RPLTable).count() == 0:
             for i, club in enumerate(RPL_CLUBS, 1):
                 team = RPLTable(
@@ -1453,7 +1496,6 @@ if __name__ == '__main__':
                 db.session.add(team)
             db.session.commit()
 
-        # Добавление тестовых данных, если нет матчей
         if db.session.query(Match).count() == 0:
             today = datetime.now()
             matches = [
@@ -1466,7 +1508,6 @@ if __name__ == '__main__':
 
         init_user_balances()
 
-        # Добавление тестовых вопросов, если их нет
         if db.session.query(ClubTest).count() == 0:
             sample_tests = [
                 ClubTest(
@@ -1484,5 +1525,4 @@ if __name__ == '__main__':
 
         schedule_tour_update()
 
-        # Запуск приложения в режиме отладки
-        app.run(host='127.0.0.1', port=5000, debug=True)
+        socketio.run(app, host='127.0.0.1', port=5000, debug=True)
