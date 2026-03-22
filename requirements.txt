@@ -8,3 +8,4 @@ SQLAlchemy-serializer==1.4.1
 requests==2.31.0
 translators==5.8.3
 flask_socketio==5.6.1
+eventlet==0.35.2

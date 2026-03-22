@@ -145,22 +145,25 @@ def load_current_tour():
         return load_current_tour_from_file()
 
 
-def schedule_tour_update():
-    def update_job():
-        while True:
+def background_updater():
+    while True:
+        time.sleep(15)
+        with app.app_context():
             try:
-                time.sleep(6 * 60 * 60)
+                current_tour = load_current_tour()
 
-                with app.app_context():
-                    current_tour = get_current_tour_from_api()
-                    save_current_tour(current_tour)
-                    print(f"Автоматически обновлен текущий тур: {current_tour}")
+                update_matches_for_tour(current_tour)
+                update_matches_for_tour(current_tour + 1)
+                update_matches_for_tour(current_tour - 1)
+
+                update_rpl_table_from_sstats()
+
+                played_matches = db.session.query(Match).filter_by(is_played=True).all()
+                for m in played_matches:
+                    settle_bets(m.id)
 
             except Exception as e:
-                print(f"Ошибка в фоновом обновлении тура: {e}")
-
-    thread = threading.Thread(target=update_job, daemon=True)
-    thread.start()
+                print(f"Ошибка фонового LIVE-обновления: {e}")
 
 
 def update_rpl_table_from_sstats():
@@ -1523,6 +1526,7 @@ if __name__ == '__main__':
             db.session.add_all(sample_tests)
             db.session.commit()
 
-        schedule_tour_update()
+        updater_thread = threading.Thread(target=background_updater, daemon=True)
+        updater_thread.start()
 
-        socketio.run(app, host='127.0.0.1', port=5000, debug=True)
+    socketio.run(app, host='127.0.0.1', port=5000, debug=True, allow_unsafe_werkzeug=True)
