@@ -396,6 +396,7 @@ body:not(.theme-dark) .theme-option:hover {
 }
 
 .bet-item-profile {
+    flex-shrink: 0;
     background: rgba(128, 128, 128, 0.05);
     border-radius: 10px;
     border: 1px solid var(--border-color);
